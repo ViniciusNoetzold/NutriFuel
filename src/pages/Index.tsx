@@ -81,10 +81,10 @@ export default function Index() {
       {/* Hero Section */}
       <div className="flex flex-col md:flex-row items-center gap-6">
         <div className="flex-1 space-y-2">
-          <h2 className="text-3xl font-bold tracking-tight text-shadow-lg">
+          <h2 className="text-3xl font-bold tracking-tight text-shadow-lg text-foreground">
             Olá, {user.name.split(' ')[0]}!
           </h2>
-          <p className="text-lg text-muted-foreground/80 font-medium">
+          <p className="text-lg text-muted-foreground font-medium">
             Seu corpo, seu combustível.
           </p>
         </div>
@@ -92,14 +92,14 @@ export default function Index() {
 
       {/* 1. Status - Dashboard */}
       <Card className="aero-glass border-0 relative overflow-hidden transition-all duration-700 hover:shadow-2xl">
-        <div className="absolute inset-0 bg-gradient-to-tr from-cyan-100/20 via-transparent to-blue-100/20 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-cyan-100/30 via-transparent to-blue-100/30 pointer-events-none" />
         <CardContent className="p-6 relative z-10">
           <div className="flex justify-between items-center mb-6">
-            <h3 className="text-lg font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+            <h3 className="text-lg font-semibold text-foreground uppercase tracking-widest flex items-center gap-2">
               <Zap className="w-5 h-5 text-primary fill-primary/20" />
               Status
             </h3>
-            <span className="text-xs font-bold bg-white/30 px-2 py-1 rounded-lg text-foreground/70">
+            <span className="text-xs font-bold bg-white/40 px-2 py-1 rounded-lg text-foreground/80 shadow-sm border border-white/20">
               Hoje
             </span>
           </div>
@@ -122,8 +122,8 @@ export default function Index() {
                   >
                     <stop offset="0%" stopColor="#22c55e" />{' '}
                     {/* green-500 start */}
-                    <stop offset="100%" stopColor="#06b6d4" />{' '}
-                    {/* cyan-500 end */}
+                    <stop offset="100%" stopColor="hsl(var(--primary))" />{' '}
+                    {/* primary end */}
                   </linearGradient>
                   {/* Glossy Reflection Gradient */}
                   <linearGradient
@@ -146,7 +146,7 @@ export default function Index() {
                   fill="transparent"
                   stroke="currentColor"
                   strokeWidth={stroke}
-                  className="text-black/5 dark:text-white/5"
+                  className="text-black/10 dark:text-white/5"
                 />
 
                 {/* Progress Arc */}
@@ -163,7 +163,7 @@ export default function Index() {
                   className="transition-[stroke-dashoffset] duration-1000 ease-out drop-shadow-[0_0_8px_rgba(6,182,212,0.4)]"
                 />
 
-                {/* Optional: Glassy overlay on the stroke for extra Frutiger feel */}
+                {/* Glassy overlay */}
                 <circle
                   cx="100"
                   cy="100"
@@ -184,13 +184,13 @@ export default function Index() {
                   <Flame className="w-7 h-7 text-white fill-white animate-pulse" />
                 </div>
                 <div className="text-center">
-                  <p className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-b from-primary to-cyan-600 dark:to-cyan-400 drop-shadow-sm leading-none">
+                  <p className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-b from-primary to-cyan-700 dark:to-cyan-400 drop-shadow-sm leading-none">
                     {Math.floor(remainingCalories)}
                   </p>
                   <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
                     Kcal Restantes
                   </p>
-                  <p className="text-[9px] text-muted-foreground/60 mt-1 font-medium">
+                  <p className="text-[9px] text-muted-foreground/80 mt-1 font-medium">
                     Meta: {dailyGoal}
                   </p>
                 </div>
@@ -221,12 +221,12 @@ export default function Index() {
               ].map((m) => (
                 <div
                   key={m.label}
-                  className="flex flex-col items-center p-3 rounded-2xl bg-white/20 dark:bg-white/5 border border-white/30 backdrop-blur-sm shadow-sm transition-transform hover:scale-105"
+                  className="flex flex-col items-center p-3 rounded-2xl bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/10 backdrop-blur-sm shadow-sm transition-transform hover:scale-105"
                 >
                   <span className="text-xs font-bold text-muted-foreground mb-1">
                     {m.label}
                   </span>
-                  <div className="text-lg font-bold">
+                  <div className="text-lg font-bold text-foreground">
                     {m.val}
                     <span className="text-xs text-muted-foreground font-normal">
                       /{m.goal}g
@@ -253,22 +253,24 @@ export default function Index() {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* 2. Hidratação */}
         <div className="space-y-6">
-          <Card className="aero-card border-0 bg-cyan-50/30 dark:bg-cyan-900/20">
+          <Card className="aero-card border-0 bg-cyan-50/50 dark:bg-cyan-900/20">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-4">
                 <div className="bg-cyan-500 p-2 rounded-full shadow-lg shadow-cyan-500/30 text-white">
                   <Droplets className="h-6 w-6" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-lg">Hidratação</h3>
-                  <p className="text-xs text-muted-foreground">
+                  <h3 className="font-bold text-lg text-foreground">
+                    Hidratação
+                  </h3>
+                  <p className="text-xs text-muted-foreground font-medium">
                     Meta Diária: {user.waterGoal}ml
                   </p>
                 </div>
               </div>
 
               {/* Liquid Progress Bar for Water */}
-              <div className="h-6 w-full bg-white/50 dark:bg-black/20 rounded-full overflow-hidden border border-white/30 shadow-inner mb-6 relative">
+              <div className="h-6 w-full bg-white/50 dark:bg-black/20 rounded-full overflow-hidden border border-white/40 shadow-inner mb-6 relative">
                 <div
                   className="h-full bg-gradient-to-r from-cyan-400 to-cyan-600 shadow-[0_0_20px_rgba(6,182,212,0.5)] transition-all duration-1000 ease-out animate-liquid-flow"
                   style={{
@@ -281,7 +283,7 @@ export default function Index() {
 
               <div className="flex gap-4">
                 <Button
-                  className="flex-1 aero-button bg-cyan-100/50 hover:bg-cyan-200/50 text-cyan-600 border-cyan-200/50"
+                  className="flex-1 aero-button bg-cyan-100/70 hover:bg-cyan-200/70 text-cyan-700 border-cyan-200/50"
                   variant="ghost"
                   onClick={() => handleWater(-250)}
                   disabled={todayLog.waterIntake <= 0}
@@ -289,7 +291,7 @@ export default function Index() {
                   <Minus className="mr-2 h-4 w-4" /> 250ml
                 </Button>
                 <Button
-                  className="flex-1 aero-button bg-blue-100/50 hover:bg-blue-200/50 text-blue-600 border-blue-200/50"
+                  className="flex-1 aero-button bg-blue-100/70 hover:bg-blue-200/70 text-blue-700 border-blue-200/50"
                   variant="ghost"
                   onClick={() => handleWater(250)}
                 >
@@ -303,7 +305,9 @@ export default function Index() {
         {/* 3. Refeições do Dia */}
         <div>
           <div className="flex items-center justify-between mb-4 px-2">
-            <h3 className="font-bold text-xl text-shadow">Refeições de Hoje</h3>
+            <h3 className="font-bold text-xl text-shadow text-foreground">
+              Refeições de Hoje
+            </h3>
             <Link
               to="/plan"
               className="text-sm font-semibold text-primary hover:underline flex items-center gap-1"
@@ -351,7 +355,7 @@ export default function Index() {
                         </p>
                         <p
                           className={cn(
-                            'font-bold truncate text-lg transition-all',
+                            'font-bold truncate text-lg transition-all text-foreground',
                             slot.completed
                               ? 'line-through text-muted-foreground'
                               : 'group-hover:text-primary',

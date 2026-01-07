@@ -6,36 +6,36 @@
 
 @layer base {
   :root {
-    /* Ice Blue Light Mode - Frutiger Aero */
-    --background: 200 60% 97%; /* Ice Blue */
-    --foreground: 215 40% 20%;
+    /* Ice Blue Light Mode - Refined for High Contrast & Better Readability */
+    --background: 205 50% 94%; /* Slightly darker Ice Blue base */
+    --foreground: 215 60% 15%; /* Dark Navy for high contrast text */
     --card: 0 0% 100%;
-    --card-foreground: 215 40% 20%;
+    --card-foreground: 215 60% 15%;
     --popover: 0 0% 100%;
-    --popover-foreground: 215 40% 20%;
-    --primary: 190 90% 40%; /* Deep Cyan */
+    --popover-foreground: 215 60% 15%;
+    --primary: 195 100% 32%; /* Deep Intense Cyan/Teal for accessibility */
     --primary-foreground: 0 0% 100%;
-    --secondary: 200 50% 90%;
-    --secondary-foreground: 215 40% 20%;
-    --muted: 200 30% 90%;
-    --muted-foreground: 215 20% 50%;
-    --accent: 190 60% 95%;
-    --accent-foreground: 215 40% 20%;
+    --secondary: 205 30% 90%;
+    --secondary-foreground: 215 60% 15%;
+    --muted: 205 20% 85%;
+    --muted-foreground: 215 30% 35%; /* Darker muted text for readability on glass */
+    --accent: 195 40% 90%;
+    --accent-foreground: 215 60% 15%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 200 40% 85%;
-    --input: 200 40% 85%;
-    --ring: 190 90% 40%;
+    --border: 205 25% 75%; /* More visible border */
+    --input: 205 25% 75%;
+    --ring: 195 100% 32%;
     --radius: 1.25rem;
-    --chart-1: 190 90% 40%;
-    --chart-2: 215 40% 20%;
-    --chart-3: 200 50% 60%;
+    --chart-1: 195 100% 32%;
+    --chart-2: 215 60% 15%;
+    --chart-3: 200 50% 50%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
   }
 
   .dark {
-    /* Deep Petroleum Blue Dark Mode */
+    /* Deep Petroleum Blue Dark Mode - Unchanged */
     --background: 215 40% 12%; /* Deep Petroleum */
     --foreground: 190 20% 95%;
     --card: 215 40% 16%;
@@ -68,9 +68,9 @@
 }
 
 @layer components {
-  /* Frutiger Glass (Light Mode) */
+  /* Frutiger Glass (Light Mode) - Improved Shadows for Contrast */
   .frutiger-glass {
-    @apply bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_8px_32px_0_rgba(31,38,135,0.1),inset_0_1px_0_rgba(255,255,255,0.8)] rounded-[24px];
+    @apply bg-white/50 backdrop-blur-2xl border border-white/80 shadow-[0_8px_32px_0_rgba(31,38,135,0.15),inset_0_1px_0_rgba(255,255,255,0.95)] rounded-[24px];
   }
 
   /* Obsidian Glass (Dark Mode) */
@@ -83,33 +83,33 @@
     @apply frutiger-glass dark:obsidian-glass;
   }
 
-  /* Frosted Filter Glass (30-40% opacity, 1px white border) */
+  /* Frosted Filter Glass (High Contrast Text) */
   .frosted-glass {
-    @apply bg-white/35 dark:bg-white/5 backdrop-blur-lg border border-white/100 dark:border-white/20 shadow-sm rounded-xl;
+    @apply bg-white/40 dark:bg-white/5 backdrop-blur-lg border border-white/100 dark:border-white/20 shadow-sm rounded-xl text-foreground dark:text-foreground;
   }
 
-  /* Cards */
+  /* Cards - Enhanced Contrast */
   .aero-card {
-    @apply bg-white/60 dark:bg-[#1e293b]/80 backdrop-blur-md border border-white/60 dark:border-white/10 shadow-lg rounded-[20px] transition-all duration-300 hover:shadow-xl hover:bg-white/80 dark:hover:bg-[#2d3440]/90;
+    @apply bg-white/70 dark:bg-[#1e293b]/80 backdrop-blur-md border border-white/70 dark:border-white/10 shadow-lg rounded-[20px] transition-all duration-300 hover:shadow-xl hover:bg-white/90 dark:hover:bg-[#2d3440]/90;
   }
 
   /* Buttons */
   .aero-button {
-    @apply relative overflow-hidden bg-gradient-to-b from-white/50 to-white/10 dark:from-white/15 dark:to-white/5 border border-white/60 dark:border-white/10 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-sm transition-all duration-300 active:scale-95 active:shadow-inner rounded-full hover:brightness-110;
+    @apply relative overflow-hidden bg-gradient-to-b from-white/60 to-white/20 dark:from-white/15 dark:to-white/5 border border-white/70 dark:border-white/10 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-sm transition-all duration-300 active:scale-95 active:shadow-inner rounded-full hover:brightness-105;
   }
 
-  /* Inputs */
+  /* Inputs - Sharper borders for accessibility */
   .aero-input {
-    @apply bg-white/50 dark:bg-black/30 border border-white/40 dark:border-white/10 backdrop-blur-sm rounded-xl focus:ring-2 focus:ring-primary/50 transition-all shadow-inner placeholder:text-muted-foreground/70;
+    @apply bg-white/60 dark:bg-black/30 border border-white/60 dark:border-white/10 backdrop-blur-sm rounded-xl focus:ring-2 focus:ring-primary/50 transition-all shadow-inner placeholder:text-muted-foreground/80 text-foreground font-medium;
   }
 
   /* Theme Backgrounds */
   .theme-light-bg {
     background: radial-gradient(
       circle at 50% 0%,
-      #e0f2fe 0%,
-      #f0f9ff 40%,
-      #e6fffa 100%
+      hsl(205 60% 90%) 0%,
+      hsl(205 60% 94%) 40%,
+      hsl(210 50% 96%) 100%
     );
     background-size: 100% 100%;
   }
@@ -148,9 +148,22 @@
     @apply absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/50 to-transparent rounded-t-2xl pointer-events-none;
   }
 
-  /* Text Styles for Branding */
+  /* Text Styles for Branding - Adaptive for Light Mode Contrast */
   .text-metallic {
-    @apply bg-clip-text text-transparent bg-gradient-to-b from-gray-100 via-white to-gray-300 drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)];
+    @apply bg-clip-text text-transparent;
+  }
+
+  /* Light Mode: Dark Metallic Blue/Steel */
+  :root:not(.dark) .text-metallic {
+    background-image: linear-gradient(to bottom, #1e293b, #334155, #1e293b);
+    text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.15));
+  }
+
+  /* Dark Mode: Silver/White */
+  .dark .text-metallic {
+    background-image: linear-gradient(to bottom, #f3f4f6, #ffffff, #d1d5db);
+    filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.5));
   }
 }
 

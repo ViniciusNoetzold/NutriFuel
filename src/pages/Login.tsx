@@ -27,25 +27,25 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-[#e0f2fe] to-[#f0f9ff] dark:from-[#0f172a] dark:to-[#1e293b]">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-sky-200 to-blue-200 dark:from-[#0f172a] dark:to-[#1e293b]">
       {/* Background Texture Overlay */}
       <div className="absolute inset-0 opacity-[0.04] pointer-events-none bg-texture-overlay mix-blend-overlay z-0" />
 
       {/* Center Light */}
-      <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/20 to-white/40 dark:via-cyan-900/10 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/10 to-white/30 dark:via-cyan-900/10 pointer-events-none" />
 
       <div className="w-full max-w-md z-10 animate-fade-in-up">
-        <div className="aero-glass p-8 rounded-[32px] shadow-2xl space-y-8 relative overflow-hidden">
+        <div className="aero-glass p-8 rounded-[32px] shadow-2xl space-y-8 relative overflow-hidden border border-white/60 dark:border-white/10">
           {/* Top sheen */}
           <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/80 to-transparent" />
 
           <div className="flex flex-col items-center space-y-4">
             <InteractiveDumbbell />
             <div className="text-center relative">
-              <h1 className="text-4xl font-extrabold mt-2 tracking-tight text-metallic drop-shadow-md">
+              <h1 className="text-4xl font-extrabold mt-2 tracking-tight text-metallic">
                 NutriFuel
               </h1>
-              <p className="text-primary-foreground dark:text-cyan-400 text-sm max-w-[200px] mx-auto font-medium drop-shadow-sm opacity-80">
+              <p className="text-primary font-bold dark:text-cyan-400 text-sm max-w-[200px] mx-auto mt-1 drop-shadow-sm opacity-90">
                 Energy for Life.
               </p>
             </div>
@@ -54,7 +54,10 @@ export default function Login() {
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="username" className="ml-1">
+                <Label
+                  htmlFor="username"
+                  className="ml-1 text-foreground font-bold"
+                >
                   Usuário
                 </Label>
                 <div className="relative group">
@@ -63,14 +66,17 @@ export default function Login() {
                     id="username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="pl-12 h-14 aero-input rounded-2xl transition-all"
+                    className="pl-12 h-14 aero-input rounded-2xl transition-all border-white/70 bg-white/70 dark:bg-black/30 text-lg font-medium"
                     placeholder="user"
                     required
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password" className="ml-1">
+                <Label
+                  htmlFor="password"
+                  className="ml-1 text-foreground font-bold"
+                >
                   Senha
                 </Label>
                 <div className="relative group">
@@ -80,7 +86,7 @@ export default function Login() {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-12 h-14 aero-input rounded-2xl transition-all"
+                    className="pl-12 h-14 aero-input rounded-2xl transition-all border-white/70 bg-white/70 dark:bg-black/30 text-lg font-medium"
                     placeholder="1234"
                     required
                   />
@@ -90,7 +96,7 @@ export default function Login() {
 
             <Button
               type="submit"
-              className="w-full h-14 rounded-full font-bold text-lg bg-gradient-to-r from-primary to-cyan-500 dark:to-cyan-600 hover:brightness-110 text-white shadow-[0_0_20px_rgba(var(--primary),0.3)] border border-white/20 relative overflow-hidden group"
+              className="w-full h-14 rounded-full font-bold text-lg bg-gradient-to-r from-primary to-cyan-700 dark:to-cyan-600 hover:brightness-110 text-white shadow-[0_4px_14px_rgba(var(--primary),0.4)] border border-white/20 relative overflow-hidden group"
               disabled={isLoading}
             >
               <span className="relative z-10 flex items-center gap-2 justify-center">
@@ -102,7 +108,7 @@ export default function Login() {
           </form>
 
           <div className="text-center">
-            <p className="text-xs text-muted-foreground/60">
+            <p className="text-xs text-muted-foreground font-semibold">
               Teste: user / 1234
             </p>
           </div>
