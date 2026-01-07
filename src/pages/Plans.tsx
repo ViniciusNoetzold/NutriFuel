@@ -8,11 +8,11 @@ export default function Plans() {
     {
       name: 'Basic',
       price: 'Grátis',
-      description: 'Para começar sua jornada',
+      description: 'Essencial para começar',
       features: [
         'Registro de água',
         '3 receitas por dia',
-        'Monitoramento de peso simples',
+        'Monitoramento básico',
       ],
       icon: Dumbbell,
       color: 'bg-blue-500',
@@ -21,7 +21,7 @@ export default function Plans() {
     {
       name: 'Pro Member',
       price: 'R$ 29,90/mês',
-      description: 'A experiência completa',
+      description: 'Experiência completa',
       features: [
         'Tudo do Basic',
         'Receitas ilimitadas',
@@ -33,10 +33,10 @@ export default function Plans() {
       popular: true,
     },
     {
-      name: 'Trial',
-      price: '7 Dias Grátis',
+      name: 'Free Trial',
+      price: '7 Dias',
       description: 'Teste o poder do Pro',
-      features: ['Acesso total por 7 dias', 'Cancele quando quiser'],
+      features: ['Acesso total por 7 dias', 'Sem compromisso'],
       icon: Zap,
       color: 'bg-purple-500',
       popular: false,
@@ -44,13 +44,13 @@ export default function Plans() {
   ]
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6 pb-24 px-1">
       <div className="text-center space-y-2 py-4">
         <h2 className="text-3xl font-bold tracking-tight text-shadow-lg">
-          Escolha seu Plano
+          Níveis de Acesso
         </h2>
         <p className="text-muted-foreground">
-          Desbloqueie todo o potencial do seu corpo.
+          Escolha o melhor plano para sua evolução.
         </p>
       </div>
 
@@ -58,36 +58,43 @@ export default function Plans() {
         {plans.map((plan) => (
           <Card
             key={plan.name}
-            className={`aero-card border-0 relative overflow-hidden transition-all duration-500 hover:scale-105 ${plan.popular ? 'ring-2 ring-primary shadow-xl' : ''}`}
+            className={`aero-card border-0 relative overflow-hidden transition-all duration-500 hover:scale-[1.02] ${
+              plan.popular
+                ? 'ring-2 ring-primary shadow-[0_0_30px_rgba(var(--primary),0.3)]'
+                : ''
+            }`}
           >
             {plan.popular && (
-              <div className="absolute top-0 right-0 bg-primary text-white text-xs font-bold px-3 py-1 rounded-bl-xl shadow-md z-10">
+              <div className="absolute top-0 right-0 bg-gradient-to-bl from-primary to-blue-600 text-white text-xs font-bold px-4 py-1.5 rounded-bl-2xl shadow-md z-10 border-b border-l border-white/20">
                 POPULAR
               </div>
             )}
 
-            <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-b from-white/20 to-transparent pointer-events-none" />
+            <div className="absolute top-0 left-0 w-full h-40 bg-gradient-to-b from-white/10 to-transparent pointer-events-none" />
 
-            <CardHeader className="text-center pb-2 relative z-10">
+            <CardHeader className="text-center pb-2 relative z-10 pt-8">
               <div
-                className={`mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-4 text-white shadow-lg ${plan.color}`}
+                className={`mx-auto w-16 h-16 rounded-2xl flex items-center justify-center mb-4 text-white shadow-lg border border-white/30 ${plan.color}`}
               >
-                <plan.icon className="h-8 w-8" />
+                <plan.icon className="h-8 w-8 drop-shadow-md" />
               </div>
               <CardTitle className="text-xl font-bold">{plan.name}</CardTitle>
-              <div className="text-3xl font-extrabold text-primary mt-2 text-shadow-sm">
+              <div className="text-3xl font-extrabold text-foreground mt-2 text-shadow-sm">
                 {plan.price}
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground font-medium">
                 {plan.description}
               </p>
             </CardHeader>
 
             <CardContent className="space-y-6 relative z-10">
-              <ul className="space-y-3">
+              <ul className="space-y-3 bg-white/20 dark:bg-black/20 p-4 rounded-xl backdrop-blur-sm">
                 {plan.features.map((feature) => (
-                  <li key={feature} className="flex items-center gap-2 text-sm">
-                    <div className="h-5 w-5 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center flex-shrink-0 text-green-600">
+                  <li
+                    key={feature}
+                    className="flex items-center gap-2 text-sm font-medium"
+                  >
+                    <div className="h-5 w-5 rounded-full bg-green-500/20 flex items-center justify-center flex-shrink-0 text-green-600 dark:text-green-400">
                       <Check className="h-3 w-3" />
                     </div>
                     {feature}
@@ -96,9 +103,13 @@ export default function Plans() {
               </ul>
 
               <Button
-                className={`w-full h-12 rounded-full font-bold shadow-md transition-transform active:scale-95 ${plan.popular ? 'bg-primary hover:bg-primary/90' : 'bg-white/50 hover:bg-white/70 text-foreground border border-white/40'}`}
+                className={`w-full h-12 rounded-full font-bold shadow-lg transition-transform active:scale-95 ${
+                  plan.popular
+                    ? 'bg-gradient-to-r from-primary to-blue-600 hover:brightness-110 text-white border-white/20'
+                    : 'aero-button hover:bg-white/40'
+                }`}
               >
-                Escolher {plan.name}
+                Selecionar
               </Button>
             </CardContent>
           </Card>

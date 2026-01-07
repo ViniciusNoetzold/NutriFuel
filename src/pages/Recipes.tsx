@@ -16,7 +16,9 @@ import {
 } from '@/components/ui/sheet'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
+import { cn } from '@/lib/utils'
 
+// Reordered categories
 const CATEGORIES = ['Todas', 'Salgadas', 'Lanches', 'Sobremesas', 'Drinks']
 const DIETARY_FILTERS = [
   'Sem Glúten',
@@ -123,21 +125,21 @@ export default function Recipes() {
         </Sheet>
       </div>
 
-      {/* Categories - Mobile Scroll */}
-      <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide snap-x">
+      {/* Categories - Crystal Bubbles */}
+      <div className="flex gap-3 overflow-x-auto pb-4 pt-2 -mx-4 px-4 scrollbar-hide snap-x">
         {CATEGORIES.map((cat) => (
-          <Button
+          <button
             key={cat}
-            variant={selectedCategory === cat ? 'default' : 'outline'}
-            className={`snap-center rounded-full flex-shrink-0 px-6 backdrop-blur-md transition-all duration-300 ${
-              selectedCategory === cat
-                ? 'aero-button border-0 text-white'
-                : 'bg-white/30 border-white/40 hover:bg-white/50 text-foreground'
-            }`}
             onClick={() => setSelectedCategory(cat)}
+            className={cn(
+              'crystal-bubble snap-center flex-shrink-0 px-6 py-2.5 text-sm font-bold transition-all duration-300 hover:scale-105',
+              selectedCategory === cat
+                ? 'bg-gradient-to-b from-primary to-blue-600 text-white shadow-[0_0_15px_rgba(var(--primary),0.5)] border-transparent'
+                : 'bg-gradient-to-b from-white/70 to-white/30 dark:from-white/20 dark:to-white/5 text-foreground hover:bg-white/50',
+            )}
           >
-            {cat}
-          </Button>
+            <span className="relative z-10 text-shadow-sm">{cat}</span>
+          </button>
         ))}
       </div>
 
@@ -148,7 +150,7 @@ export default function Recipes() {
             <Badge
               key={filter}
               variant="secondary"
-              className="gap-1 pl-3 py-1.5 rounded-full bg-white/40 border border-white/30 backdrop-blur-sm"
+              className="gap-1 pl-3 py-1.5 rounded-full bg-white/40 border border-white/30 backdrop-blur-sm shadow-sm"
             >
               {filter}
               <X
@@ -168,10 +170,10 @@ export default function Recipes() {
         </div>
       )}
 
-      {/* Grid - Strictly Responsive */}
+      {/* Grid */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
         {filteredRecipes.map((recipe) => (
-          <div key={recipe.id} className="w-full">
+          <div key={recipe.id} className="w-full h-full">
             <RecipeCard recipe={recipe} />
           </div>
         ))}

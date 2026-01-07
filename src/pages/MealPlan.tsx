@@ -8,6 +8,8 @@ import {
   Calendar as CalendarIcon,
   X,
   ShoppingCart,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
@@ -42,8 +44,8 @@ export default function MealPlan() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [activeFilters, setActiveFilters] = useState<string[]>([])
 
+  // Calculate week based on current date
   const startDate = startOfWeek(currentDate, { weekStartsOn: 0 })
-
   const weekDays = Array.from({ length: 7 }).map((_, i) =>
     addDays(startDate, i),
   )
@@ -76,8 +78,11 @@ export default function MealPlan() {
       activeFilters.every((f) => recipe.tags.includes(f)),
   )
 
+  const nextWeek = () => setCurrentDate(addDays(currentDate, 7))
+  const prevWeek = () => setCurrentDate(addDays(currentDate, -7))
+
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6 pb-24">
       <div className="flex items-center justify-between aero-glass p-4">
         <h2 className="text-xl font-bold">Planejamento</h2>
         <div className="flex gap-2">
@@ -86,37 +91,67 @@ export default function MealPlan() {
               <ShoppingCart className="h-4 w-4 mr-2" /> Lista
             </Button>
           </Link>
+
+          {/* Minimalist Magic Hat Icon Button */}
           <Button
             onClick={handleAutoGenerate}
-            size="sm"
-            className="aero-button bg-indigo-500 text-white border-white/30"
+            size="icon"
+            className="rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 border border-white/30 shadow-[0_0_15px_rgba(147,51,234,0.4)] hover:scale-105 transition-transform"
+            title="Gerar Automaticamente"
           >
-            <Wand2 className="mr-2 h-4 w-4" /> Mágica
+            <Wand2 className="h-5 w-5 text-white drop-shadow-md" />
           </Button>
         </div>
       </div>
 
-      {/* Week Strip */}
-      <div className="flex justify-between overflow-x-auto pb-4 pt-2 -mx-4 px-4 scrollbar-hide snap-x">
-        {weekDays.map((day) => {
-          const isSelected = isSameDay(day, currentDate)
-          return (
-            <button
-              key={day.toISOString()}
-              onClick={() => setCurrentDate(day)}
-              className={`snap-center flex flex-col items-center min-w-[4rem] p-3 rounded-2xl transition-all duration-300 ${
-                isSelected
-                  ? 'bg-gradient-to-b from-primary to-blue-500 text-white shadow-lg scale-110'
-                  : 'bg-white/40 dark:bg-black/40 backdrop-blur-md text-muted-foreground hover:bg-white/60'
-              }`}
-            >
-              <span className="text-xs font-semibold uppercase mb-1">
-                {format(day, 'EEE', { locale: ptBR })}
-              </span>
-              <span className="text-xl font-bold">{format(day, 'd')}</span>
-            </button>
-          )
-        })}
+      {/* Improved Mobile Calendar */}
+      <div className="space-y-2">
+        <div className="flex items-center justify-between px-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={prevWeek}
+            className="h-8 w-8 rounded-full"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+            {format(startDate, 'MMMM yyyy', { locale: ptBR })}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={nextWeek}
+            className="h-8 w-8 rounded-full"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+        <div className="grid grid-cols-7 gap-1 px-1">
+          {weekDays.map((day) => {
+            const isSelected = isSameDay(day, currentDate)
+            return (
+              <button
+                key={day.toISOString()}
+                onClick={() => setCurrentDate(day)}
+                className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 aspect-[3/4] ${
+                  isSelected
+                    ? 'bg-gradient-to-b from-primary to-blue-500 text-white shadow-md scale-105'
+                    : 'bg-white/30 dark:bg-white/5 text-muted-foreground hover:bg-white/50'
+                }`}
+              >
+                <span className="text-[10px] font-bold uppercase mb-1 opacity-80">
+                  {format(day, 'EEE', { locale: ptBR }).slice(0, 3)}
+                </span>
+                <span
+                  className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-foreground'}`}
+                >
+                  {format(day, 'd')}
+                </span>
+              </button>
+            )
+          })}
+        </div>
       </div>
 
       {/* Daily Plan */}
@@ -138,7 +173,7 @@ export default function MealPlan() {
 
           return (
             <div key={type} className="space-y-3">
-              <h4 className="text-sm font-bold text-muted-foreground ml-2 uppercase tracking-wide opacity-70">
+              <h4 className="text-xs font-bold text-muted-foreground ml-2 uppercase tracking-wide opacity-70">
                 {type}
               </h4>
               {recipe ? (
@@ -158,11 +193,11 @@ export default function MealPlan() {
               ) : (
                 <Sheet>
                   <SheetTrigger asChild>
-                    <button className="w-full h-32 rounded-[24px] border-2 border-dashed border-white/40 bg-white/10 hover:bg-white/20 transition-all flex flex-col items-center justify-center text-muted-foreground gap-2 group">
-                      <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Plus className="h-5 w-5 opacity-70" />
+                    <button className="w-full h-24 rounded-[20px] border-2 border-dashed border-white/40 bg-white/5 hover:bg-white/10 transition-all flex flex-col items-center justify-center text-muted-foreground gap-2 group">
+                      <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Plus className="h-4 w-4 opacity-70" />
                       </div>
-                      <span className="text-sm font-medium">
+                      <span className="text-xs font-medium">
                         Adicionar {type}
                       </span>
                     </button>

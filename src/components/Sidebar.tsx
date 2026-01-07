@@ -5,7 +5,6 @@ import {
   Calendar,
   ShoppingCart,
   User,
-  TrendingUp,
   Dumbbell,
   Crown,
 } from 'lucide-react'
@@ -20,18 +19,17 @@ export function Sidebar() {
     { icon: Search, label: 'Receitas', href: '/recipes' },
     { icon: Calendar, label: 'Plano', href: '/plan' },
     { icon: ShoppingCart, label: 'Compras', href: '/shop' },
-    { icon: TrendingUp, label: 'Progresso', href: '/progress' },
     { icon: Crown, label: 'Planos', href: '/plans' },
-    { icon: User, label: 'Perfil', href: '/profile' },
+    { icon: User, label: 'Perfil Unificado', href: '/profile' },
   ]
 
   return (
     <aside className="hidden h-[calc(100vh-2rem)] w-60 flex-col aero-glass md:flex fixed left-4 top-4 z-50">
-      <div className="flex h-16 items-center px-6 border-b border-white/20">
-        <div className="bg-gradient-to-br from-primary to-secondary p-1.5 rounded-xl shadow-inner mr-3">
+      <div className="flex h-16 items-center px-6 border-b border-white/20 dark:border-white/5">
+        <div className="bg-gradient-to-br from-primary to-secondary p-1.5 rounded-xl shadow-inner mr-3 ring-1 ring-white/30">
           <Dumbbell className="h-5 w-5 text-white" />
         </div>
-        <span className="text-lg font-bold text-foreground drop-shadow-sm">
+        <span className="text-lg font-bold text-foreground drop-shadow-sm tracking-tight">
           Gym Aero
         </span>
       </div>
@@ -44,16 +42,16 @@ export function Sidebar() {
                 key={item.href}
                 to={item.href}
                 className={cn(
-                  'flex items-center space-x-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-300',
+                  'flex items-center space-x-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-300 group',
                   isActive
-                    ? 'bg-white/40 shadow-inner text-primary translate-x-1'
-                    : 'text-muted-foreground hover:bg-white/20 hover:text-foreground hover:translate-x-1',
+                    ? 'bg-white/40 dark:bg-white/10 shadow-inner text-primary translate-x-1'
+                    : 'text-muted-foreground hover:bg-white/20 dark:hover:bg-white/5 hover:text-foreground hover:translate-x-1',
                 )}
               >
                 <item.icon
                   className={cn(
-                    'h-5 w-5 drop-shadow-sm',
-                    isActive && 'text-primary',
+                    'h-5 w-5 drop-shadow-sm transition-transform group-hover:scale-110',
+                    isActive && 'text-primary fill-current/20',
                   )}
                 />
                 <span>{item.label}</span>
@@ -62,9 +60,9 @@ export function Sidebar() {
           })}
         </nav>
       </div>
-      <div className="p-4 border-t border-white/20 bg-white/5">
+      <div className="p-4 border-t border-white/20 dark:border-white/5 bg-white/5 dark:bg-black/20">
         <div className="flex items-center space-x-3">
-          <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-primary to-blue-300 flex items-center justify-center text-white font-bold shadow-md border-2 border-white/50">
+          <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-primary to-cyan-300 flex items-center justify-center text-white font-bold shadow-md border-2 border-white/50">
             U
           </div>
           <div className="text-sm">

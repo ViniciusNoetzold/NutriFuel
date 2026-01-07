@@ -8,7 +8,6 @@ import Recipes from './pages/Recipes'
 import RecipeDetail from './pages/RecipeDetail'
 import MealPlan from './pages/MealPlan'
 import ShoppingList from './pages/ShoppingList'
-import Progress from './pages/Progress'
 import Profile from './pages/Profile'
 import NotFound from './pages/NotFound'
 import Login from './pages/Login'
@@ -40,7 +39,6 @@ const AppRoutes = () => {
         <Route path="/recipes/:id" element={<RecipeDetail />} />
         <Route path="/plan" element={<MealPlan />} />
         <Route path="/shop" element={<ShoppingList />} />
-        <Route path="/progress" element={<Progress />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/plans" element={<Plans />} />
       </Route>

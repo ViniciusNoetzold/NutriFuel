@@ -40,7 +40,7 @@ export default function Index() {
   }
 
   return (
-    <div className="space-y-8 pb-20">
+    <div className="space-y-8 pb-24 px-1">
       {/* Hero Section */}
       <div className="flex flex-col md:flex-row items-center gap-6">
         <div className="flex-1 space-y-2">
@@ -162,7 +162,7 @@ export default function Index() {
             <GlossyCardButton
               icon={Scale}
               title="Registrar Peso"
-              onClick={() => navigate('/progress')}
+              onClick={() => navigate('/profile')} // Unified Profile
             />
           </div>
         </div>
