@@ -12,42 +12,42 @@ interface RecipeCardProps {
 
 export function RecipeCard({ recipe, onAdd }: RecipeCardProps) {
   return (
-    <Link to={`/recipes/${recipe.id}`} className="block group">
-      <Card className="overflow-hidden transition-all duration-300 hover:shadow-lg hover:-translate-y-1 h-full flex flex-col">
-        <div className="relative aspect-video overflow-hidden">
+    <Link to={`/recipes/${recipe.id}`} className="block group h-full">
+      <Card className="aero-card h-full flex flex-col overflow-hidden border-0">
+        <div className="relative aspect-video overflow-hidden rounded-t-[20px] m-1">
           <img
             src={recipe.image}
             alt={recipe.title}
-            className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
           <div className="absolute top-2 right-2">
             <Badge
               variant="secondary"
-              className="flex items-center gap-1 bg-white/90 text-orange-600 backdrop-blur-sm shadow-sm"
+              className="flex items-center gap-1 bg-white/80 backdrop-blur-md text-orange-600 shadow-sm border border-white/50"
             >
-              <Star className="h-3 w-3 fill-orange-500" />
+              <Star className="h-3 w-3 fill-orange-500 text-orange-500" />
               {recipe.rating}
             </Badge>
           </div>
           <div className="absolute bottom-2 left-2 flex gap-1">
             <Badge
               variant="secondary"
-              className="bg-black/60 text-white backdrop-blur-md border-0 text-[10px] h-5 px-1.5"
+              className="bg-black/40 backdrop-blur-md text-white border-white/20 text-[10px] h-5 px-2"
             >
               {recipe.difficulty}
             </Badge>
           </div>
         </div>
         <CardContent className="p-4 flex-1">
-          <h3 className="font-bold text-lg leading-tight mb-2 line-clamp-1 group-hover:text-primary transition-colors">
+          <h3 className="font-bold text-lg leading-tight mb-2 line-clamp-1 group-hover:text-primary transition-colors text-shadow">
             {recipe.title}
           </h3>
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <div className="flex items-center gap-1">
+          <div className="flex items-center gap-3 text-xs text-muted-foreground font-medium">
+            <div className="flex items-center gap-1 bg-orange-50/50 dark:bg-orange-900/20 px-2 py-1 rounded-full border border-orange-100 dark:border-orange-800">
               <Flame className="h-3 w-3 text-orange-500" />
               <span>{recipe.calories} kcal</span>
             </div>
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 bg-blue-50/50 dark:bg-blue-900/20 px-2 py-1 rounded-full border border-blue-100 dark:border-blue-800">
               <Clock className="h-3 w-3 text-blue-500" />
               <span>{recipe.prepTime} min</span>
             </div>
@@ -60,7 +60,7 @@ export function RecipeCard({ recipe, onAdd }: RecipeCardProps) {
                 e.preventDefault()
                 onAdd()
               }}
-              className="w-full bg-secondary hover:bg-secondary/90 text-white"
+              className="w-full aero-button text-primary-foreground font-semibold hover:brightness-110 border-white/20"
               size="sm"
             >
               <Plus className="mr-2 h-4 w-4" /> Adicionar

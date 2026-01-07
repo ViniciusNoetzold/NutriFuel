@@ -37,6 +37,8 @@ interface AppContextType {
     carbs: number
     fats: number
   }
+  hasNewPR: boolean
+  resetPR: () => void
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -66,6 +68,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([])
   const [notifications, setNotifications] =
     useState<Notification[]>(MOCK_NOTIFICATIONS)
+  const [hasNewPR, setHasNewPR] = useState(false)
 
   // Load initial empty logs or plan if needed
   useEffect(() => {
@@ -150,6 +153,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logWeight = (weight: number, date: string) => {
+    // Check for PR (Simplistic: if new weight is closer to goal or just different in a good way)
+    // Assuming weight loss goal: if new weight < min(previous weights)
+    const previousWeights = dailyLogs
+      .filter((l) => l.weight)
+      .map((l) => l.weight!)
+    const minWeight =
+      previousWeights.length > 0 ? Math.min(...previousWeights) : user.weight
+
+    if (weight < minWeight && user.goal === 'Emagrecer') {
+      setHasNewPR(true)
+    } else if (weight > minWeight && user.goal === 'Ganhar Massa') {
+      // Logic for mass gain could be max weight
+      const maxWeight =
+        previousWeights.length > 0 ? Math.max(...previousWeights) : user.weight
+      if (weight > maxWeight) setHasNewPR(true)
+    }
+
     setDailyLogs((prev) => {
       const existing = prev.find((l) => l.date === date)
       if (existing) {
@@ -158,9 +178,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         return [...prev, { date, waterIntake: 0, weight: weight }]
       }
     })
-    // Also update user profile current weight
     updateUser({ weight })
   }
+
+  const resetPR = () => setHasNewPR(false)
 
   const addShoppingItem = (item: Omit<ShoppingItem, 'id' | 'checked'>) => {
     const newItem: ShoppingItem = {
@@ -237,6 +258,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         notifications,
         markNotificationsAsRead,
         getDailyNutrition,
+        hasNewPR,
+        resetPR,
       }}
     >
       {children}

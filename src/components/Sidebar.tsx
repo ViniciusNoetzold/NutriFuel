@@ -17,20 +17,24 @@ export function Sidebar() {
   const items = [
     { icon: Home, label: 'Início', href: '/' },
     { icon: Search, label: 'Receitas', href: '/recipes' },
-    { icon: Calendar, label: 'Plano Alimentar', href: '/plan' },
-    { icon: ShoppingCart, label: 'Lista de Compras', href: '/shop' },
+    { icon: Calendar, label: 'Plano', href: '/plan' },
+    { icon: ShoppingCart, label: 'Compras', href: '/shop' },
     { icon: TrendingUp, label: 'Progresso', href: '/progress' },
     { icon: User, label: 'Perfil', href: '/profile' },
   ]
 
   return (
-    <aside className="hidden h-screen w-64 flex-col border-r bg-card md:flex fixed left-0 top-0">
-      <div className="flex h-16 items-center px-6 border-b">
-        <Dumbbell className="mr-2 h-6 w-6 text-primary" />
-        <span className="text-lg font-bold text-foreground">FitManager</span>
+    <aside className="hidden h-[calc(100vh-2rem)] w-60 flex-col aero-glass md:flex fixed left-4 top-4 z-50">
+      <div className="flex h-16 items-center px-6 border-b border-white/20">
+        <div className="bg-gradient-to-br from-primary to-secondary p-1.5 rounded-xl shadow-inner mr-3">
+          <Dumbbell className="h-5 w-5 text-white" />
+        </div>
+        <span className="text-lg font-bold text-foreground drop-shadow-sm">
+          Gym Aero
+        </span>
       </div>
       <div className="flex-1 overflow-y-auto py-6">
-        <nav className="space-y-1 px-3">
+        <nav className="space-y-2 px-3">
           {items.map((item) => {
             const isActive = path === item.href
             return (
@@ -38,27 +42,32 @@ export function Sidebar() {
                 key={item.href}
                 to={item.href}
                 className={cn(
-                  'flex items-center space-x-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors',
+                  'flex items-center space-x-3 rounded-2xl px-4 py-3 text-sm font-medium transition-all duration-300',
                   isActive
-                    ? 'bg-primary/10 text-primary'
-                    : 'text-muted-foreground hover:bg-accent hover:text-foreground',
+                    ? 'bg-white/40 shadow-inner text-primary translate-x-1'
+                    : 'text-muted-foreground hover:bg-white/20 hover:text-foreground hover:translate-x-1',
                 )}
               >
-                <item.icon className="h-5 w-5" />
+                <item.icon
+                  className={cn(
+                    'h-5 w-5 drop-shadow-sm',
+                    isActive && 'text-primary',
+                  )}
+                />
                 <span>{item.label}</span>
               </Link>
             )
           })}
         </nav>
       </div>
-      <div className="border-t p-4">
+      <div className="p-4 border-t border-white/20 bg-white/5">
         <div className="flex items-center space-x-3">
-          <div className="h-8 w-8 rounded-full bg-primary/20 flex items-center justify-center text-primary font-bold">
+          <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-primary to-blue-300 flex items-center justify-center text-white font-bold shadow-md border-2 border-white/50">
             U
           </div>
           <div className="text-sm">
-            <p className="font-medium">Usuário</p>
-            <p className="text-xs text-muted-foreground">Plano Básico</p>
+            <p className="font-bold">Usuário</p>
+            <p className="text-xs text-muted-foreground">Pro Member</p>
           </div>
         </div>
       </div>

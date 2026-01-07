@@ -8,7 +8,6 @@ import {
   Calendar as CalendarIcon,
   X,
   ShoppingCart,
-  Filter,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
@@ -20,8 +19,6 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '@/components/ui/label'
 import { Link } from 'react-router-dom'
 import { Badge } from '@/components/ui/badge'
 
@@ -53,7 +50,7 @@ export default function MealPlan() {
 
   const handleAutoGenerate = () => {
     autoGeneratePlan(format(startDate, 'yyyy-MM-dd'))
-    toast.success('Plano semanal gerado com sucesso!')
+    toast.success('Semana planejada magicamente! ✨')
   }
 
   const getSlot = (date: Date, type: string) => {
@@ -73,7 +70,6 @@ export default function MealPlan() {
     )
   }
 
-  // Filter available recipes for adding to plan
   const filteredRecipes = recipes.filter(
     (recipe) =>
       activeFilters.length === 0 ||
@@ -81,70 +77,55 @@ export default function MealPlan() {
   )
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
+    <div className="space-y-6 pb-20">
+      <div className="flex items-center justify-between aero-glass p-4">
         <h2 className="text-xl font-bold">Planejamento</h2>
         <div className="flex gap-2">
           <Link to="/shop">
-            <Button variant="outline" size="sm">
+            <Button variant="ghost" size="sm" className="hover:bg-white/20">
               <ShoppingCart className="h-4 w-4 mr-2" /> Lista
             </Button>
           </Link>
           <Button
             onClick={handleAutoGenerate}
             size="sm"
-            className="bg-indigo-600 hover:bg-indigo-700 text-white"
+            className="aero-button bg-indigo-500 text-white border-white/30"
           >
             <Wand2 className="mr-2 h-4 w-4" /> Mágica
           </Button>
         </div>
       </div>
 
-      {/* Filters for planning */}
-      <div className="flex gap-2 items-center overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
-        <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">
-          Preferências:
-        </span>
-        {DIETARY_FILTERS.map((filter) => (
-          <Badge
-            key={filter}
-            variant={activeFilters.includes(filter) ? 'default' : 'outline'}
-            className="cursor-pointer whitespace-nowrap"
-            onClick={() => toggleFilter(filter)}
-          >
-            {filter}
-          </Badge>
-        ))}
-      </div>
-
       {/* Week Strip */}
-      <div className="flex justify-between overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+      <div className="flex justify-between overflow-x-auto pb-4 pt-2 -mx-4 px-4 scrollbar-hide snap-x">
         {weekDays.map((day) => {
           const isSelected = isSameDay(day, currentDate)
           return (
             <button
               key={day.toISOString()}
               onClick={() => setCurrentDate(day)}
-              className={`flex flex-col items-center min-w-[3.5rem] p-2 rounded-xl transition-all ${
+              className={`snap-center flex flex-col items-center min-w-[4rem] p-3 rounded-2xl transition-all duration-300 ${
                 isSelected
-                  ? 'bg-primary text-primary-foreground shadow-md scale-105'
-                  : 'bg-card text-muted-foreground'
+                  ? 'bg-gradient-to-b from-primary to-blue-500 text-white shadow-lg scale-110'
+                  : 'bg-white/40 dark:bg-black/40 backdrop-blur-md text-muted-foreground hover:bg-white/60'
               }`}
             >
-              <span className="text-xs font-medium uppercase">
+              <span className="text-xs font-semibold uppercase mb-1">
                 {format(day, 'EEE', { locale: ptBR })}
               </span>
-              <span className="text-lg font-bold">{format(day, 'd')}</span>
+              <span className="text-xl font-bold">{format(day, 'd')}</span>
             </button>
           )
         })}
       </div>
 
       {/* Daily Plan */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2 mb-2">
-          <CalendarIcon className="h-5 w-5 text-primary" />
-          <span className="font-semibold capitalize">
+      <div className="space-y-6">
+        <div className="flex items-center gap-3 mb-2 px-2">
+          <div className="p-2 bg-primary/20 rounded-xl text-primary">
+            <CalendarIcon className="h-5 w-5" />
+          </div>
+          <span className="font-bold text-lg capitalize text-shadow-sm">
             {format(currentDate, "EEEE, d 'de' MMMM", { locale: ptBR })}
           </span>
         </div>
@@ -156,17 +137,17 @@ export default function MealPlan() {
             : null
 
           return (
-            <div key={type} className="space-y-2">
-              <h4 className="text-sm font-medium text-muted-foreground">
+            <div key={type} className="space-y-3">
+              <h4 className="text-sm font-bold text-muted-foreground ml-2 uppercase tracking-wide opacity-70">
                 {type}
               </h4>
               {recipe ? (
                 <div className="relative group">
-                  <div className="absolute right-2 top-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity flex gap-2">
+                  <div className="absolute -right-2 -top-2 z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 scale-90 group-hover:scale-100">
                     <Button
                       size="icon"
                       variant="destructive"
-                      className="h-8 w-8 rounded-full shadow-md"
+                      className="h-8 w-8 rounded-full shadow-lg border-2 border-white"
                       onClick={() => removeMealFromPlan(slot!.date, slot!.type)}
                     >
                       <X className="h-4 w-4" />
@@ -177,22 +158,37 @@ export default function MealPlan() {
               ) : (
                 <Sheet>
                   <SheetTrigger asChild>
-                    <button className="w-full h-24 rounded-xl border-2 border-dashed border-muted-foreground/20 flex flex-col items-center justify-center text-muted-foreground hover:bg-muted/30 transition-colors">
-                      <Plus className="h-6 w-6 mb-1 opacity-50" />
-                      <span className="text-sm">Adicionar {type}</span>
+                    <button className="w-full h-32 rounded-[24px] border-2 border-dashed border-white/40 bg-white/10 hover:bg-white/20 transition-all flex flex-col items-center justify-center text-muted-foreground gap-2 group">
+                      <div className="h-10 w-10 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                        <Plus className="h-5 w-5 opacity-70" />
+                      </div>
+                      <span className="text-sm font-medium">
+                        Adicionar {type}
+                      </span>
                     </button>
                   </SheetTrigger>
                   <SheetContent
                     side="bottom"
-                    className="h-[85vh] rounded-t-3xl flex flex-col"
+                    className="h-[85vh] rounded-t-3xl aero-glass flex flex-col"
                   >
                     <SheetHeader className="pb-4">
-                      <SheetTitle>Escolher Receita</SheetTitle>
-                      {activeFilters.length > 0 && (
-                        <p className="text-xs text-muted-foreground">
-                          Filtrando por: {activeFilters.join(', ')}
-                        </p>
-                      )}
+                      <SheetTitle>Escolher para {type}</SheetTitle>
+                      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                        {DIETARY_FILTERS.map((filter) => (
+                          <Badge
+                            key={filter}
+                            variant={
+                              activeFilters.includes(filter)
+                                ? 'default'
+                                : 'outline'
+                            }
+                            className="cursor-pointer whitespace-nowrap"
+                            onClick={() => toggleFilter(filter)}
+                          >
+                            {filter}
+                          </Badge>
+                        ))}
+                      </div>
                     </SheetHeader>
                     <div className="flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-4 pb-8">
                       {filteredRecipes.length > 0 ? (
@@ -211,7 +207,7 @@ export default function MealPlan() {
                         ))
                       ) : (
                         <div className="col-span-full text-center py-8 text-muted-foreground">
-                          Nenhuma receita encontrada com os filtros atuais.
+                          Nenhuma receita encontrada.
                         </div>
                       )}
                     </div>

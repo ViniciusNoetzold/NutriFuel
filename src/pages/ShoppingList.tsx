@@ -7,6 +7,7 @@ import {
   ShoppingCart,
   Plus,
   X,
+  ListRestart,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -46,8 +47,9 @@ export default function ShoppingList() {
   // Group by category
   const grouped = shoppingList.reduce(
     (acc, item) => {
-      if (!acc[item.category]) acc[item.category] = []
-      acc[item.category].push(item)
+      const cat = item.category || 'Outros'
+      if (!acc[cat]) acc[cat] = []
+      acc[cat].push(item)
       return acc
     },
     {} as Record<string, typeof shoppingList>,
@@ -64,7 +66,7 @@ export default function ShoppingList() {
 
     addShoppingItem({
       name: newItemName,
-      amount: `${newItemQty}${newItemUnit}`,
+      amount: `${newItemQty} ${newItemUnit}`,
       category: 'Outros', // Default category for manual entry
     })
 
@@ -75,117 +77,133 @@ export default function ShoppingList() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between bg-primary/10 p-4 rounded-xl">
-        <div className="flex items-center gap-3">
-          <div className="bg-primary p-2 rounded-full text-primary-foreground">
+    <div className="space-y-6 pb-24">
+      <div className="aero-glass p-6 flex items-center justify-between">
+        <div className="flex items-center gap-4">
+          <div className="bg-gradient-to-br from-orange-400 to-red-500 p-3 rounded-full text-white shadow-lg">
             <ShoppingCart className="h-6 w-6" />
           </div>
           <div>
-            <p className="font-bold text-lg">Lista de Compras</p>
-            <p className="text-sm text-muted-foreground">
-              {checkedItems} de {totalItems} itens comprados
+            <h2 className="font-bold text-xl">Lista de Compras</h2>
+            <p className="text-sm text-muted-foreground font-medium">
+              {checkedItems}/{totalItems} itens
             </p>
           </div>
         </div>
-        <div className="flex gap-2">
-          {checkedItems > 0 && (
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={clearShoppingList}
-              className="text-destructive hover:bg-destructive/10"
-            >
-              <Trash2 className="h-5 w-5" />
+        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <DialogTrigger asChild>
+            <Button size="icon" className="rounded-full h-12 w-12 aero-button">
+              <Plus className="h-6 w-6" />
             </Button>
-          )}
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="icon" className="rounded-full">
-                <Plus className="h-5 w-5" />
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Adicionar Item</DialogTitle>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
+          </DialogTrigger>
+          <DialogContent className="aero-glass">
+            <DialogHeader>
+              <DialogTitle>Novo Item</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome do Item</Label>
+                <Input
+                  id="name"
+                  value={newItemName}
+                  onChange={(e) => setNewItemName(e.target.value)}
+                  placeholder="Ex: Arroz Integral"
+                  className="aero-input"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Nome do Item</Label>
+                  <Label htmlFor="qty">Quantidade</Label>
                   <Input
-                    id="name"
-                    value={newItemName}
-                    onChange={(e) => setNewItemName(e.target.value)}
-                    placeholder="Ex: Arroz Integral"
+                    id="qty"
+                    type="number"
+                    value={newItemQty}
+                    onChange={(e) => setNewItemQty(e.target.value)}
+                    placeholder="1"
+                    className="aero-input"
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="qty">Quantidade</Label>
-                    <Input
-                      id="qty"
-                      type="number"
-                      value={newItemQty}
-                      onChange={(e) => setNewItemQty(e.target.value)}
-                      placeholder="1"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Unidade</Label>
-                    <Select value={newItemUnit} onValueChange={setNewItemUnit}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="un">un</SelectItem>
-                        <SelectItem value="kg">kg</SelectItem>
-                        <SelectItem value="g">g</SelectItem>
-                        <SelectItem value="l">l</SelectItem>
-                        <SelectItem value="ml">ml</SelectItem>
-                        <SelectItem value="pct">pacote</SelectItem>
-                        <SelectItem value="cx">caixa</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                <div className="space-y-2">
+                  <Label>Unidade</Label>
+                  <Select value={newItemUnit} onValueChange={setNewItemUnit}>
+                    <SelectTrigger className="aero-input">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="un">un</SelectItem>
+                      <SelectItem value="kg">kg</SelectItem>
+                      <SelectItem value="g">g</SelectItem>
+                      <SelectItem value="l">l</SelectItem>
+                      <SelectItem value="ml">ml</SelectItem>
+                      <SelectItem value="pct">pct</SelectItem>
+                      <SelectItem value="cx">cx</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Button className="w-full" onClick={handleAddItem}>
-                  Adicionar à Lista
-                </Button>
               </div>
-            </DialogContent>
-          </Dialog>
-        </div>
+              <Button className="w-full aero-button" onClick={handleAddItem}>
+                Adicionar à Lista
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
+      {totalItems > 0 && (
+        <div className="flex justify-end px-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={clearShoppingList}
+            className="text-red-500 hover:bg-red-50 rounded-full px-4"
+          >
+            <Trash2 className="h-4 w-4 mr-2" /> Limpar Lista
+          </Button>
+        </div>
+      )}
+
       {totalItems === 0 ? (
-        <div className="text-center py-12">
-          <p className="text-muted-foreground mb-4">Sua lista está vazia.</p>
-          <Button variant="outline" onClick={() => setIsDialogOpen(true)}>
-            Adicionar Item
+        <div className="text-center py-16 aero-glass rounded-[30px] border-dashed border-2 border-white/40">
+          <div className="w-20 h-20 bg-white/30 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ListRestart className="h-10 w-10 text-muted-foreground" />
+          </div>
+          <p className="text-muted-foreground font-medium mb-6">
+            Sua lista está vazia.
+          </p>
+          <Button
+            variant="outline"
+            onClick={() => setIsDialogOpen(true)}
+            className="aero-button border-0 px-8"
+          >
+            Começar Lista
           </Button>
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {Object.entries(grouped).map(([category, items]) => (
-            <div key={category}>
-              <h3 className="font-semibold text-primary mb-3 sticky top-14 bg-background z-10 py-2 border-b">
+            <div key={category} className="space-y-3">
+              <h3 className="font-bold text-primary ml-2 uppercase tracking-wider text-sm sticky top-20 z-20 drop-shadow-sm">
                 {category}
               </h3>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {items.map((item) => (
                   <Card
                     key={item.id}
-                    className={`transition-all duration-200 ${item.checked ? 'bg-muted/50 opacity-60' : 'bg-card'}`}
+                    className={`transition-all duration-300 border-0 shadow-sm ${
+                      item.checked
+                        ? 'bg-white/20 opacity-60 scale-[0.98]'
+                        : 'bg-white/60 dark:bg-black/40 backdrop-blur-md hover:scale-[1.01] hover:bg-white/70'
+                    }`}
                   >
-                    <div className="p-3 flex items-center gap-3">
+                    <div className="p-4 flex items-center gap-4">
                       <div
                         className="cursor-pointer"
                         onClick={() => toggleShoppingItem(item.id)}
                       >
                         {item.checked ? (
-                          <CheckCircle2 className="h-6 w-6 text-green-500 flex-shrink-0" />
+                          <CheckCircle2 className="h-7 w-7 text-green-500 flex-shrink-0 drop-shadow-md" />
                         ) : (
-                          <Circle className="h-6 w-6 text-muted-foreground flex-shrink-0" />
+                          <Circle className="h-7 w-7 text-muted-foreground flex-shrink-0" />
                         )}
                       </div>
                       <div
@@ -193,18 +211,18 @@ export default function ShoppingList() {
                         onClick={() => toggleShoppingItem(item.id)}
                       >
                         <p
-                          className={`font-medium ${item.checked ? 'line-through' : ''}`}
+                          className={`font-semibold text-lg ${item.checked ? 'line-through text-muted-foreground' : 'text-foreground'}`}
                         >
                           {item.name}
                         </p>
                       </div>
-                      <span className="text-sm text-muted-foreground font-medium bg-secondary/10 px-2 py-1 rounded text-orange-600">
+                      <span className="text-sm font-bold bg-white/50 px-3 py-1.5 rounded-full shadow-inner text-orange-600">
                         {item.amount}
                       </span>
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-muted-foreground hover:text-destructive"
+                        className="h-8 w-8 text-muted-foreground hover:text-red-500 hover:bg-red-50 rounded-full"
                         onClick={() => removeShoppingItem(item.id)}
                       >
                         <X className="h-4 w-4" />
@@ -217,8 +235,6 @@ export default function ShoppingList() {
           ))}
         </div>
       )}
-      {/* Spacer for bottom nav */}
-      <div className="h-20" />
     </div>
   )
 }

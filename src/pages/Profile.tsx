@@ -14,11 +14,13 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import { useState } from 'react'
-import { User } from 'lucide-react'
+import { User, Sun, Moon } from 'lucide-react'
+import { useTheme } from 'next-themes'
 
 export default function Profile() {
   const { user, updateUser } = useAppStore()
   const [formData, setFormData] = useState(user)
+  const { setTheme, theme } = useTheme()
 
   const handleSave = () => {
     updateUser(formData)
@@ -30,32 +32,56 @@ export default function Profile() {
   }
 
   return (
-    <div className="space-y-8 pb-20">
-      <div className="flex flex-col items-center justify-center space-y-4">
-        <div className="relative">
-          <Avatar className="h-24 w-24 border-4 border-background shadow-xl">
+    <div className="space-y-8 pb-24">
+      <div className="flex flex-col items-center justify-center space-y-4 pt-4">
+        <div className="relative group">
+          <div className="absolute inset-0 bg-gradient-to-tr from-primary to-blue-300 rounded-full blur-lg opacity-50 group-hover:opacity-80 transition-opacity" />
+          <Avatar className="h-32 w-32 border-4 border-white/50 shadow-2xl relative z-10">
             <AvatarImage src={formData.avatar} />
             <AvatarFallback>
               <User className="h-12 w-12" />
             </AvatarFallback>
           </Avatar>
-          <Button
-            size="icon"
-            variant="secondary"
-            className="absolute bottom-0 right-0 rounded-full h-8 w-8 shadow-sm"
-          >
-            <span className="text-xs">Edit</span>
-          </Button>
         </div>
         <div className="text-center">
-          <h2 className="text-xl font-bold">{formData.name}</h2>
-          <p className="text-sm text-muted-foreground">
+          <h2 className="text-2xl font-bold text-shadow">{formData.name}</h2>
+          <Badge
+            variant="secondary"
+            className="mt-2 bg-white/30 backdrop-blur-md"
+          >
             {formData.activityLevel}
-          </p>
+          </Badge>
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="aero-glass p-6 space-y-6">
+        {/* Theme Switcher - Physical 3D Look */}
+        <div className="flex items-center justify-between bg-white/20 p-4 rounded-2xl border border-white/20 shadow-inner">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-gradient-to-br from-yellow-300 to-orange-400 rounded-full text-white shadow-md">
+              {theme === 'dark' ? (
+                <Moon className="h-5 w-5" />
+              ) : (
+                <Sun className="h-5 w-5" />
+              )}
+            </div>
+            <span className="font-semibold text-lg">Tema do Ambiente</span>
+          </div>
+
+          <div
+            className="relative w-20 h-10 bg-gray-300 dark:bg-gray-700 rounded-full shadow-inner cursor-pointer p-1 transition-colors"
+            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+          >
+            <div
+              className={`w-8 h-8 rounded-full bg-gradient-to-b from-white to-gray-200 shadow-md transform transition-transform duration-300 ease-spring ${theme === 'dark' ? 'translate-x-10' : 'translate-x-0'}`}
+            >
+              <div className="absolute top-2 left-2 w-2 h-2 bg-white rounded-full opacity-50" />
+            </div>
+          </div>
+        </div>
+
+        <Separator className="bg-white/20" />
+
         <div className="space-y-4">
           <h3 className="font-semibold text-lg">Dados Pessoais</h3>
           <div className="grid grid-cols-2 gap-4">
@@ -64,6 +90,7 @@ export default function Profile() {
               <Input
                 id="age"
                 type="number"
+                className="aero-input"
                 value={formData.age}
                 onChange={(e) => handleChange('age', Number(e.target.value))}
               />
@@ -74,7 +101,7 @@ export default function Profile() {
                 value={formData.gender}
                 onValueChange={(val) => handleChange('gender', val)}
               >
-                <SelectTrigger>
+                <SelectTrigger className="aero-input">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -88,6 +115,7 @@ export default function Profile() {
               <Input
                 id="weight"
                 type="number"
+                className="aero-input"
                 value={formData.weight}
                 onChange={(e) => handleChange('weight', Number(e.target.value))}
               />
@@ -97,6 +125,7 @@ export default function Profile() {
               <Input
                 id="height"
                 type="number"
+                className="aero-input"
                 value={formData.height}
                 onChange={(e) => handleChange('height', Number(e.target.value))}
               />
@@ -108,7 +137,7 @@ export default function Profile() {
               value={formData.activityLevel}
               onValueChange={(val) => handleChange('activityLevel', val)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="aero-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -122,7 +151,7 @@ export default function Profile() {
           </div>
         </div>
 
-        <Separator />
+        <Separator className="bg-white/20" />
 
         <div className="space-y-4">
           <h3 className="font-semibold text-lg">Objetivos</h3>
@@ -132,7 +161,7 @@ export default function Profile() {
               value={formData.goal}
               onValueChange={(val) => handleChange('goal', val)}
             >
-              <SelectTrigger>
+              <SelectTrigger className="aero-input">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -147,6 +176,7 @@ export default function Profile() {
               <Label>Meta Calórica</Label>
               <Input
                 type="number"
+                className="aero-input"
                 value={formData.calorieGoal}
                 onChange={(e) =>
                   handleChange('calorieGoal', Number(e.target.value))
@@ -157,6 +187,7 @@ export default function Profile() {
               <Label>Meta Água (ml)</Label>
               <Input
                 type="number"
+                className="aero-input"
                 value={formData.waterGoal}
                 onChange={(e) =>
                   handleChange('waterGoal', Number(e.target.value))
@@ -166,55 +197,10 @@ export default function Profile() {
           </div>
         </div>
 
-        <Separator />
-
-        <div className="space-y-4">
-          <h3 className="font-semibold text-lg">Restrições e Preferências</h3>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="notif" className="text-base font-normal">
-              Notificações de Água
-            </Label>
-            <Switch id="notif" defaultChecked />
-          </div>
-          <div className="space-y-2 pt-2">
-            <Label className="text-base font-normal mb-2 block">
-              Restrições Alimentares
-            </Label>
-            <div className="flex flex-wrap gap-2">
-              {['Sem Glúten', 'Sem Lactose', 'Vegetariano', 'Vegan'].map(
-                (restriction) => (
-                  <div
-                    key={restriction}
-                    className="flex items-center gap-2 border p-2 rounded-md bg-card"
-                  >
-                    <Switch
-                      id={`r-${restriction}`}
-                      checked={formData.dietaryRestrictions.includes(
-                        restriction,
-                      )}
-                      onCheckedChange={(checked) => {
-                        const newRestrictions = checked
-                          ? [...formData.dietaryRestrictions, restriction]
-                          : formData.dietaryRestrictions.filter(
-                              (r) => r !== restriction,
-                            )
-                        handleChange('dietaryRestrictions', newRestrictions)
-                      }}
-                    />
-                    <Label
-                      htmlFor={`r-${restriction}`}
-                      className="cursor-pointer"
-                    >
-                      {restriction}
-                    </Label>
-                  </div>
-                ),
-              )}
-            </div>
-          </div>
-        </div>
-
-        <Button className="w-full text-lg h-12" onClick={handleSave}>
+        <Button
+          className="w-full text-lg h-14 aero-button mt-4 font-bold"
+          onClick={handleSave}
+        >
           Salvar Alterações
         </Button>
       </div>

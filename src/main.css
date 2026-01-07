@@ -6,72 +6,53 @@
 
 @layer base {
   :root {
-    /* Vitality Green (#22C55E), Energy Orange (#F97316), Deep Navy (#0F172A) */
-    --background: 210 40% 98%; /* #F8FAFC */
-    --foreground: 222 47% 11%; /* #0F172A */
-
+    --background: 210 40% 98%;
+    --foreground: 222 47% 11%;
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
-
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-
-    --primary: 142 71% 45%; /* #22C55E */
+    --primary: 199 89% 48%; /* Frutiger Aero Blue */
     --primary-foreground: 0 0% 100%;
-
-    --secondary: 27 96% 53%; /* #F97316 */
+    --secondary: 142 71% 45%; /* Nature Green */
     --secondary-foreground: 0 0% 100%;
-
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
-
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.47% 11%;
-
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 142 71% 45%; /* Green ring */
-
-    --radius: 1rem; /* 16px */
-
-    --chart-1: 142 71% 45%;
-    --chart-2: 27 96% 53%;
+    --ring: 199 89% 48%;
+    --radius: 1.25rem; /* 20px */
+    --chart-1: 199 89% 48%;
+    --chart-2: 142 71% 45%;
     --chart-3: 222 47% 11%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
   }
 
   .dark {
-    --background: 222 47% 11%;
+    --background: 222 47% 5%; /* Deep Navy/Black */
     --foreground: 210 40% 98%;
-
-    --card: 222 47% 14%;
+    --card: 222 47% 10%;
     --card-foreground: 210 40% 98%;
-
-    --popover: 222 47% 14%;
+    --popover: 222 47% 10%;
     --popover-foreground: 210 40% 98%;
-
-    --primary: 142 71% 45%;
-    --primary-foreground: 0 0% 100%;
-
-    --secondary: 27 96% 53%;
+    --primary: 180 100% 50%; /* Neon Cyan */
+    --primary-foreground: 222 47% 11%;
+    --secondary: 142 70% 50%; /* Neon Green */
     --secondary-foreground: 0 0% 100%;
-
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
-
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
-
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 142 71% 45%;
+    --ring: 180 100% 50%;
   }
 }
 
@@ -84,8 +65,101 @@
   }
 }
 
+@layer components {
+  /* Frutiger Aero Glassmorphism */
+  .aero-glass {
+    @apply bg-white/40 dark:bg-black/40 backdrop-blur-xl border border-white/50 dark:border-white/10 shadow-lg rounded-[24px];
+  }
+
+  .aero-card {
+    @apply bg-white/60 dark:bg-black/60 backdrop-blur-md border border-white/60 dark:border-white/10 shadow-md rounded-[20px] transition-all duration-300 hover:shadow-xl hover:-translate-y-1 hover:bg-white/70 dark:hover:bg-black/70;
+  }
+
+  .aero-button {
+    @apply relative overflow-hidden bg-gradient-to-b from-white/40 to-white/5 border-t border-white/80 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.1),inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-sm transition-all active:scale-95 active:shadow-inner rounded-full;
+  }
+
+  .aero-input {
+    @apply bg-white/50 dark:bg-black/50 border border-white/40 dark:border-white/20 backdrop-blur-sm rounded-xl focus:ring-2 focus:ring-primary/50 transition-all shadow-inner;
+  }
+
+  /* Themes Backgrounds */
+  .theme-light-bg {
+    background: radial-gradient(circle at 50% 0%, #d4fc79 0%, #96e6a1 100%);
+    background-image: linear-gradient(120deg, #84fab0 0%, #8fd3f4 100%);
+  }
+
+  .theme-dark-bg {
+    background: radial-gradient(
+      circle at 50% 0%,
+      #0f2027 0%,
+      #203a43 50%,
+      #2c5364 100%
+    );
+  }
+}
+
 @layer utilities {
   .pb-safe {
     padding-bottom: env(safe-area-inset-bottom);
   }
+  .text-shadow {
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  }
+  .text-shadow-lg {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+}
+
+/* Animations */
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes bubble-rise {
+  0% {
+    transform: translateY(100vh) scale(0.5);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-20vh) scale(1.5);
+    opacity: 0;
+  }
+}
+
+@keyframes fireworks {
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1.5);
+    opacity: 0;
+  }
+}
+
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.bubble {
+  position: fixed;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at 30% 30%,
+    rgba(255, 255, 255, 0.8),
+    rgba(255, 255, 255, 0.1)
+  );
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+  z-index: 0;
+  pointer-events: none;
 }

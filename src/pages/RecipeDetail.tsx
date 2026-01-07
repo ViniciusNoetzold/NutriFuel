@@ -80,51 +80,83 @@ export default function RecipeDetail() {
   }
 
   return (
-    <div className="space-y-6 -mx-4 md:mx-0">
+    <div className="space-y-6 pb-20">
       {/* Hero Image */}
-      <div className="relative h-64 md:h-80 md:rounded-2xl overflow-hidden">
+      <div className="relative h-72 md:h-96 rounded-[30px] overflow-hidden shadow-2xl mx-[-1rem] md:mx-0">
         <img
           src={recipe.image}
           alt={recipe.title}
           className="w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 to-transparent" />
-        <div className="absolute bottom-4 left-4 right-4 text-white">
-          <Badge className="mb-2 bg-primary hover:bg-primary border-0">
-            {recipe.category}
-          </Badge>
-          <h1 className="text-3xl font-bold leading-tight mb-1">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+        <div className="absolute bottom-6 left-6 right-6 text-white">
+          <div className="flex gap-2 mb-3">
+            <Badge className="bg-primary/80 backdrop-blur-md border border-white/20 text-white">
+              {recipe.category}
+            </Badge>
+            {recipe.tags.slice(0, 2).map((tag) => (
+              <Badge
+                key={tag}
+                variant="outline"
+                className="border-white/40 text-white/90 bg-black/20 backdrop-blur-md"
+              >
+                {tag}
+              </Badge>
+            ))}
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold leading-tight mb-2 text-shadow-lg">
             {recipe.title}
           </h1>
-          <div className="flex items-center gap-2 text-sm text-gray-300">
+          <div className="flex items-center gap-4 text-sm text-gray-200 font-medium">
             <span className="flex items-center gap-1">
-              <Flame className="h-4 w-4" /> {recipe.calories} kcal
+              <Flame className="h-4 w-4 text-orange-400" /> {recipe.calories}{' '}
+              kcal
             </span>
-            <span>•</span>
+            <span className="w-1 h-1 bg-white/50 rounded-full" />
             <span>{recipe.difficulty}</span>
           </div>
         </div>
       </div>
 
-      <div className="px-4 md:px-0">
+      <div className="px-1">
         {/* Macros */}
-        <div className="grid grid-cols-4 gap-2 mb-6">
+        <div className="grid grid-cols-4 gap-3 mb-8">
           {[
-            { label: 'Calorias', val: recipe.calories, unit: 'kcal' },
-            { label: 'Proteína', val: recipe.protein, unit: 'g' },
-            { label: 'Carbos', val: recipe.carbs, unit: 'g' },
-            { label: 'Gorduras', val: recipe.fats, unit: 'g' },
+            {
+              label: 'Calorias',
+              val: recipe.calories,
+              unit: 'kcal',
+              color: 'bg-orange-100 text-orange-700',
+            },
+            {
+              label: 'Proteína',
+              val: recipe.protein,
+              unit: 'g',
+              color: 'bg-blue-100 text-blue-700',
+            },
+            {
+              label: 'Carbos',
+              val: recipe.carbs,
+              unit: 'g',
+              color: 'bg-green-100 text-green-700',
+            },
+            {
+              label: 'Gorduras',
+              val: recipe.fats,
+              unit: 'g',
+              color: 'bg-yellow-100 text-yellow-700',
+            },
           ].map((macro) => (
             <div
               key={macro.label}
-              className="bg-muted/50 p-3 rounded-xl text-center"
+              className="aero-glass p-3 text-center flex flex-col justify-center min-h-[80px]"
             >
-              <p className="text-xs text-muted-foreground mb-1">
+              <p className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1 font-bold">
                 {macro.label}
               </p>
-              <p className="font-bold text-foreground">
+              <p className="font-bold text-xl text-foreground">
                 {macro.val}
-                <span className="text-xs font-normal text-muted-foreground">
+                <span className="text-xs font-normal text-muted-foreground ml-0.5">
                   {macro.unit}
                 </span>
               </p>
@@ -133,59 +165,73 @@ export default function RecipeDetail() {
         </div>
 
         {/* Info Row */}
-        <div className="flex items-center justify-between py-4 border-y border-border/50 mb-6">
-          <div className="flex items-center gap-2">
-            <Clock className="h-5 w-5 text-muted-foreground" />
+        <div className="flex items-center justify-between py-6 px-4 aero-glass mb-8">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100/50 rounded-full text-blue-600">
+              <Clock className="h-5 w-5" />
+            </div>
             <div>
-              <p className="text-xs text-muted-foreground">Tempo</p>
-              <p className="font-medium">{recipe.prepTime} min</p>
+              <p className="text-xs text-muted-foreground font-semibold uppercase">
+                Tempo
+              </p>
+              <p className="font-bold">{recipe.prepTime} min</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <Users className="h-5 w-5 text-muted-foreground" />
+          <div className="w-px h-8 bg-black/10 dark:bg-white/10" />
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-100/50 rounded-full text-green-600">
+              <Users className="h-5 w-5" />
+            </div>
             <div>
-              <p className="text-xs text-muted-foreground">Porções</p>
-              <p className="font-medium">{recipe.portions} pes.</p>
+              <p className="text-xs text-muted-foreground font-semibold uppercase">
+                Porções
+              </p>
+              <p className="font-bold">{recipe.portions} pes.</p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <ChefHat className="h-5 w-5 text-muted-foreground" />
+          <div className="w-px h-8 bg-black/10 dark:bg-white/10" />
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-100/50 rounded-full text-purple-600">
+              <ChefHat className="h-5 w-5" />
+            </div>
             <div>
-              <p className="text-xs text-muted-foreground">Dificuldade</p>
-              <p className="font-medium">{recipe.difficulty}</p>
+              <p className="text-xs text-muted-foreground font-semibold uppercase">
+                Nível
+              </p>
+              <p className="font-bold">{recipe.difficulty}</p>
             </div>
           </div>
         </div>
 
         {/* Action Buttons */}
-        <div className="grid grid-cols-2 gap-3 mb-8">
+        <div className="grid grid-cols-2 gap-4 mb-10">
           <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="w-full" size="lg">
+              <Button className="w-full h-14 text-base aero-button col-span-2 sm:col-span-1">
                 <Plus className="mr-2 h-5 w-5" /> Adicionar ao Plano
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="aero-glass">
               <DialogHeader>
-                <DialogTitle>Adicionar ao Plano</DialogTitle>
+                <DialogTitle>Planejar Refeição</DialogTitle>
               </DialogHeader>
-              <div className="space-y-4 py-4">
+              <div className="space-y-6 py-4">
                 <div className="space-y-2">
                   <Label>Data</Label>
                   <input
                     type="date"
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background"
+                    className="flex h-12 w-full rounded-xl border border-white/30 bg-white/50 px-3 py-2 text-sm ring-offset-background backdrop-blur-sm"
                     value={selectedDate}
                     onChange={(e) => setSelectedDate(e.target.value)}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Refeição</Label>
+                  <Label>Tipo de Refeição</Label>
                   <Select
                     value={selectedMealType}
                     onValueChange={setSelectedMealType}
                   >
-                    <SelectTrigger>
+                    <SelectTrigger className="h-12 rounded-xl bg-white/50 border-white/30 backdrop-blur-sm">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -198,17 +244,28 @@ export default function RecipeDetail() {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button className="w-full" onClick={handleAddToPlan}>
-                  Confirmar
+                <Button
+                  className="w-full aero-button"
+                  onClick={handleAddToPlan}
+                >
+                  Confirmar Agendamento
                 </Button>
               </div>
             </DialogContent>
           </Dialog>
-          <div className="flex gap-3">
-            <Button variant="outline" size="lg" className="flex-1">
+          <div className="flex gap-4 col-span-2 sm:col-span-1">
+            <Button
+              variant="outline"
+              size="lg"
+              className="flex-1 h-14 rounded-2xl border-white/40 bg-white/30 backdrop-blur-md hover:bg-white/50"
+            >
               <Heart className="h-5 w-5" />
             </Button>
-            <Button variant="outline" size="lg" className="flex-1">
+            <Button
+              variant="outline"
+              size="lg"
+              className="flex-1 h-14 rounded-2xl border-white/40 bg-white/30 backdrop-blur-md hover:bg-white/50"
+            >
               <Share2 className="h-5 w-5" />
             </Button>
           </div>
@@ -216,19 +273,33 @@ export default function RecipeDetail() {
 
         {/* Tabs */}
         <Tabs defaultValue="ingredients" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6">
-            <TabsTrigger value="ingredients">Ingredientes</TabsTrigger>
-            <TabsTrigger value="method">Preparo</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-2 mb-6 h-14 p-1 bg-white/20 backdrop-blur-md rounded-2xl">
+            <TabsTrigger
+              value="ingredients"
+              className="h-full rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
+              Ingredientes
+            </TabsTrigger>
+            <TabsTrigger
+              value="method"
+              className="h-full rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm"
+            >
+              Preparo
+            </TabsTrigger>
           </TabsList>
-          <TabsContent value="ingredients" className="space-y-4">
-            <div className="flex justify-between items-center mb-2">
-              <p className="text-sm text-muted-foreground">
-                Selecione para comprar
+
+          <TabsContent
+            value="ingredients"
+            className="space-y-4 animate-fade-in-up"
+          >
+            <div className="flex justify-between items-center mb-4 px-1">
+              <p className="text-sm font-medium text-muted-foreground">
+                Marque para adicionar à lista
               </p>
               {selectedIngredients.length > 0 && (
                 <Button
                   size="sm"
-                  variant="secondary"
+                  className="aero-button h-8 text-xs"
                   onClick={handleAddIngredientsToShop}
                 >
                   <ShoppingCart className="h-3 w-3 mr-2" /> Adicionar (
@@ -236,41 +307,50 @@ export default function RecipeDetail() {
                 </Button>
               )}
             </div>
-            {recipe.ingredients.map((ing, i) => (
-              <div
-                key={i}
-                className="flex items-center p-3 rounded-lg border bg-card gap-3"
-              >
-                <Checkbox
-                  id={`ing-${i}`}
-                  checked={selectedIngredients.includes(ing.name)}
-                  onCheckedChange={() => handleToggleIngredient(ing.name)}
-                />
-                <div className="flex-1 flex justify-between items-center">
-                  <Label
-                    htmlFor={`ing-${i}`}
-                    className="font-medium cursor-pointer"
-                  >
-                    {ing.name}
-                  </Label>
-                  <span className="text-muted-foreground text-sm">
-                    {ing.amount}
-                  </span>
+            <div className="grid gap-3">
+              {recipe.ingredients.map((ing, i) => (
+                <div
+                  key={i}
+                  className="flex items-center p-4 rounded-2xl border border-white/30 bg-white/40 backdrop-blur-sm gap-4 transition-all hover:bg-white/60"
+                >
+                  <Checkbox
+                    id={`ing-${i}`}
+                    checked={selectedIngredients.includes(ing.name)}
+                    onCheckedChange={() => handleToggleIngredient(ing.name)}
+                    className="h-6 w-6 rounded-full border-2"
+                  />
+                  <div className="flex-1 flex justify-between items-center">
+                    <Label
+                      htmlFor={`ing-${i}`}
+                      className="font-semibold text-base cursor-pointer"
+                    >
+                      {ing.name}
+                    </Label>
+                    <span className="text-muted-foreground font-medium bg-white/30 px-3 py-1 rounded-full text-sm">
+                      {ing.amount}
+                    </span>
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </TabsContent>
-          <TabsContent value="method" className="space-y-6">
-            {recipe.instructions.map((step, i) => (
-              <div key={i} className="flex gap-4">
-                <div className="flex-none h-8 w-8 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
-                  {i + 1}
+
+          <TabsContent value="method" className="space-y-6 animate-fade-in-up">
+            <div className="aero-glass p-6">
+              {recipe.instructions.map((step, i) => (
+                <div key={i} className="flex gap-6 mb-8 last:mb-0 relative">
+                  <div className="flex-none h-10 w-10 rounded-full bg-gradient-to-br from-primary to-blue-600 text-white shadow-lg flex items-center justify-center font-bold text-lg z-10">
+                    {i + 1}
+                  </div>
+                  {i !== recipe.instructions.length - 1 && (
+                    <div className="absolute left-5 top-10 bottom-[-32px] w-0.5 bg-gradient-to-b from-primary/50 to-transparent" />
+                  )}
+                  <p className="text-foreground/80 leading-relaxed pt-1 text-lg">
+                    {step}
+                  </p>
                 </div>
-                <p className="text-muted-foreground leading-relaxed pt-1">
-                  {step}
-                </p>
-              </div>
-            ))}
+              ))}
+            </div>
           </TabsContent>
         </Tabs>
       </div>

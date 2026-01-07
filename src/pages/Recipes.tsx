@@ -17,7 +17,6 @@ import {
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 
-// Updated categories to match User Story requirements
 const CATEGORIES = ['Todas', 'Salgadas', 'Lanches', 'Sobremesas', 'Drinks']
 const DIETARY_FILTERS = [
   'Sem Glúten',
@@ -55,14 +54,14 @@ export default function Recipes() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-20">
       {/* Search & Filter Bar */}
-      <div className="flex gap-2 sticky top-14 z-30 bg-background/95 pb-2 pt-2">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+      <div className="flex gap-3 sticky top-20 z-30 py-2">
+        <div className="relative flex-1 group">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
           <Input
             placeholder="Buscar receitas..."
-            className="pl-9"
+            className="pl-10 aero-input h-12"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -72,31 +71,42 @@ export default function Recipes() {
             <Button
               variant="outline"
               size="icon"
-              className={
-                activeFilters.length > 0 ? 'border-primary text-primary' : ''
-              }
+              className={`h-12 w-12 rounded-xl aero-input border-0 ${
+                activeFilters.length > 0 ? 'bg-primary/20 text-primary' : ''
+              }`}
             >
-              <Filter className="h-4 w-4" />
+              <Filter className="h-5 w-5" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="h-[80vh] rounded-t-3xl">
+          <SheetContent
+            side="bottom"
+            className="h-[80vh] rounded-t-3xl aero-glass border-t border-white/50"
+          >
             <SheetHeader>
-              <SheetTitle>Filtros</SheetTitle>
+              <SheetTitle className="text-2xl font-bold">Filtros</SheetTitle>
             </SheetHeader>
-            <div className="py-6 space-y-6">
+            <div className="py-8 space-y-8">
               <div>
-                <h4 className="mb-4 text-sm font-medium leading-none">
+                <h4 className="mb-4 text-base font-semibold">
                   Restrições Alimentares
                 </h4>
                 <div className="grid grid-cols-2 gap-4">
                   {DIETARY_FILTERS.map((filter) => (
-                    <div key={filter} className="flex items-center space-x-2">
+                    <div
+                      key={filter}
+                      className="flex items-center space-x-3 p-3 rounded-xl bg-white/10 border border-white/20"
+                    >
                       <Checkbox
                         id={filter}
                         checked={activeFilters.includes(filter)}
                         onCheckedChange={() => toggleFilter(filter)}
                       />
-                      <Label htmlFor={filter}>{filter}</Label>
+                      <Label
+                        htmlFor={filter}
+                        className="font-medium cursor-pointer flex-1"
+                      >
+                        {filter}
+                      </Label>
                     </div>
                   ))}
                 </div>
@@ -104,7 +114,9 @@ export default function Recipes() {
             </div>
             <SheetFooter>
               <SheetClose asChild>
-                <Button className="w-full">Ver Resultados</Button>
+                <Button className="w-full aero-button h-12 text-lg">
+                  Ver Resultados
+                </Button>
               </SheetClose>
             </SheetFooter>
           </SheetContent>
@@ -112,13 +124,12 @@ export default function Recipes() {
       </div>
 
       {/* Categories */}
-      <div className="flex gap-2 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+      <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
         {CATEGORIES.map((cat) => (
           <Button
             key={cat}
             variant={selectedCategory === cat ? 'default' : 'outline'}
-            className="rounded-full flex-shrink-0"
-            size="sm"
+            className={`rounded-full flex-shrink-0 px-6 backdrop-blur-md transition-all duration-300 ${selectedCategory === cat ? 'aero-button border-0' : 'bg-white/30 border-white/40 hover:bg-white/50'}`}
             onClick={() => setSelectedCategory(cat)}
           >
             {cat}
@@ -130,10 +141,14 @@ export default function Recipes() {
       {activeFilters.length > 0 && (
         <div className="flex gap-2 flex-wrap">
           {activeFilters.map((filter) => (
-            <Badge key={filter} variant="secondary" className="gap-1 pl-2">
+            <Badge
+              key={filter}
+              variant="secondary"
+              className="gap-1 pl-3 py-1.5 rounded-full bg-white/40 border border-white/30 backdrop-blur-sm"
+            >
               {filter}
               <X
-                className="h-3 w-3 cursor-pointer"
+                className="h-3 w-3 cursor-pointer hover:text-red-500 transition-colors"
                 onClick={() => toggleFilter(filter)}
               />
             </Badge>
@@ -141,7 +156,7 @@ export default function Recipes() {
           <Button
             variant="ghost"
             size="sm"
-            className="h-5 text-xs px-2"
+            className="h-7 text-xs px-3 rounded-full hover:bg-red-100/50 hover:text-red-500"
             onClick={() => setActiveFilters([])}
           >
             Limpar
@@ -150,15 +165,27 @@ export default function Recipes() {
       )}
 
       {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         {filteredRecipes.map((recipe) => (
           <RecipeCard key={recipe.id} recipe={recipe} />
         ))}
       </div>
 
       {filteredRecipes.length === 0 && (
-        <div className="text-center py-10">
-          <p className="text-muted-foreground">Nenhuma receita encontrada.</p>
+        <div className="text-center py-20 aero-glass rounded-[30px]">
+          <p className="text-muted-foreground font-medium">
+            Nenhuma receita encontrada.
+          </p>
+          <Button
+            variant="link"
+            onClick={() => {
+              setSearch('')
+              setActiveFilters([])
+              setSelectedCategory('Todas')
+            }}
+          >
+            Limpar busca
+          </Button>
         </div>
       )}
     </div>

@@ -12,29 +12,32 @@ import Progress from './pages/Progress'
 import Profile from './pages/Profile'
 import NotFound from './pages/NotFound'
 import { AppProvider } from './stores/useAppStore'
+import { ThemeProvider } from 'next-themes'
 
 const App = () => (
   <BrowserRouter
     future={{ v7_startTransition: false, v7_relativeSplatPath: false }}
   >
-    <AppProvider>
-      <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <Routes>
-          <Route element={<Layout />}>
-            <Route path="/" element={<Index />} />
-            <Route path="/recipes" element={<Recipes />} />
-            <Route path="/recipes/:id" element={<RecipeDetail />} />
-            <Route path="/plan" element={<MealPlan />} />
-            <Route path="/shop" element={<ShoppingList />} />
-            <Route path="/progress" element={<Progress />} />
-            <Route path="/profile" element={<Profile />} />
-          </Route>
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </TooltipProvider>
-    </AppProvider>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <AppProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <Routes>
+            <Route element={<Layout />}>
+              <Route path="/" element={<Index />} />
+              <Route path="/recipes" element={<Recipes />} />
+              <Route path="/recipes/:id" element={<RecipeDetail />} />
+              <Route path="/plan" element={<MealPlan />} />
+              <Route path="/shop" element={<ShoppingList />} />
+              <Route path="/progress" element={<Progress />} />
+              <Route path="/profile" element={<Profile />} />
+            </Route>
+            <Route path="*" element={<NotFound />} />
+          </Routes>
+        </TooltipProvider>
+      </AppProvider>
+    </ThemeProvider>
   </BrowserRouter>
 )
 
