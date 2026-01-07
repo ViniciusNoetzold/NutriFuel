@@ -45,13 +45,13 @@ export default function MealPlan() {
   const [activeFilters, setActiveFilters] = useState<string[]>([])
 
   // Calculate week based on current date
-  const startDate = startOfWeek(currentDate, { weekStartsOn: 0 })
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 })
   const weekDays = Array.from({ length: 7 }).map((_, i) =>
-    addDays(startDate, i),
+    addDays(weekStart, i),
   )
 
   const handleAutoGenerate = () => {
-    autoGeneratePlan(format(startDate, 'yyyy-MM-dd'))
+    autoGeneratePlan(format(weekStart, 'yyyy-MM-dd'))
     toast.success('Semana planejada magicamente! ✨')
   }
 
@@ -92,14 +92,14 @@ export default function MealPlan() {
             </Button>
           </Link>
 
-          {/* Minimalist Magic Hat Icon Button */}
+          {/* Magic Button - Minimalist Hat/Wand */}
           <Button
             onClick={handleAutoGenerate}
             size="icon"
             className="rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 border border-white/30 shadow-[0_0_15px_rgba(147,51,234,0.4)] hover:scale-105 transition-transform"
             title="Gerar Automaticamente"
           >
-            <Wand2 className="h-5 w-5 text-white drop-shadow-md" />
+            <Wand2 className="h-4 w-4 text-white drop-shadow-md" />
           </Button>
         </div>
       </div>
@@ -116,7 +116,7 @@ export default function MealPlan() {
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
-            {format(startDate, 'MMMM yyyy', { locale: ptBR })}
+            {format(weekStart, 'MMMM yyyy', { locale: ptBR })}
           </span>
           <Button
             variant="ghost"
@@ -134,17 +134,17 @@ export default function MealPlan() {
               <button
                 key={day.toISOString()}
                 onClick={() => setCurrentDate(day)}
-                className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 aspect-[3/4] ${
+                className={`flex flex-col items-center justify-center p-1 rounded-xl transition-all duration-300 aspect-[3/4] ${
                   isSelected
-                    ? 'bg-gradient-to-b from-primary to-blue-500 text-white shadow-md scale-105'
+                    ? 'bg-gradient-to-b from-primary to-green-500 dark:from-primary dark:to-cyan-500 text-white shadow-md scale-105'
                     : 'bg-white/30 dark:bg-white/5 text-muted-foreground hover:bg-white/50'
                 }`}
               >
-                <span className="text-[10px] font-bold uppercase mb-1 opacity-80">
+                <span className="text-[9px] font-bold uppercase mb-0.5 opacity-80">
                   {format(day, 'EEE', { locale: ptBR }).slice(0, 3)}
                 </span>
                 <span
-                  className={`text-sm font-bold ${isSelected ? 'text-white' : 'text-foreground'}`}
+                  className={`text-xs font-bold ${isSelected ? 'text-white' : 'text-foreground'}`}
                 >
                   {format(day, 'd')}
                 </span>

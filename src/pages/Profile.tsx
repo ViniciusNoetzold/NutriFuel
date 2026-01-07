@@ -32,7 +32,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { useNavigate } from 'react-router-dom'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   ChartContainer,
   ChartTooltip,
@@ -140,7 +140,7 @@ export default function Profile() {
         </div>
       )}
 
-      {/* Header Profile Section */}
+      {/* Header Profile Section - Unified */}
       <div className="flex flex-col items-center justify-center space-y-4 pt-4">
         <div className="relative group">
           <div className="absolute inset-0 bg-gradient-to-tr from-primary to-blue-300 rounded-full blur-lg opacity-50 group-hover:opacity-80 transition-opacity" />
@@ -209,7 +209,7 @@ export default function Profile() {
       </div>
 
       <div className="aero-glass p-6 space-y-8">
-        {/* Progress & Charts Section (Merged) */}
+        {/* Progress & Charts Section - Unified View */}
         <section className="space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-lg flex items-center gap-2">
@@ -264,12 +264,12 @@ export default function Profile() {
                         >
                           <stop
                             offset="5%"
-                            stopColor="var(--color-weight)"
+                            stopColor="hsl(var(--primary))"
                             stopOpacity={0.4}
                           />
                           <stop
                             offset="95%"
-                            stopColor="var(--color-weight)"
+                            stopColor="hsl(var(--primary))"
                             stopOpacity={0}
                           />
                         </linearGradient>
@@ -294,7 +294,7 @@ export default function Profile() {
                       <Area
                         type="monotone"
                         dataKey="weight"
-                        stroke="var(--color-weight)"
+                        stroke="hsl(var(--primary))"
                         strokeWidth={3}
                         fillOpacity={1}
                         fill="url(#colorWeight)"

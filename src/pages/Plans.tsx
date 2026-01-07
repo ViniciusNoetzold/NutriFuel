@@ -1,27 +1,27 @@
-import { Check, Dumbbell, Star, Zap } from 'lucide-react'
+import { Check, Star, Zap, Crown } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Badge } from '@/components/ui/badge'
 
 export default function Plans() {
   const plans = [
     {
       name: 'Basic',
-      price: 'Grátis',
-      description: 'Essencial para começar',
+      price: 'R$ 0,00',
+      description: 'Grátis para começar',
       features: [
         'Registro de água',
-        '3 receitas por dia',
-        'Monitoramento básico',
+        'Receitas básicas',
+        'Monitoramento simples',
       ],
-      icon: Dumbbell,
-      color: 'bg-blue-500',
+      icon: Zap,
+      color: 'bg-gray-400',
       popular: false,
     },
     {
       name: 'Pro Member',
-      price: 'R$ 29,90/mês',
-      description: 'Experiência completa',
+      price: 'R$ 35,00',
+      period: '/mês',
+      description: 'Evolução consistente',
       features: [
         'Tudo do Basic',
         'Receitas ilimitadas',
@@ -33,12 +33,17 @@ export default function Plans() {
       popular: true,
     },
     {
-      name: 'Free Trial',
-      price: '7 Dias',
-      description: 'Teste o poder do Pro',
-      features: ['Acesso total por 7 dias', 'Sem compromisso'],
-      icon: Zap,
-      color: 'bg-purple-500',
+      name: 'Master',
+      price: 'R$ 30,00',
+      period: '/mês (Anual)',
+      description: 'Comprometimento total',
+      features: [
+        'Acesso VIP total',
+        'Prioridade no suporte',
+        'Consultoria mensal',
+      ],
+      icon: Crown,
+      color: 'bg-gradient-to-br from-purple-500 to-pink-500',
       popular: false,
     },
   ]
@@ -65,7 +70,7 @@ export default function Plans() {
             }`}
           >
             {plan.popular && (
-              <div className="absolute top-0 right-0 bg-gradient-to-bl from-primary to-blue-600 text-white text-xs font-bold px-4 py-1.5 rounded-bl-2xl shadow-md z-10 border-b border-l border-white/20">
+              <div className="absolute top-0 right-0 bg-gradient-to-bl from-primary to-green-600 dark:to-cyan-600 text-white text-xs font-bold px-4 py-1.5 rounded-bl-2xl shadow-md z-10 border-b border-l border-white/20">
                 POPULAR
               </div>
             )}
@@ -79,8 +84,15 @@ export default function Plans() {
                 <plan.icon className="h-8 w-8 drop-shadow-md" />
               </div>
               <CardTitle className="text-xl font-bold">{plan.name}</CardTitle>
-              <div className="text-3xl font-extrabold text-foreground mt-2 text-shadow-sm">
-                {plan.price}
+              <div className="flex items-baseline justify-center gap-1 mt-2 text-shadow-sm">
+                <span className="text-3xl font-extrabold text-foreground">
+                  {plan.price}
+                </span>
+                {plan.period && (
+                  <span className="text-sm text-muted-foreground">
+                    {plan.period}
+                  </span>
+                )}
               </div>
               <p className="text-sm text-muted-foreground font-medium">
                 {plan.description}
@@ -88,7 +100,7 @@ export default function Plans() {
             </CardHeader>
 
             <CardContent className="space-y-6 relative z-10">
-              <ul className="space-y-3 bg-white/20 dark:bg-black/20 p-4 rounded-xl backdrop-blur-sm">
+              <ul className="space-y-3 bg-white/20 dark:bg-black/20 p-4 rounded-xl backdrop-blur-sm border border-white/10">
                 {plan.features.map((feature) => (
                   <li
                     key={feature}
@@ -105,7 +117,7 @@ export default function Plans() {
               <Button
                 className={`w-full h-12 rounded-full font-bold shadow-lg transition-transform active:scale-95 ${
                   plan.popular
-                    ? 'bg-gradient-to-r from-primary to-blue-600 hover:brightness-110 text-white border-white/20'
+                    ? 'bg-gradient-to-r from-primary to-green-600 dark:to-cyan-600 hover:brightness-110 text-white border-white/20'
                     : 'aero-button hover:bg-white/40'
                 }`}
               >

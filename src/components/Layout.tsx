@@ -1,3 +1,4 @@
+import React, { useRef, useState, useEffect } from 'react'
 import { Outlet, useLocation, useNavigate, Link } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
@@ -17,6 +18,9 @@ export default function Layout() {
   const location = useLocation()
   const navigate = useNavigate()
   const { user, notifications, markNotificationsAsRead } = useAppStore()
+  const mainRef = useRef<HTMLDivElement>(null)
+  const [showNavbar, setShowNavbar] = useState(true)
+  const [lastScrollY, setLastScrollY] = useState(0)
 
   const isRecipeDetail =
     location.pathname.startsWith('/recipes/') &&
@@ -24,28 +28,40 @@ export default function Layout() {
 
   const unreadCount = notifications.filter((n) => !n.read).length
 
+  // Scroll listener for Smart Navbar
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!mainRef.current) return
+      const currentScrollY = mainRef.current.scrollTop
+
+      if (currentScrollY > lastScrollY && currentScrollY > 20) {
+        setShowNavbar(false)
+      } else {
+        setShowNavbar(true)
+      }
+      setLastScrollY(currentScrollY)
+    }
+
+    const mainElement = mainRef.current
+    if (mainElement) {
+      mainElement.addEventListener('scroll', handleScroll)
+    }
+
+    return () => {
+      if (mainElement) {
+        mainElement.removeEventListener('scroll', handleScroll)
+      }
+    }
+  }, [lastScrollY])
+
   return (
     <div className="flex min-h-screen transition-colors duration-500 theme-light-bg dark:theme-dark-bg text-foreground overflow-hidden">
-      {/* Background Bubbles */}
-      <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        {Array.from({ length: 6 }).map((_, i) => (
-          <div
-            key={i}
-            className="bubble absolute"
-            style={{
-              width: `${Math.random() * 200 + 100}px`,
-              height: `${Math.random() * 200 + 100}px`,
-              left: `${Math.random() * 100}%`,
-              animation: `bubble-rise ${Math.random() * 10 + 10}s infinite linear`,
-              animationDelay: `${Math.random() * 5}s`,
-            }}
-          />
-        ))}
-      </div>
-
       <Sidebar />
-      <main className="flex-1 md:pl-64 pb-24 md:pb-0 z-10 relative h-screen overflow-y-auto">
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between px-4 aero-glass mx-4 mt-4 mb-4">
+      <main
+        ref={mainRef}
+        className="flex-1 md:pl-64 pb-24 md:pb-0 z-10 relative h-screen overflow-y-auto scroll-smooth"
+      >
+        <header className="sticky top-0 z-40 flex h-16 items-center justify-between px-4 aero-glass mx-4 mt-4 mb-4 transition-transform duration-300">
           <div className="flex items-center gap-2">
             {isRecipeDetail && (
               <Button
@@ -62,7 +78,6 @@ export default function Layout() {
               {location.pathname === '/recipes' && 'Receitas'}
               {location.pathname === '/plan' && 'Plano Alimentar'}
               {location.pathname === '/shop' && 'Compras'}
-              {location.pathname === '/progress' && 'Progresso'}
               {location.pathname === '/profile' && 'Perfil'}
               {location.pathname === '/plans' && 'Planos'}
               {isRecipeDetail && 'Detalhes'}
@@ -152,7 +167,7 @@ export default function Layout() {
           <Outlet />
         </div>
       </main>
-      <BottomNav />
+      <BottomNav isVisible={showNavbar} />
     </div>
   )
 }

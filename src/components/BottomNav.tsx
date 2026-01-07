@@ -2,7 +2,11 @@ import { Link, useLocation } from 'react-router-dom'
 import { Home, Search, Calendar, ShoppingCart, User, Crown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
-export function BottomNav() {
+interface BottomNavProps {
+  isVisible: boolean
+}
+
+export function BottomNav({ isVisible }: BottomNavProps) {
   const location = useLocation()
   const path = location.pathname
 
@@ -16,8 +20,13 @@ export function BottomNav() {
   ]
 
   return (
-    <nav className="fixed bottom-4 left-4 right-4 z-50 aero-glass md:hidden pb-safe shadow-2xl">
-      <div className="flex h-16 items-center justify-around px-2">
+    <nav
+      className={cn(
+        'fixed bottom-4 left-4 right-4 z-50 aero-glass md:hidden pb-safe shadow-2xl transition-transform duration-500 overflow-hidden',
+        isVisible ? 'translate-y-0' : 'translate-y-[150%]',
+      )}
+    >
+      <div className="flex h-16 items-center justify-around px-2 relative">
         {items.map((item) => {
           const isActive = path === item.href
           return (
@@ -25,15 +34,15 @@ export function BottomNav() {
               key={item.href}
               to={item.href}
               className={cn(
-                'relative flex flex-col items-center justify-center w-full h-full transition-all duration-300',
+                'relative flex flex-col items-center justify-center w-full h-full transition-all duration-300 group',
                 isActive
                   ? 'text-primary'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              {/* Active Indicator Glow inside the bar */}
+              {/* Active Indicator Glow inside the bar - clipped */}
               {isActive && (
-                <div className="absolute inset-0 bg-gradient-to-b from-white/40 to-transparent dark:from-white/10 rounded-xl mx-2 shadow-[inset_0_1px_1px_rgba(255,255,255,0.5)] animate-fade-in" />
+                <div className="absolute inset-x-2 inset-y-1 bg-gradient-to-b from-white/40 to-transparent dark:from-white/10 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.5)] animate-fade-in pointer-events-none" />
               )}
 
               <div className="relative z-10 flex flex-col items-center">

@@ -6,54 +6,54 @@
 
 @layer base {
   :root {
-    /* Clean & Modern Light - Pearlescent */
-    --background: 210 20% 98%;
-    --foreground: 222 47% 11%;
+    /* Frutiger Green - Vibrant Grass Green & Crystal Clear */
+    --background: 120 10% 98%;
+    --foreground: 140 40% 20%;
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: 140 40% 20%;
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
-    --primary: 199 89% 48%; /* Frutiger Aero Blue */
+    --popover-foreground: 140 40% 20%;
+    --primary: 120 60% 40%; /* Fresh Grass Green */
     --primary-foreground: 0 0% 100%;
-    --secondary: 150 60% 50%; /* Fresh Green */
+    --secondary: 190 70% 50%; /* Cyan Water */
     --secondary-foreground: 0 0% 100%;
-    --muted: 210 20% 94%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 199 89% 96%;
-    --accent-foreground: 222.47% 11%;
+    --muted: 120 10% 94%;
+    --muted-foreground: 120 10% 40%;
+    --accent: 120 30% 90%;
+    --accent-foreground: 140 40% 20%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 90%;
-    --input: 214.3 31.8% 90%;
-    --ring: 199 89% 48%;
+    --border: 120 20% 90%;
+    --input: 120 20% 90%;
+    --ring: 120 60% 40%;
     --radius: 1.25rem;
-    --chart-1: 199 89% 48%;
-    --chart-2: 150 60% 45%;
-    --chart-3: 222 47% 11%;
+    --chart-1: 120 60% 40%;
+    --chart-2: 190 70% 50%;
+    --chart-3: 140 40% 20%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
   }
 
   .dark {
-    /* Old School Dark - Brushed Metal/Concrete & Neon */
-    --background: 220 10% 12%;
-    --foreground: 0 0% 95%;
-    --card: 220 10% 16%;
-    --card-foreground: 0 0% 95%;
-    --popover: 220 10% 16%;
-    --popover-foreground: 0 0% 95%;
+    /* Obsidian Gym - Smoky Glass, Brushed Metal, Black Rubber */
+    --background: 220 10% 8%;
+    --foreground: 0 0% 90%;
+    --card: 220 10% 12%;
+    --card-foreground: 0 0% 90%;
+    --popover: 220 10% 12%;
+    --popover-foreground: 0 0% 90%;
     --primary: 180 100% 50%; /* Neon Cyan */
     --primary-foreground: 222 47% 11%;
-    --secondary: 300 100% 50%; /* Neon Purple */
+    --secondary: 0 0% 20%; /* Dark Metal */
     --secondary-foreground: 0 0% 100%;
-    --muted: 220 10% 20%;
-    --muted-foreground: 215 20.2% 75.1%;
-    --accent: 220 10% 20%;
+    --muted: 220 10% 15%;
+    --muted-foreground: 220 10% 60%;
+    --accent: 220 10% 15%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 220 10% 25%;
-    --input: 220 10% 25%;
+    --border: 220 10% 20%;
+    --input: 220 10% 20%;
     --ring: 180 100% 50%;
   }
 }
@@ -68,19 +68,24 @@
 }
 
 @layer components {
-  /* Frutiger Aero Glassmorphism */
-  .aero-glass {
-    @apply bg-white/40 dark:bg-black/60 backdrop-blur-2xl border border-white/60 dark:border-white/10 shadow-[0_8px_32px_0_rgba(31,38,135,0.07)] rounded-[24px];
+  /* Frutiger Glass (Light Mode) */
+  .frutiger-glass {
+    @apply bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_8px_32px_0_rgba(50,200,50,0.1),inset_0_1px_0_rgba(255,255,255,0.8)] rounded-[24px];
   }
 
-  /* Obsidian Glass for Dark Mode */
-  .dark .aero-glass {
-    @apply bg-black/70 border-white/5 shadow-[0_8px_32px_0_rgba(0,0,0,0.5)];
+  /* Obsidian Glass (Dark Mode) */
+  .obsidian-glass {
+    @apply bg-black/70 backdrop-blur-xl border border-white/5 shadow-[0_8px_32px_0_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.1)] rounded-[24px];
+  }
+
+  /* Adaptive Aero Glass */
+  .aero-glass {
+    @apply frutiger-glass dark:obsidian-glass;
   }
 
   /* Cards */
   .aero-card {
-    @apply bg-white/60 dark:bg-[#1e1e1e]/80 backdrop-blur-md border border-white/60 dark:border-white/10 shadow-lg rounded-[20px] transition-all duration-300 hover:shadow-xl hover:bg-white/80 dark:hover:bg-[#252525]/90;
+    @apply bg-white/60 dark:bg-[#1a1a1a]/80 backdrop-blur-md border border-white/60 dark:border-white/5 shadow-lg rounded-[20px] transition-all duration-300 hover:shadow-xl hover:bg-white/80 dark:hover:bg-[#252525]/90;
   }
 
   /* Buttons */
@@ -97,19 +102,19 @@
   .theme-light-bg {
     background: radial-gradient(
       circle at 50% 0%,
-      #e0f7fa 0%,
+      #f0fdf4 0%,
       #ffffff 40%,
-      #f0fdf4 100%
+      #dcfce7 100%
     );
     background-size: 100% 100%;
   }
 
   .theme-dark-bg {
-    background-color: #121212;
+    background-color: #050505;
     background-image:
-      radial-gradient(circle at 50% -20%, #2c3e50 0%, transparent 60%),
-      linear-gradient(0deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      radial-gradient(circle at 50% -20%, #1a202c 0%, transparent 60%),
+      linear-gradient(0deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
     background-size:
       100% 100%,
       40px 40px,
@@ -155,6 +160,12 @@
   .ease-spring {
     transition-timing-function: cubic-bezier(0.34, 1.56, 0.64, 1);
   }
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+  .transform-style-3d {
+    transform-style: preserve-3d;
+  }
 }
 
 /* Animations */
@@ -196,27 +207,17 @@
     opacity: 1;
   }
 }
-@keyframes bubble-rise {
-  0% {
-    transform: translateY(120vh) scale(0.5);
-    opacity: 0;
-  }
-  20% {
-    opacity: 0.8;
-  }
+@keyframes glow {
+  0%,
   100% {
-    transform: translateY(-20vh) scale(1.5);
-    opacity: 0;
+    box-shadow:
+      0 0 5px rgba(var(--primary), 0.5),
+      inset 0 0 5px rgba(var(--primary), 0.2);
   }
-}
-@keyframes fireworks {
-  0% {
-    transform: scale(0);
-    opacity: 1;
-  }
-  100% {
-    transform: scale(1.5);
-    opacity: 0;
+  50% {
+    box-shadow:
+      0 0 20px rgba(var(--primary), 0.8),
+      inset 0 0 10px rgba(var(--primary), 0.4);
   }
 }
 
@@ -232,18 +233,6 @@
 .animate-liquid {
   animation: liquid-pulse 4s ease-in-out infinite;
 }
-
-.bubble {
-  position: fixed;
-  border-radius: 50%;
-  background: radial-gradient(
-    circle at 30% 30%,
-    rgba(255, 255, 255, 0.8),
-    rgba(255, 255, 255, 0.1)
-  );
-  box-shadow:
-    0 0 10px rgba(255, 255, 255, 0.3),
-    inset 0 0 10px rgba(255, 255, 255, 0.5);
-  z-index: 0;
-  pointer-events: none;
+.animate-glow {
+  animation: glow 2s ease-in-out infinite;
 }

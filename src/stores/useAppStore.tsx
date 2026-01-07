@@ -23,6 +23,7 @@ interface AppContextType {
   mealPlan: MealSlot[]
   addMealToPlan: (date: string, type: MealType, recipeId: string) => void
   removeMealFromPlan: (date: string, type: MealType) => void
+  toggleMealCompletion: (date: string, type: MealType) => void
   autoGeneratePlan: (startDate: string) => void
   dailyLogs: DayLog[]
   logWater: (amount: number, date: string) => void
@@ -67,7 +68,7 @@ const MOCK_NOTIFICATIONS: Notification[] = [
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState<UserProfile>(MOCK_USER)
-  const [recipes] = useState<Recipe[]>(MOCK_RECIPES)
+  const [recipes] = useState<Recipe[]>(MOCK_RECIPES as Recipe[])
   const [mealPlan, setMealPlan] = useState<MealSlot[]>([])
   const [dailyLogs, setDailyLogs] = useState<DayLog[]>([])
   const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([])
@@ -110,13 +111,23 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const filtered = prev.filter(
         (slot) => !(slot.date === date && slot.type === type),
       )
-      return [...filtered, { date, type, recipeId }]
+      return [...filtered, { date, type, recipeId, completed: false }]
     })
   }
 
   const removeMealFromPlan = (date: string, type: MealType) => {
     setMealPlan((prev) =>
       prev.filter((slot) => !(slot.date === date && slot.type === type)),
+    )
+  }
+
+  const toggleMealCompletion = (date: string, type: MealType) => {
+    setMealPlan((prev) =>
+      prev.map((slot) =>
+        slot.date === date && slot.type === type
+          ? { ...slot, completed: !slot.completed }
+          : slot,
+      ),
     )
   }
 
@@ -133,7 +144,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       types.forEach((type) => {
         let categoryFilter: string[] = []
         if (type === 'Café da Manhã' || type === 'Lanche')
-          categoryFilter = ['Lanches', 'Sobremesas', 'Drinks']
+          categoryFilter = ['Lanches', 'Doces', 'Drinks']
         else categoryFilter = ['Salgadas']
 
         const candidates = recipes.filter((r) =>
@@ -147,11 +158,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             date: dateStr,
             type,
             recipeId: randomRecipe.id,
+            completed: false,
           })
         }
       })
     }
-    setMealPlan(newPlan)
+    setMealPlan((prev) => {
+      // Filter out existing slots for the range to avoid duplicates if re-generating
+      const existingDates = new Set(newPlan.map((p) => p.date))
+      const filteredPrev = prev.filter((p) => !existingDates.has(p.date))
+      return [...filteredPrev, ...newPlan]
+    })
   }
 
   const logWater = (amount: number, date: string) => {
@@ -239,6 +256,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const getDailyNutrition = (date: string) => {
+    // Only count completed meals for "consumed" nutrition? Or all planned?
+    // Usually planning apps show what's planned. Let's stick to planned for total, but maybe can differentiate later.
     const slots = mealPlan.filter((s) => s.date === date)
     const nutrition = { calories: 0, protein: 0, carbs: 0, fats: 0 }
     slots.forEach((slot) => {
@@ -265,6 +284,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         mealPlan,
         addMealToPlan,
         removeMealFromPlan,
+        toggleMealCompletion,
         autoGeneratePlan,
         dailyLogs,
         logWater,

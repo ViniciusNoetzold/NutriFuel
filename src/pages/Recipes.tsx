@@ -18,8 +18,8 @@ import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
 
-// Reordered categories
-const CATEGORIES = ['Todas', 'Salgadas', 'Lanches', 'Sobremesas', 'Drinks']
+// Reordered categories per User Story
+const CATEGORIES = ['Todas', 'Salgadas', 'Lanches', 'Doces', 'Drinks']
 const DIETARY_FILTERS = [
   'Sem Glúten',
   'Sem Lactose',
@@ -132,13 +132,15 @@ export default function Recipes() {
             key={cat}
             onClick={() => setSelectedCategory(cat)}
             className={cn(
-              'crystal-bubble snap-center flex-shrink-0 px-6 py-2.5 text-sm font-bold transition-all duration-300 hover:scale-105',
+              'crystal-bubble snap-center flex-shrink-0 px-6 py-2.5 text-sm font-bold transition-all duration-300 hover:scale-105 active:scale-95',
               selectedCategory === cat
-                ? 'bg-gradient-to-b from-primary to-blue-600 text-white shadow-[0_0_15px_rgba(var(--primary),0.5)] border-transparent'
+                ? 'bg-gradient-to-b from-primary to-green-600 dark:from-primary dark:to-cyan-600 text-white shadow-[0_0_15px_rgba(var(--primary),0.5)] border-transparent'
                 : 'bg-gradient-to-b from-white/70 to-white/30 dark:from-white/20 dark:to-white/5 text-foreground hover:bg-white/50',
             )}
           >
             <span className="relative z-10 text-shadow-sm">{cat}</span>
+            {/* Inner Glare for Crystal Effect */}
+            <span className="absolute top-1 left-2 right-2 h-[2px] bg-white/60 rounded-full blur-[1px]" />
           </button>
         ))}
       </div>
@@ -154,7 +156,7 @@ export default function Recipes() {
             >
               {filter}
               <X
-                className="h-3 w-3 cursor-pointer hover:text-red-500 transition-colors"
+                className="h-3 w-3 cursor-pointer hover:text-destructive transition-colors"
                 onClick={() => toggleFilter(filter)}
               />
             </Badge>

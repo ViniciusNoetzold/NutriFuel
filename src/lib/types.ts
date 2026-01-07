@@ -20,8 +20,8 @@ export interface Recipe {
   prepTime: number
   portions: number
   difficulty: 'Fácil' | 'Médio' | 'Difícil'
-  category: 'Salgadas' | 'Lanches' | 'Sobremesas' | 'Drinks'
-  tags: string[] // 'Vegan', 'Low Carb', etc.
+  category: 'Salgadas' | 'Lanches' | 'Doces' | 'Drinks' // Updated categories
+  tags: string[]
   ingredients: Ingredient[]
   instructions: string[]
   rating: number
@@ -47,6 +47,7 @@ export interface MealSlot {
   date: string // ISO date string YYYY-MM-DD
   type: MealType
   recipeId: string | null
+  completed?: boolean // Added for checklist functionality
 }
 
 export interface DayLog {
