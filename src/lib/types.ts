@@ -58,6 +58,7 @@ export interface DayLog {
   waterIntake: number // in ml
   weight?: number
   photo?: string // URL to shape photo
+  exerciseBurned?: number // Calories burned
 }
 
 export interface Notification {

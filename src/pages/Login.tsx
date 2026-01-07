@@ -27,12 +27,12 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-gray-100 to-gray-300 dark:from-gray-800 dark:to-gray-900">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-[#e0f2fe] to-[#f0f9ff] dark:from-[#0f172a] dark:to-[#1e293b]">
       {/* Background Texture Overlay */}
       <div className="absolute inset-0 opacity-[0.04] pointer-events-none bg-texture-overlay mix-blend-overlay z-0" />
 
       {/* Center Light */}
-      <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/10 to-white/30 dark:via-white/5 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/20 to-white/40 dark:via-cyan-900/10 pointer-events-none" />
 
       <div className="w-full max-w-md z-10 animate-fade-in-up">
         <div className="aero-glass p-8 rounded-[32px] shadow-2xl space-y-8 relative overflow-hidden">
@@ -41,12 +41,12 @@ export default function Login() {
 
           <div className="flex flex-col items-center space-y-4">
             <InteractiveDumbbell />
-            <div className="text-center">
-              <h1 className="text-3xl font-bold mt-2 text-shadow-lg tracking-tight bg-clip-text text-transparent bg-gradient-to-b from-foreground to-foreground/70">
-                Fitness Aero
+            <div className="text-center relative">
+              <h1 className="text-4xl font-extrabold mt-2 tracking-tight text-metallic drop-shadow-md">
+                NutriFuel
               </h1>
-              <p className="text-muted-foreground text-sm max-w-[200px] mx-auto">
-                Performance tangível.
+              <p className="text-primary-foreground dark:text-cyan-400 text-sm max-w-[200px] mx-auto font-medium drop-shadow-sm opacity-80">
+                Energy for Life.
               </p>
             </div>
           </div>
@@ -90,7 +90,7 @@ export default function Login() {
 
             <Button
               type="submit"
-              className="w-full h-14 rounded-full font-bold text-lg bg-gradient-to-r from-primary to-green-500 dark:to-cyan-600 hover:brightness-110 text-primary-foreground shadow-[0_0_20px_rgba(var(--primary),0.3)] border border-white/20 relative overflow-hidden group"
+              className="w-full h-14 rounded-full font-bold text-lg bg-gradient-to-r from-primary to-cyan-500 dark:to-cyan-600 hover:brightness-110 text-white shadow-[0_0_20px_rgba(var(--primary),0.3)] border border-white/20 relative overflow-hidden group"
               disabled={isLoading}
             >
               <span className="relative z-10 flex items-center gap-2 justify-center">

@@ -9,7 +9,7 @@ import {
   Scale,
   Flame,
   Utensils,
-  Zap,
+  Activity,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -28,14 +28,32 @@ export default function Index() {
     mealPlan,
     recipes,
     toggleMealCompletion,
+    logExercise,
   } = useAppStore()
   const navigate = useNavigate()
   const today = format(new Date(), 'yyyy-MM-dd')
   const todayLog = dailyLogs.find((l) => l.date === today) || {
     waterIntake: 0,
     weight: user.weight,
+    exerciseBurned: 0,
   }
   const consumed = getConsumedNutrition(today)
+
+  const burned = todayLog.exerciseBurned || 0
+  const dailyGoal = user.calorieGoal
+  // Formula: Daily Goal - (Consumed + Exercise) -> Wait, if Exercise adds to the "budget", it should be Goal + Exercise - Consumed.
+  // But based on user story explicit formula "Daily Goal - (Consumed + Exercise)",
+  // I will assume "Exercise" acts as a credit.
+  // To make it functional as "Remaining":
+  // Remaining = (Goal + Exercise) - Consumed
+  const remainingCalories = dailyGoal + burned - consumed.calories
+
+  // Progress for liquid bar (Consumed / (Goal + Exercise))
+  const totalBudget = dailyGoal + burned
+  const progressPercentCalories = Math.min(
+    100,
+    (consumed.calories / totalBudget) * 100,
+  )
 
   const todayMeals = mealPlan
     .filter((slot) => slot.date === today)
@@ -44,16 +62,17 @@ export default function Index() {
       return order[a.type] - order[b.type]
     })
 
-  const completedMealsCount = todayMeals.filter((m) => m.completed).length
-  const totalMealsCount = todayMeals.length
-  const progressPercent =
-    totalMealsCount > 0 ? (completedMealsCount / totalMealsCount) * 100 : 0
-
   const handleWater = (amount: number) => {
     logWater(amount, today)
     if (amount > 0) {
       toast.success('Hidratação +250ml')
     }
+  }
+
+  const handleExercise = () => {
+    // Quick add 100 cal for demo
+    logExercise(100, today)
+    toast.success('Exercício registrado: -100kcal (adicionadas ao orçamento)')
   }
 
   return (
@@ -65,146 +84,99 @@ export default function Index() {
             Olá, {user.name.split(' ')[0]}!
           </h2>
           <p className="text-lg text-muted-foreground/80 font-medium">
-            Seu corpo, seu templo.
+            Seu corpo, seu combustível.
           </p>
         </div>
       </div>
 
-      {/* 1. Status Atual - Advanced Nutritional Status Dashboard */}
+      {/* 1. Status - Dashboard */}
       <Card className="aero-glass border-0 relative overflow-hidden transition-all duration-700 hover:shadow-2xl">
-        <div className="absolute inset-0 bg-gradient-to-tr from-green-100/20 via-transparent to-blue-100/20 pointer-events-none" />
+        <div className="absolute inset-0 bg-gradient-to-tr from-cyan-100/20 via-transparent to-blue-100/20 pointer-events-none" />
         <CardContent className="p-6 relative z-10">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-              <Zap className="w-5 h-5 text-yellow-500" />
-              Status Atual
+              <Activity className="w-5 h-5 text-primary" />
+              Status
             </h3>
             <span className="text-xs font-bold bg-white/30 px-2 py-1 rounded-lg text-foreground/70">
               Hoje
             </span>
           </div>
 
-          <div className="flex flex-col md:flex-row items-center gap-8">
-            {/* Left: Remaining Protein */}
-            <div className="flex-1 text-center md:text-left">
-              <p className="text-4xl font-extrabold text-primary drop-shadow-sm">
-                {Math.max(0, user.proteinGoal - consumed.protein).toFixed(0)}g
+          <div className="flex flex-col items-center gap-6">
+            {/* Primary Metric: Remaining Calories */}
+            <div className="text-center relative">
+              <p className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-primary to-cyan-600 dark:to-cyan-400 drop-shadow-sm">
+                {Math.floor(remainingCalories)}
               </p>
-              <p className="text-sm font-medium text-muted-foreground uppercase tracking-wide">
-                Faltam Proteínas
+              <p className="text-sm font-bold text-muted-foreground uppercase tracking-wide mt-1">
+                Calorias Restantes
               </p>
-            </div>
-
-            {/* Center: Calories Fire Bubble */}
-            <div className="relative w-40 h-40 flex-shrink-0">
-              <div className="absolute inset-0 rounded-full bg-gradient-to-br from-orange-400/20 to-red-500/10 backdrop-blur-sm border border-white/40 shadow-[0_0_40px_rgba(249,115,22,0.3)] animate-liquid flex items-center justify-center">
-                <div className="text-center">
-                  <Flame className="h-10 w-10 text-orange-500 mx-auto mb-1 drop-shadow-md animate-pulse" />
-                  <p className="text-3xl font-bold text-foreground drop-shadow-sm">
-                    {consumed.calories}
-                  </p>
-                  <p className="text-[10px] font-bold text-muted-foreground uppercase">
-                    kcal Consumidas
-                  </p>
-                </div>
+              <div className="text-xs text-muted-foreground/60 mt-2 font-medium">
+                Meta: {dailyGoal} + Treino: {burned} - Consumo:{' '}
+                {consumed.calories}
               </div>
-              {/* Progress Ring around calories */}
-              <svg
-                className="absolute inset-0 w-full h-full -rotate-90"
-                viewBox="0 0 100 100"
-              >
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="none"
-                  stroke="rgba(255,255,255,0.1)"
-                  strokeWidth="6"
-                />
-                <circle
-                  cx="50"
-                  cy="50"
-                  r="45"
-                  fill="none"
-                  stroke="url(#gradient-fire)"
-                  strokeWidth="6"
-                  strokeDasharray="283"
-                  strokeDashoffset={
-                    283 -
-                    Math.min(consumed.calories / user.calorieGoal, 1) * 283
-                  }
-                  strokeLinecap="round"
-                  className="transition-all duration-1000 ease-out"
-                />
-                <defs>
-                  <linearGradient
-                    id="gradient-fire"
-                    x1="0%"
-                    y1="0%"
-                    x2="100%"
-                    y2="100%"
-                  >
-                    <stop offset="0%" stopColor="#fbbf24" />
-                    <stop offset="100%" stopColor="#ef4444" />
-                  </linearGradient>
-                </defs>
-              </svg>
             </div>
 
-            {/* Right: Macro Breakdown */}
-            <div className="flex-1 flex flex-row md:flex-col justify-center gap-4 w-full md:w-auto">
+            {/* Liquid Progress Bar */}
+            <div className="w-full max-w-md h-8 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden border border-white/30 shadow-inner relative">
+              <div
+                className="h-full bg-gradient-to-r from-primary via-cyan-400 to-blue-500 animate-liquid-flow shadow-[0_0_20px_rgba(6,182,212,0.6)] relative"
+                style={{ width: `${progressPercentCalories}%` }}
+              >
+                {/* Liquid Glare */}
+                <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/40 rounded-t-full" />
+                {/* Bubbles */}
+                <div className="absolute inset-0 opacity-50 bg-[url('https://img.usecurling.com/p/64/64?q=bubbles&color=white')] bg-repeat-x animate-liquid-flow mix-blend-overlay" />
+              </div>
+            </div>
+
+            {/* Macro Breakdown Bubbles */}
+            <div className="grid grid-cols-3 gap-4 w-full max-w-md mt-2">
               {[
                 {
-                  label: 'Carbs',
+                  label: 'Carb',
                   val: consumed.carbs,
                   goal: user.carbsGoal,
-                  color: 'text-green-600',
-                  bg: 'bg-green-100/50',
-                },
-                {
-                  label: 'Gord',
-                  val: consumed.fats,
-                  goal: user.fatsGoal,
-                  color: 'text-yellow-600',
-                  bg: 'bg-yellow-100/50',
+                  color: 'from-green-400 to-green-600',
                 },
                 {
                   label: 'Prot',
                   val: consumed.protein,
                   goal: user.proteinGoal,
-                  color: 'text-blue-600',
-                  bg: 'bg-blue-100/50',
+                  color: 'from-blue-400 to-blue-600',
+                },
+                {
+                  label: 'Gord',
+                  val: consumed.fats,
+                  goal: user.fatsGoal,
+                  color: 'from-yellow-400 to-orange-500',
                 },
               ].map((m) => (
                 <div
                   key={m.label}
-                  className="flex flex-col items-center md:items-start flex-1 md:flex-none"
+                  className="flex flex-col items-center p-3 rounded-2xl bg-white/20 dark:bg-white/5 border border-white/30 backdrop-blur-sm"
                 >
-                  <div className="flex items-center gap-2 mb-1">
-                    <span
-                      className={cn(
-                        'w-2 h-2 rounded-full',
-                        m.color.replace('text', 'bg'),
-                      )}
-                    />
-                    <span className="text-xs font-bold text-muted-foreground uppercase">
-                      {m.label}
+                  <span className="text-xs font-bold text-muted-foreground mb-1">
+                    {m.label}
+                  </span>
+                  <div className="text-lg font-bold">
+                    {m.val}
+                    <span className="text-xs text-muted-foreground font-normal">
+                      /{m.goal}g
                     </span>
                   </div>
-                  <div className="w-full h-2 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden">
+                  <div className="w-full h-1.5 bg-black/10 rounded-full mt-2 overflow-hidden">
                     <div
                       className={cn(
-                        'h-full rounded-full transition-all duration-1000',
-                        m.bg.replace('/50', ''),
+                        'h-full rounded-full bg-gradient-to-r',
+                        m.color,
                       )}
                       style={{
                         width: `${Math.min(100, (m.val / m.goal) * 100)}%`,
                       }}
                     />
                   </div>
-                  <p className="text-xs font-semibold mt-1">
-                    {m.val}/{m.goal}g
-                  </p>
                 </div>
               ))}
             </div>
@@ -212,29 +184,8 @@ export default function Index() {
         </CardContent>
       </Card>
 
-      {/* 2. Progresso Diário - Global Progress */}
-      <div className="aero-glass p-4 flex items-center gap-4">
-        <div className="flex-1">
-          <div className="flex justify-between text-sm font-bold mb-2">
-            <span className="flex items-center gap-2">
-              <Utensils className="h-4 w-4" /> Progresso Refeições
-            </span>
-            <span>{Math.round(progressPercent)}%</span>
-          </div>
-          <div className="h-4 bg-white/50 rounded-full overflow-hidden border border-white/30 shadow-inner">
-            <div
-              className="h-full bg-gradient-to-r from-primary to-green-400 dark:from-primary dark:to-cyan-400 transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(var(--primary),0.5)] relative overflow-hidden"
-              style={{ width: `${progressPercent}%` }}
-            >
-              <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-b from-white/30 to-transparent" />
-              <div className="absolute top-0 right-0 bottom-0 w-1 bg-white/50 blur-[2px]" />
-            </div>
-          </div>
-        </div>
-      </div>
-
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* 3. Hidratação */}
+        {/* 2. Hidratação */}
         <div className="space-y-6">
           <Card className="aero-card border-0 bg-cyan-50/30 dark:bg-cyan-900/20">
             <CardContent className="p-6">
@@ -253,7 +204,7 @@ export default function Index() {
               {/* Liquid Progress Bar */}
               <div className="h-6 w-full bg-white/50 dark:bg-black/20 rounded-full overflow-hidden border border-white/30 shadow-inner mb-6 relative">
                 <div
-                  className="h-full bg-gradient-to-r from-cyan-400 to-cyan-600 shadow-[0_0_20px_rgba(6,182,212,0.5)] transition-all duration-1000 ease-out"
+                  className="h-full bg-gradient-to-r from-cyan-400 to-cyan-600 shadow-[0_0_20px_rgba(6,182,212,0.5)] transition-all duration-1000 ease-out animate-liquid-flow"
                   style={{
                     width: `${Math.min(100, (todayLog.waterIntake / user.waterGoal) * 100)}%`,
                   }}
@@ -283,7 +234,7 @@ export default function Index() {
           </Card>
         </div>
 
-        {/* 4. Refeições do Dia */}
+        {/* 3. Refeições do Dia */}
         <div>
           <div className="flex items-center justify-between mb-4 px-2">
             <h3 className="font-bold text-xl text-shadow">Refeições de Hoje</h3>
@@ -367,7 +318,7 @@ export default function Index() {
         </div>
       </div>
 
-      {/* 5. Ações Rápidas - Quick Actions */}
+      {/* 4. Ações Rápidas - Quick Actions */}
       <div className="grid grid-cols-2 gap-6 mt-4">
         <GlossyCardButton
           icon={Calendar}
@@ -376,9 +327,9 @@ export default function Index() {
           className="h-32 active:scale-95 transition-transform"
         />
         <GlossyCardButton
-          icon={Scale}
-          title="Registrar Peso"
-          onClick={() => navigate('/profile')}
+          icon={Flame}
+          title="Registrar Treino"
+          onClick={handleExercise}
           className="h-32 active:scale-95 transition-transform"
         />
       </div>

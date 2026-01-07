@@ -96,7 +96,8 @@ export default function Recipes() {
                   {DIETARY_FILTERS.map((filter) => (
                     <div
                       key={filter}
-                      className="flex items-center space-x-3 p-3 rounded-xl bg-white/10 border border-white/20"
+                      // Frosted glass UI: backdrop-blur, 30-40% opacity, 1px white border
+                      className="frosted-glass flex items-center space-x-3 p-3 text-sm font-medium transition-all hover:bg-white/50"
                     >
                       <Checkbox
                         id={filter}
@@ -105,7 +106,7 @@ export default function Recipes() {
                       />
                       <Label
                         htmlFor={filter}
-                        className="font-medium cursor-pointer flex-1"
+                        className="cursor-pointer flex-1 text-foreground dark:text-white"
                       >
                         {filter}
                       </Label>
@@ -134,7 +135,7 @@ export default function Recipes() {
             className={cn(
               'crystal-bubble snap-center flex-shrink-0 px-6 py-2.5 text-sm font-bold transition-all duration-300 hover:scale-105 active:scale-95',
               selectedCategory === cat
-                ? 'bg-gradient-to-b from-primary to-green-600 dark:from-primary dark:to-cyan-600 text-white shadow-[0_0_15px_rgba(var(--primary),0.5)] border-transparent'
+                ? 'bg-gradient-to-b from-primary to-cyan-600 dark:from-primary dark:to-cyan-600 text-white shadow-[0_0_15px_rgba(var(--primary),0.5)] border-transparent'
                 : 'bg-gradient-to-b from-white/70 to-white/30 dark:from-white/20 dark:to-white/5 text-foreground hover:bg-white/50',
             )}
           >

@@ -6,55 +6,55 @@
 
 @layer base {
   :root {
-    /* Frutiger Green - Vibrant Grass Green & Crystal Clear */
-    --background: 120 10% 98%;
-    --foreground: 140 40% 20%;
+    /* Ice Blue Light Mode - Frutiger Aero */
+    --background: 200 60% 97%; /* Ice Blue */
+    --foreground: 215 40% 20%;
     --card: 0 0% 100%;
-    --card-foreground: 140 40% 20%;
+    --card-foreground: 215 40% 20%;
     --popover: 0 0% 100%;
-    --popover-foreground: 140 40% 20%;
-    --primary: 120 60% 40%; /* Fresh Grass Green */
+    --popover-foreground: 215 40% 20%;
+    --primary: 190 90% 40%; /* Deep Cyan */
     --primary-foreground: 0 0% 100%;
-    --secondary: 190 70% 50%; /* Cyan Water */
-    --secondary-foreground: 0 0% 100%;
-    --muted: 120 10% 94%;
-    --muted-foreground: 120 10% 40%;
-    --accent: 120 30% 90%;
-    --accent-foreground: 140 40% 20%;
+    --secondary: 200 50% 90%;
+    --secondary-foreground: 215 40% 20%;
+    --muted: 200 30% 90%;
+    --muted-foreground: 215 20% 50%;
+    --accent: 190 60% 95%;
+    --accent-foreground: 215 40% 20%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 120 20% 90%;
-    --input: 120 20% 90%;
-    --ring: 120 60% 40%;
+    --border: 200 40% 85%;
+    --input: 200 40% 85%;
+    --ring: 190 90% 40%;
     --radius: 1.25rem;
-    --chart-1: 120 60% 40%;
-    --chart-2: 190 70% 50%;
-    --chart-3: 140 40% 20%;
+    --chart-1: 190 90% 40%;
+    --chart-2: 215 40% 20%;
+    --chart-3: 200 50% 60%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
   }
 
   .dark {
-    /* Obsidian Gym - Updated Lighter Charcoal Palette for Readability */
-    --background: 220 14% 14%; /* Lighter than previous 8% */
-    --foreground: 220 10% 95%;
-    --card: 220 14% 18%; /* Lighter than previous 12% */
-    --card-foreground: 220 10% 95%;
-    --popover: 220 14% 18%;
-    --popover-foreground: 220 10% 95%;
-    --primary: 180 90% 55%; /* Slightly softer Neon Cyan */
-    --primary-foreground: 222 47% 11%;
-    --secondary: 220 10% 25%; /* Lighter Dark Metal */
-    --secondary-foreground: 0 0% 100%;
-    --muted: 220 10% 22%;
-    --muted-foreground: 220 10% 65%;
-    --accent: 220 10% 22%;
-    --accent-foreground: 0 0% 98%;
+    /* Deep Petroleum Blue Dark Mode */
+    --background: 215 40% 12%; /* Deep Petroleum */
+    --foreground: 190 20% 95%;
+    --card: 215 40% 16%;
+    --card-foreground: 190 20% 95%;
+    --popover: 215 40% 16%;
+    --popover-foreground: 190 20% 95%;
+    --primary: 180 100% 50%; /* Neon Cyan */
+    --primary-foreground: 215 40% 12%;
+    --secondary: 215 30% 25%;
+    --secondary-foreground: 190 20% 95%;
+    --muted: 215 30% 22%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 215 30% 25%;
+    --accent-foreground: 190 20% 95%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 220 10% 25%;
-    --input: 220 10% 25%;
-    --ring: 180 90% 55%;
+    --border: 215 30% 25%;
+    --input: 215 30% 25%;
+    --ring: 180 100% 50%;
   }
 }
 
@@ -70,12 +70,12 @@
 @layer components {
   /* Frutiger Glass (Light Mode) */
   .frutiger-glass {
-    @apply bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_8px_32px_0_rgba(50,200,50,0.1),inset_0_1px_0_rgba(255,255,255,0.8)] rounded-[24px];
+    @apply bg-white/40 backdrop-blur-2xl border border-white/60 shadow-[0_8px_32px_0_rgba(31,38,135,0.1),inset_0_1px_0_rgba(255,255,255,0.8)] rounded-[24px];
   }
 
   /* Obsidian Glass (Dark Mode) */
   .obsidian-glass {
-    @apply bg-black/60 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.1)] rounded-[24px];
+    @apply bg-[#0f172a]/60 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.1)] rounded-[24px];
   }
 
   /* Adaptive Aero Glass */
@@ -83,9 +83,14 @@
     @apply frutiger-glass dark:obsidian-glass;
   }
 
+  /* Frosted Filter Glass (30-40% opacity, 1px white border) */
+  .frosted-glass {
+    @apply bg-white/35 dark:bg-white/5 backdrop-blur-lg border border-white/100 dark:border-white/20 shadow-sm rounded-xl;
+  }
+
   /* Cards */
   .aero-card {
-    @apply bg-white/60 dark:bg-[#252a33]/80 backdrop-blur-md border border-white/60 dark:border-white/10 shadow-lg rounded-[20px] transition-all duration-300 hover:shadow-xl hover:bg-white/80 dark:hover:bg-[#2d3440]/90;
+    @apply bg-white/60 dark:bg-[#1e293b]/80 backdrop-blur-md border border-white/60 dark:border-white/10 shadow-lg rounded-[20px] transition-all duration-300 hover:shadow-xl hover:bg-white/80 dark:hover:bg-[#2d3440]/90;
   }
 
   /* Buttons */
@@ -102,19 +107,23 @@
   .theme-light-bg {
     background: radial-gradient(
       circle at 50% 0%,
-      #f0fdf4 0%,
-      #ffffff 40%,
-      #dcfce7 100%
+      #e0f2fe 0%,
+      #f0f9ff 40%,
+      #e6fffa 100%
     );
     background-size: 100% 100%;
   }
 
   .theme-dark-bg {
-    background-color: #1a1e24; /* Lighter base for dark mode */
+    background-color: #0f172a; /* Deep Petroleum */
     background-image:
-      radial-gradient(circle at 50% -20%, #2d3748 0%, transparent 60%),
-      linear-gradient(0deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+      radial-gradient(
+        circle at 50% 20%,
+        rgba(6, 182, 212, 0.15) 0%,
+        transparent 50%
+      ),
+      linear-gradient(0deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
     background-size:
       100% 100%,
       40px 40px,
@@ -137,6 +146,11 @@
   .glossy-icon-container::before {
     content: '';
     @apply absolute top-0 left-0 right-0 h-1/2 bg-gradient-to-b from-white/50 to-transparent rounded-t-2xl pointer-events-none;
+  }
+
+  /* Text Styles for Branding */
+  .text-metallic {
+    @apply bg-clip-text text-transparent bg-gradient-to-b from-gray-100 via-white to-gray-300 drop-shadow-[0_2px_2px_rgba(0,0,0,0.5)];
   }
 }
 
@@ -212,6 +226,17 @@
     opacity: 1;
   }
 }
+@keyframes liquid-flow {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
 @keyframes glow {
   0%,
   100% {
@@ -240,4 +265,8 @@
 }
 .animate-glow {
   animation: glow 2s ease-in-out infinite;
+}
+.animate-liquid-flow {
+  background-size: 200% 200%;
+  animation: liquid-flow 3s ease infinite;
 }

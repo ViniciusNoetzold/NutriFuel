@@ -28,6 +28,7 @@ interface AppContextType {
   dailyLogs: DayLog[]
   logWater: (amount: number, date: string) => void
   logWeight: (weight: number, date: string, photo?: string) => void
+  logExercise: (calories: number, date: string) => void
   shoppingList: ShoppingItem[]
   addShoppingItem: (item: Omit<ShoppingItem, 'id' | 'checked'>) => void
   addIngredientsToShoppingList: (ingredients: Ingredient[]) => void
@@ -88,7 +89,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (!dailyLogs.find((l) => l.date === today)) {
       setDailyLogs((prev) => [
         ...prev,
-        { date: today, waterIntake: 0, weight: user.weight },
+        {
+          date: today,
+          waterIntake: 0,
+          weight: user.weight,
+          exerciseBurned: 0,
+        },
       ])
     }
   }, [])
@@ -96,7 +102,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const login = (u: string, p: string) => {
     if (u === 'user' && p === '1234') {
       setIsAuthenticated(true)
-      toast.success('Bem-vindo de volta!')
+      toast.success('Bem-vindo de volta ao NutriFuel!')
       return true
     }
     toast.error('Credenciais inválidas')
@@ -170,7 +176,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       })
     }
     setMealPlan((prev) => {
-      // Filter out existing slots for the range to avoid duplicates if re-generating
       const existingDates = new Set(newPlan.map((p) => p.date))
       const filteredPrev = prev.filter((p) => !existingDates.has(p.date))
       return [...filteredPrev, ...newPlan]
@@ -189,7 +194,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       } else {
         return [
           ...prev,
-          { date, waterIntake: Math.max(0, amount), weight: user.weight },
+          {
+            date,
+            waterIntake: Math.max(0, amount),
+            weight: user.weight,
+            exerciseBurned: 0,
+          },
         ]
       }
     })
@@ -219,10 +229,45 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             : l,
         )
       } else {
-        return [...prev, { date, waterIntake: 0, weight: weight, photo: photo }]
+        return [
+          ...prev,
+          {
+            date,
+            waterIntake: 0,
+            weight: weight,
+            photo: photo,
+            exerciseBurned: 0,
+          },
+        ]
       }
     })
     updateUser({ weight })
+  }
+
+  const logExercise = (calories: number, date: string) => {
+    setDailyLogs((prev) => {
+      const existing = prev.find((l) => l.date === date)
+      if (existing) {
+        return prev.map((l) =>
+          l.date === date
+            ? {
+                ...l,
+                exerciseBurned: (l.exerciseBurned || 0) + calories,
+              }
+            : l,
+        )
+      } else {
+        return [
+          ...prev,
+          {
+            date,
+            waterIntake: 0,
+            weight: user.weight,
+            exerciseBurned: calories,
+          },
+        ]
+      }
+    })
   }
 
   const resetPR = () => setHasNewPR(false)
@@ -266,8 +311,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const getDailyNutrition = (date: string) => {
-    // Only count completed meals for "consumed" nutrition? Or all planned?
-    // Usually planning apps show what's planned. Let's stick to planned for total, but maybe can differentiate later.
     const slots = mealPlan.filter((s) => s.date === date)
     const nutrition = { calories: 0, protein: 0, carbs: 0, fats: 0 }
     slots.forEach((slot) => {
@@ -314,6 +357,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         dailyLogs,
         logWater,
         logWeight,
+        logExercise,
         shoppingList,
         addShoppingItem,
         addIngredientsToShoppingList,

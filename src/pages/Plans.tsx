@@ -29,8 +29,8 @@ export default function Plans() {
         'Sem anúncios',
       ],
       icon: Star,
-      color: 'bg-gradient-to-br from-yellow-400 to-orange-500',
-      popular: true,
+      color: 'bg-gradient-to-br from-blue-400 to-cyan-500',
+      popular: false,
     },
     {
       name: 'Master',
@@ -41,15 +41,18 @@ export default function Plans() {
         'Acesso VIP total',
         'Prioridade no suporte',
         'Consultoria mensal',
+        'Economia de 14%',
       ],
       icon: Crown,
-      color: 'bg-gradient-to-br from-purple-500 to-pink-500',
-      popular: false,
+      color: 'bg-gradient-to-br from-yellow-400 to-orange-500',
+      popular: true, // Master is now the best/most popular
+      badge: 'Melhor Desconto',
+      savings: 'Economize R$ 60/ano',
     },
   ]
 
   return (
-    <div className="space-y-6 pb-24 px-1">
+    <div className="space-y-8 pb-24 px-1">
       <div className="text-center space-y-2 py-4">
         <h2 className="text-3xl font-bold tracking-tight text-shadow-lg">
           Níveis de Acesso
@@ -59,19 +62,19 @@ export default function Plans() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
         {plans.map((plan) => (
           <Card
             key={plan.name}
             className={`aero-card border-0 relative overflow-hidden transition-all duration-500 hover:scale-[1.02] ${
               plan.popular
-                ? 'ring-2 ring-primary shadow-[0_0_30px_rgba(var(--primary),0.3)]'
-                : ''
+                ? 'ring-2 ring-primary shadow-[0_0_40px_rgba(var(--primary),0.4)] scale-105 z-10'
+                : 'opacity-90 hover:opacity-100'
             }`}
           >
             {plan.popular && (
-              <div className="absolute top-0 right-0 bg-gradient-to-bl from-primary to-green-600 dark:to-cyan-600 text-white text-xs font-bold px-4 py-1.5 rounded-bl-2xl shadow-md z-10 border-b border-l border-white/20">
-                POPULAR
+              <div className="absolute top-0 right-0 bg-gradient-to-bl from-primary to-cyan-600 text-white text-xs font-bold px-4 py-1.5 rounded-bl-2xl shadow-md z-10 border-b border-l border-white/20">
+                {plan.badge || 'POPULAR'}
               </div>
             )}
 
@@ -84,7 +87,7 @@ export default function Plans() {
                 <plan.icon className="h-8 w-8 drop-shadow-md" />
               </div>
               <CardTitle className="text-xl font-bold">{plan.name}</CardTitle>
-              <div className="flex items-baseline justify-center gap-1 mt-2 text-shadow-sm">
+              <div className="flex flex-col items-center justify-center gap-1 mt-2 text-shadow-sm">
                 <span className="text-3xl font-extrabold text-foreground">
                   {plan.price}
                 </span>
@@ -93,8 +96,13 @@ export default function Plans() {
                     {plan.period}
                   </span>
                 )}
+                {plan.savings && (
+                  <span className="text-xs font-bold text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-900/30 px-2 py-0.5 rounded-full mt-1">
+                    {plan.savings}
+                  </span>
+                )}
               </div>
-              <p className="text-sm text-muted-foreground font-medium">
+              <p className="text-sm text-muted-foreground font-medium mt-2">
                 {plan.description}
               </p>
             </CardHeader>
@@ -117,7 +125,7 @@ export default function Plans() {
               <Button
                 className={`w-full h-12 rounded-full font-bold shadow-lg transition-transform active:scale-95 ${
                   plan.popular
-                    ? 'bg-gradient-to-r from-primary to-green-600 dark:to-cyan-600 hover:brightness-110 text-white border-white/20'
+                    ? 'bg-gradient-to-r from-primary to-cyan-600 hover:brightness-110 text-white border-white/20'
                     : 'aero-button hover:bg-white/40'
                 }`}
               >
