@@ -24,7 +24,7 @@ import {
   Trophy,
   Image as ImageIcon,
   X,
-  Maximize2,
+  Check,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import {
