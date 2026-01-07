@@ -22,6 +22,9 @@ import {
   LogOut,
   TrendingUp,
   Trophy,
+  Image as ImageIcon,
+  X,
+  Maximize2,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import {
@@ -45,8 +48,10 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
+  Dot,
 } from 'recharts'
 import { format, subDays } from 'date-fns'
+import { cn } from '@/lib/utils'
 
 export default function Profile() {
   const { user, updateUser, logout, dailyLogs, logWeight, hasNewPR, resetPR } =
@@ -56,8 +61,17 @@ export default function Profile() {
   const { setTheme, theme } = useTheme()
   const [avatarUrl, setAvatarUrl] = useState(user.avatar)
   const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false)
+
+  // Weight & Photo State
   const [newWeight, setNewWeight] = useState('')
+  const [weightPhoto, setWeightPhoto] = useState('')
+  const [isPhotoDialogOpen, setIsPhotoDialogOpen] = useState(false)
+
+  // Celebration State
   const [showConfetti, setShowConfetti] = useState(false)
+
+  // Chart Viewer State
+  const [viewingPhoto, setViewingPhoto] = useState<string | null>(null)
 
   // Chart Data Preparation
   const historyData = Array.from({ length: 7 }).map((_, i) => {
@@ -67,14 +81,17 @@ export default function Profile() {
 
     return {
       date: format(date, 'dd/MM'),
+      fullDate: dateStr,
       weight: log?.weight ?? null,
+      photo: log?.photo,
     }
   })
 
+  // Fill nulls for smooth line, but keep original for dots
   let lastWeight = user.weight
   const chartData = historyData.map((d) => {
     if (d.weight !== null) lastWeight = d.weight
-    return { ...d, weight: lastWeight }
+    return { ...d, weight: lastWeight, originalWeight: d.weight }
   })
 
   useEffect(() => {
@@ -97,9 +114,10 @@ export default function Profile() {
     }
 
     const today = format(new Date(), 'yyyy-MM-dd')
-    logWeight(weightVal, today)
+    logWeight(weightVal, today, weightPhoto)
     setNewWeight('')
-    toast.success('Peso registrado!')
+    setWeightPhoto('')
+    toast.success('Peso e progresso registrados!')
   }
 
   const handleSave = () => {
@@ -122,6 +140,33 @@ export default function Profile() {
     navigate('/login')
   }
 
+  const handleSimulatePhotoUpload = () => {
+    const randomPhoto = `https://img.usecurling.com/ppl/medium?gender=${user.gender}&seed=${Math.random()}`
+    setWeightPhoto(randomPhoto)
+    setIsPhotoDialogOpen(false)
+    toast.success('Foto carregada com sucesso!')
+  }
+
+  // Custom Dot to show photo indicator
+  const CustomDot = (props: any) => {
+    const { cx, cy, payload } = props
+    if (payload.photo) {
+      return (
+        <circle
+          cx={cx}
+          cy={cy}
+          r={6}
+          fill="hsl(var(--primary))"
+          stroke="white"
+          strokeWidth={2}
+          className="cursor-pointer hover:scale-150 transition-transform duration-300"
+          onClick={() => setViewingPhoto(payload.photo)}
+        />
+      )
+    }
+    return <Dot {...props} r={0} /> // Hide normal dots
+  }
+
   return (
     <div className="space-y-8 pb-24 relative">
       {/* Celebration Overlay */}
@@ -140,7 +185,33 @@ export default function Profile() {
         </div>
       )}
 
-      {/* Header Profile Section - Unified */}
+      {/* Photo Viewer Modal */}
+      <Dialog open={!!viewingPhoto} onOpenChange={() => setViewingPhoto(null)}>
+        <DialogContent className="aero-glass max-w-sm p-0 overflow-hidden border-0">
+          <div className="relative aspect-square">
+            <img
+              src={viewingPhoto || ''}
+              alt="Shape Evolution"
+              className="w-full h-full object-cover"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
+            <Button
+              size="icon"
+              variant="ghost"
+              className="absolute top-2 right-2 text-white hover:bg-black/20 rounded-full"
+              onClick={() => setViewingPhoto(null)}
+            >
+              <X className="h-5 w-5" />
+            </Button>
+            <div className="absolute bottom-4 left-4 text-white">
+              <p className="font-bold text-lg text-shadow">Registro Visual</p>
+              <p className="text-xs opacity-80">Evolução do Shape</p>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Header Profile Section */}
       <div className="flex flex-col items-center justify-center space-y-4 pt-4">
         <div className="relative group">
           <div className="absolute inset-0 bg-gradient-to-tr from-primary to-blue-300 rounded-full blur-lg opacity-50 group-hover:opacity-80 transition-opacity" />
@@ -209,43 +280,124 @@ export default function Profile() {
       </div>
 
       <div className="aero-glass p-6 space-y-8">
-        {/* Progress & Charts Section - Unified View */}
+        {/* Progress & Charts Section */}
         <section className="space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-lg flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" /> Progresso &
-              Métricas
+              <TrendingUp className="h-5 w-5 text-primary" /> Evolução do Shape
             </h3>
           </div>
 
-          {/* Weight Entry */}
-          <div className="flex items-end gap-3 p-4 bg-white/20 dark:bg-black/20 rounded-2xl border border-white/10 shadow-inner">
-            <div className="flex-1 space-y-2">
-              <Label htmlFor="weight-input" className="text-sm font-semibold">
-                Atualizar Peso (kg)
-              </Label>
-              <Input
-                id="weight-input"
-                placeholder={`${user.weight} kg`}
-                value={newWeight}
-                onChange={(e) => setNewWeight(e.target.value)}
-                type="number"
-                step="0.1"
-                className="aero-input h-10 text-lg"
-              />
+          {/* Weight & Photo Entry */}
+          <div className="flex flex-col gap-3 p-4 bg-white/20 dark:bg-black/20 rounded-2xl border border-white/10 shadow-inner">
+            <div className="flex gap-3 items-end">
+              <div className="flex-1 space-y-2">
+                <Label htmlFor="weight-input" className="text-sm font-semibold">
+                  Atualizar Peso (kg)
+                </Label>
+                <Input
+                  id="weight-input"
+                  placeholder={`${user.weight} kg`}
+                  value={newWeight}
+                  onChange={(e) => setNewWeight(e.target.value)}
+                  type="number"
+                  step="0.1"
+                  className="aero-input h-10 text-lg"
+                />
+              </div>
+
+              {/* Photo Upload Trigger */}
+              <Dialog
+                open={isPhotoDialogOpen}
+                onOpenChange={setIsPhotoDialogOpen}
+              >
+                <DialogTrigger asChild>
+                  <Button
+                    size="icon"
+                    variant="outline"
+                    className={cn(
+                      'h-10 w-10 border-dashed border-2 transition-all',
+                      weightPhoto
+                        ? 'border-primary bg-primary/10 text-primary'
+                        : 'border-muted-foreground/50 text-muted-foreground',
+                    )}
+                    title="Adicionar Foto do Shape"
+                  >
+                    {weightPhoto ? (
+                      <Check className="h-5 w-5" />
+                    ) : (
+                      <Camera className="h-5 w-5" />
+                    )}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="aero-glass">
+                  <DialogHeader>
+                    <DialogTitle>Registro Visual</DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4 py-4 text-center">
+                    <div className="w-full aspect-square bg-black/10 rounded-xl flex items-center justify-center mb-4 relative overflow-hidden group">
+                      {weightPhoto ? (
+                        <img
+                          src={weightPhoto}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <ImageIcon className="h-16 w-16 text-muted-foreground/30" />
+                      )}
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                        <Button
+                          variant="ghost"
+                          className="text-white"
+                          onClick={handleSimulatePhotoUpload}
+                        >
+                          <Camera className="mr-2 h-4 w-4" /> Tirar Foto
+                        </Button>
+                      </div>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Adicione uma foto para acompanhar sua evolução visual no
+                      gráfico.
+                    </p>
+                    <div className="flex gap-2">
+                      <Input
+                        placeholder="Cole uma URL..."
+                        className="aero-input"
+                        value={weightPhoto}
+                        onChange={(e) => setWeightPhoto(e.target.value)}
+                      />
+                      <Button
+                        onClick={handleSimulatePhotoUpload}
+                        variant="outline"
+                      >
+                        Simular
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              <Button
+                onClick={handleUpdateWeight}
+                className="h-10 px-6 aero-button"
+              >
+                Salvar
+              </Button>
             </div>
-            <Button
-              onClick={handleUpdateWeight}
-              className="h-10 px-6 aero-button"
-            >
-              Salvar
-            </Button>
+            {weightPhoto && (
+              <div className="flex items-center gap-2 text-xs text-primary font-medium bg-primary/10 p-2 rounded-lg self-start">
+                <ImageIcon className="h-3 w-3" /> Foto anexada
+                <X
+                  className="h-3 w-3 cursor-pointer ml-1 hover:text-red-500"
+                  onClick={() => setWeightPhoto('')}
+                />
+              </div>
+            )}
           </div>
 
-          {/* Weight Chart */}
+          {/* Interactive Weight Chart */}
           <Card className="aero-card border-0 bg-white/40 dark:bg-black/40">
             <CardContent className="p-4 pt-6">
-              <div className="h-[200px] w-full">
+              <div className="h-[250px] w-full">
                 <ChartContainer
                   config={{
                     weight: { label: 'Peso', color: 'hsl(var(--primary))' },
@@ -253,7 +405,18 @@ export default function Profile() {
                   className="h-full w-full"
                 >
                   <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData}>
+                    <AreaChart
+                      data={chartData}
+                      margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
+                      onClick={(e) => {
+                        if (e && e.activePayload && e.activePayload[0]) {
+                          const payload = e.activePayload[0].payload
+                          if (payload.photo) {
+                            setViewingPhoto(payload.photo)
+                          }
+                        }
+                      }}
+                    >
                       <defs>
                         <linearGradient
                           id="colorWeight"
@@ -299,10 +462,19 @@ export default function Profile() {
                         fillOpacity={1}
                         fill="url(#colorWeight)"
                         animationDuration={1500}
+                        dot={<CustomDot />}
+                        activeDot={{
+                          r: 6,
+                          strokeWidth: 0,
+                          className: 'animate-pulse',
+                        }}
                       />
                     </AreaChart>
                   </ResponsiveContainer>
                 </ChartContainer>
+                <p className="text-[10px] text-center text-muted-foreground mt-2">
+                  Toque nos pontos marcados para ver a foto do shape.
+                </p>
               </div>
             </CardContent>
           </Card>
@@ -310,7 +482,7 @@ export default function Profile() {
 
         <Separator className="bg-white/20" />
 
-        {/* Theme Switcher - Physical Toggle */}
+        {/* Theme Switcher */}
         <div className="flex items-center justify-between bg-gradient-to-br from-white/30 to-white/10 dark:from-white/10 dark:to-black/20 p-4 rounded-2xl border border-white/20 shadow-lg">
           <div className="flex items-center gap-3">
             <div className="p-2 rounded-full bg-black/10 dark:bg-white/10">

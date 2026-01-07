@@ -1,4 +1,47 @@
+/* Styling for Sonner Toasts to match High-Fidelity UI */
+
+/* Base Toast Style Overrides to remove rectangular artifacts and add transparency */
+[data-sonner-toaster] .toast {
+  background: rgba(255, 255, 255, 0.7) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  border: 1px solid rgba(255, 255, 255, 0.5) !important;
+  border-radius: 20px !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.1) !important;
+  color: hsl(var(--foreground)) !important;
+}
+
+/* Dark Mode overrides */
+.dark [data-sonner-toaster] .toast {
+  background: rgba(30, 30, 35, 0.7) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5) !important;
+}
+
+/* Fix for Action Buttons inside Toast */
+[data-sonner-toaster] [data-button] {
+  border-radius: 99px !important;
+  background-color: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  font-weight: 600 !important;
+}
+
+/* Fix for Cancel Buttons */
+[data-sonner-toaster] [data-cancel] {
+  border-radius: 99px !important;
+  background-color: transparent !important;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+/* Ensure no sharp corners or artifacts */
 section[aria-label^='Notifications'] {
   padding: 0 !important;
   margin: 0 !important;
+}
+
+/* Remove default rectangular shadows if any */
+[data-sonner-toaster] {
+  --normal-bg: transparent;
+  --normal-border: transparent;
 }

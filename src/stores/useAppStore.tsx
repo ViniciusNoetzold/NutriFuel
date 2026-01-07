@@ -27,7 +27,7 @@ interface AppContextType {
   autoGeneratePlan: (startDate: string) => void
   dailyLogs: DayLog[]
   logWater: (amount: number, date: string) => void
-  logWeight: (weight: number, date: string) => void
+  logWeight: (weight: number, date: string, photo?: string) => void
   shoppingList: ShoppingItem[]
   addShoppingItem: (item: Omit<ShoppingItem, 'id' | 'checked'>) => void
   addIngredientsToShoppingList: (ingredients: Ingredient[]) => void
@@ -37,6 +37,12 @@ interface AppContextType {
   notifications: Notification[]
   markNotificationsAsRead: () => void
   getDailyNutrition: (date: string) => {
+    calories: number
+    protein: number
+    carbs: number
+    fats: number
+  }
+  getConsumedNutrition: (date: string) => {
     calories: number
     protein: number
     carbs: number
@@ -189,7 +195,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     })
   }
 
-  const logWeight = (weight: number, date: string) => {
+  const logWeight = (weight: number, date: string, photo?: string) => {
     const previousWeights = dailyLogs
       .filter((l) => l.weight)
       .map((l) => l.weight!)
@@ -207,9 +213,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setDailyLogs((prev) => {
       const existing = prev.find((l) => l.date === date)
       if (existing) {
-        return prev.map((l) => (l.date === date ? { ...l, weight: weight } : l))
+        return prev.map((l) =>
+          l.date === date
+            ? { ...l, weight: weight, photo: photo || l.photo }
+            : l,
+        )
       } else {
-        return [...prev, { date, waterIntake: 0, weight: weight }]
+        return [...prev, { date, waterIntake: 0, weight: weight, photo: photo }]
       }
     })
     updateUser({ weight })
@@ -272,6 +282,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return nutrition
   }
 
+  const getConsumedNutrition = (date: string) => {
+    const slots = mealPlan.filter((s) => s.date === date && s.completed)
+    const nutrition = { calories: 0, protein: 0, carbs: 0, fats: 0 }
+    slots.forEach((slot) => {
+      const recipe = recipes.find((r) => r.id === slot.recipeId)
+      if (recipe) {
+        nutrition.calories += recipe.calories
+        nutrition.protein += recipe.protein
+        nutrition.carbs += recipe.carbs
+        nutrition.fats += recipe.fats
+      }
+    })
+    return nutrition
+  }
+
   return (
     <AppContext.Provider
       value={{
@@ -298,6 +323,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         notifications,
         markNotificationsAsRead,
         getDailyNutrition,
+        getConsumedNutrition,
         hasNewPR,
         resetPR,
       }}

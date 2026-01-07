@@ -102,10 +102,10 @@ export default function Layout() {
                 </Button>
               </PopoverTrigger>
               <PopoverContent
-                className="w-80 p-0 aero-glass border-white/40"
+                className="w-80 p-0 aero-glass border-white/40 dark:border-white/10 dark:bg-black/80 bg-white/80 backdrop-blur-xl shadow-2xl rounded-2xl overflow-hidden"
                 align="end"
               >
-                <div className="flex items-center justify-between px-4 py-3 border-b border-white/20 bg-white/10">
+                <div className="flex items-center justify-between px-4 py-3 border-b border-white/20 bg-white/10 dark:bg-white/5">
                   <h4 className="font-semibold text-sm">Notificações</h4>
                   <Button
                     variant="ghost"
@@ -124,8 +124,8 @@ export default function Layout() {
                         <div
                           key={notification.id}
                           className={cn(
-                            'p-4 text-sm transition-colors hover:bg-white/20',
-                            !notification.read && 'bg-white/10',
+                            'p-4 text-sm transition-colors hover:bg-white/20 dark:hover:bg-white/5',
+                            !notification.read && 'bg-white/10 dark:bg-white/5',
                           )}
                         >
                           <div className="flex justify-between items-start mb-1">

@@ -20,7 +20,7 @@ export interface Recipe {
   prepTime: number
   portions: number
   difficulty: 'Fácil' | 'Médio' | 'Difícil'
-  category: 'Salgadas' | 'Lanches' | 'Doces' | 'Drinks' // Updated categories
+  category: 'Salgadas' | 'Lanches' | 'Doces' | 'Drinks'
   tags: string[]
   ingredients: Ingredient[]
   instructions: string[]
@@ -38,6 +38,9 @@ export interface UserProfile {
   goal: 'Emagrecer' | 'Manter Peso' | 'Ganhar Massa'
   dietaryRestrictions: string[]
   calorieGoal: number
+  proteinGoal: number
+  carbsGoal: number
+  fatsGoal: number
   waterGoal: number
 }
 
@@ -47,13 +50,14 @@ export interface MealSlot {
   date: string // ISO date string YYYY-MM-DD
   type: MealType
   recipeId: string | null
-  completed?: boolean // Added for checklist functionality
+  completed?: boolean
 }
 
 export interface DayLog {
   date: string
   waterIntake: number // in ml
   weight?: number
+  photo?: string // URL to shape photo
 }
 
 export interface Notification {

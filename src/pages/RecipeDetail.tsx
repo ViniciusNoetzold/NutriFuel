@@ -271,18 +271,18 @@ export default function RecipeDetail() {
           </div>
         </div>
 
-        {/* Tabs */}
+        {/* Tabs - Updated for Better Legibility in Dark Mode */}
         <Tabs defaultValue="ingredients" className="w-full">
-          <TabsList className="grid w-full grid-cols-2 mb-6 h-14 p-1 bg-white/20 backdrop-blur-md rounded-2xl">
+          <TabsList className="grid w-full grid-cols-2 mb-6 h-14 p-1 bg-black/10 dark:bg-black/40 backdrop-blur-md rounded-2xl border border-white/10">
             <TabsTrigger
               value="ingredients"
-              className="h-full rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              className="h-full rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-white/90 data-[state=active]:text-black data-[state=active]:shadow-sm font-bold transition-all"
             >
               Ingredientes
             </TabsTrigger>
             <TabsTrigger
               value="method"
-              className="h-full rounded-xl data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              className="h-full rounded-xl data-[state=active]:bg-white dark:data-[state=active]:bg-white/90 data-[state=active]:text-black data-[state=active]:shadow-sm font-bold transition-all"
             >
               Preparo
             </TabsTrigger>
@@ -311,7 +311,7 @@ export default function RecipeDetail() {
               {recipe.ingredients.map((ing, i) => (
                 <div
                   key={i}
-                  className="flex items-center p-4 rounded-2xl border border-white/30 bg-white/40 backdrop-blur-sm gap-4 transition-all hover:bg-white/60"
+                  className="flex items-center p-4 rounded-2xl border border-white/30 dark:border-white/10 bg-white/40 dark:bg-white/5 backdrop-blur-sm gap-4 transition-all hover:bg-white/60 dark:hover:bg-white/10"
                 >
                   <Checkbox
                     id={`ing-${i}`}
@@ -326,7 +326,7 @@ export default function RecipeDetail() {
                     >
                       {ing.name}
                     </Label>
-                    <span className="text-muted-foreground font-medium bg-white/30 px-3 py-1 rounded-full text-sm">
+                    <span className="text-muted-foreground font-medium bg-white/30 dark:bg-white/10 px-3 py-1 rounded-full text-sm">
                       {ing.amount}
                     </span>
                   </div>
@@ -345,7 +345,7 @@ export default function RecipeDetail() {
                   {i !== recipe.instructions.length - 1 && (
                     <div className="absolute left-5 top-10 bottom-[-32px] w-0.5 bg-gradient-to-b from-primary/50 to-transparent" />
                   )}
-                  <p className="text-foreground/80 leading-relaxed pt-1 text-lg">
+                  <p className="text-foreground/90 leading-relaxed pt-1 text-lg font-medium">
                     {step}
                   </p>
                 </div>
