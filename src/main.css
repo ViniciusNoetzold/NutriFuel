@@ -35,26 +35,26 @@
   }
 
   .dark {
-    /* Obsidian Gym - Smoky Glass, Brushed Metal, Black Rubber */
-    --background: 220 10% 8%;
-    --foreground: 0 0% 90%;
-    --card: 220 10% 12%;
-    --card-foreground: 0 0% 90%;
-    --popover: 220 10% 12%;
-    --popover-foreground: 0 0% 90%;
-    --primary: 180 100% 50%; /* Neon Cyan */
+    /* Obsidian Gym - Updated Lighter Charcoal Palette for Readability */
+    --background: 220 14% 14%; /* Lighter than previous 8% */
+    --foreground: 220 10% 95%;
+    --card: 220 14% 18%; /* Lighter than previous 12% */
+    --card-foreground: 220 10% 95%;
+    --popover: 220 14% 18%;
+    --popover-foreground: 220 10% 95%;
+    --primary: 180 90% 55%; /* Slightly softer Neon Cyan */
     --primary-foreground: 222 47% 11%;
-    --secondary: 0 0% 20%; /* Dark Metal */
+    --secondary: 220 10% 25%; /* Lighter Dark Metal */
     --secondary-foreground: 0 0% 100%;
-    --muted: 220 10% 15%;
-    --muted-foreground: 220 10% 60%;
-    --accent: 220 10% 15%;
+    --muted: 220 10% 22%;
+    --muted-foreground: 220 10% 65%;
+    --accent: 220 10% 22%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
-    --border: 220 10% 20%;
-    --input: 220 10% 20%;
-    --ring: 180 100% 50%;
+    --border: 220 10% 25%;
+    --input: 220 10% 25%;
+    --ring: 180 90% 55%;
   }
 }
 
@@ -75,7 +75,7 @@
 
   /* Obsidian Glass (Dark Mode) */
   .obsidian-glass {
-    @apply bg-black/70 backdrop-blur-xl border border-white/5 shadow-[0_8px_32px_0_rgba(0,0,0,0.7),inset_0_1px_0_rgba(255,255,255,0.1)] rounded-[24px];
+    @apply bg-black/60 backdrop-blur-xl border border-white/10 shadow-[0_8px_32px_0_rgba(0,0,0,0.5),inset_0_1px_0_rgba(255,255,255,0.1)] rounded-[24px];
   }
 
   /* Adaptive Aero Glass */
@@ -85,17 +85,17 @@
 
   /* Cards */
   .aero-card {
-    @apply bg-white/60 dark:bg-[#1a1a1a]/80 backdrop-blur-md border border-white/60 dark:border-white/5 shadow-lg rounded-[20px] transition-all duration-300 hover:shadow-xl hover:bg-white/80 dark:hover:bg-[#252525]/90;
+    @apply bg-white/60 dark:bg-[#252a33]/80 backdrop-blur-md border border-white/60 dark:border-white/10 shadow-lg rounded-[20px] transition-all duration-300 hover:shadow-xl hover:bg-white/80 dark:hover:bg-[#2d3440]/90;
   }
 
   /* Buttons */
   .aero-button {
-    @apply relative overflow-hidden bg-gradient-to-b from-white/50 to-white/10 dark:from-white/10 dark:to-transparent border border-white/60 dark:border-white/10 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-sm transition-all duration-300 active:scale-95 active:shadow-inner rounded-full hover:brightness-110;
+    @apply relative overflow-hidden bg-gradient-to-b from-white/50 to-white/10 dark:from-white/15 dark:to-white/5 border border-white/60 dark:border-white/10 shadow-[0_4px_6px_-1px_rgba(0,0,0,0.05),inset_0_1px_0_rgba(255,255,255,0.6)] backdrop-blur-sm transition-all duration-300 active:scale-95 active:shadow-inner rounded-full hover:brightness-110;
   }
 
   /* Inputs */
   .aero-input {
-    @apply bg-white/50 dark:bg-black/40 border border-white/40 dark:border-white/10 backdrop-blur-sm rounded-xl focus:ring-2 focus:ring-primary/50 transition-all shadow-inner placeholder:text-muted-foreground/70;
+    @apply bg-white/50 dark:bg-black/30 border border-white/40 dark:border-white/10 backdrop-blur-sm rounded-xl focus:ring-2 focus:ring-primary/50 transition-all shadow-inner placeholder:text-muted-foreground/70;
   }
 
   /* Theme Backgrounds */
@@ -110,11 +110,11 @@
   }
 
   .theme-dark-bg {
-    background-color: #050505;
+    background-color: #1a1e24; /* Lighter base for dark mode */
     background-image:
-      radial-gradient(circle at 50% -20%, #1a202c 0%, transparent 60%),
-      linear-gradient(0deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+      radial-gradient(circle at 50% -20%, #2d3748 0%, transparent 60%),
+      linear-gradient(0deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
     background-size:
       100% 100%,
       40px 40px,
@@ -165,6 +165,11 @@
   }
   .transform-style-3d {
     transform-style: preserve-3d;
+  }
+  /* Texture utility for unified background texture */
+  .bg-texture-overlay {
+    background-image: url('https://img.usecurling.com/p/64/64?q=noise&color=gray');
+    background-repeat: repeat;
   }
 }
 

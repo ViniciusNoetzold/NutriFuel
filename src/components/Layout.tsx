@@ -55,7 +55,10 @@ export default function Layout() {
   }, [lastScrollY])
 
   return (
-    <div className="flex min-h-screen transition-colors duration-500 theme-light-bg dark:theme-dark-bg text-foreground overflow-hidden">
+    <div className="flex min-h-screen transition-colors duration-500 theme-light-bg dark:theme-dark-bg text-foreground overflow-hidden relative">
+      {/* Universal Background Texture Overlay */}
+      <div className="absolute inset-0 z-0 opacity-[0.04] pointer-events-none bg-texture-overlay mix-blend-overlay" />
+
       <Sidebar />
       <main
         ref={mainRef}
@@ -163,7 +166,7 @@ export default function Layout() {
             </Link>
           </div>
         </header>
-        <div className="container max-w-4xl mx-auto px-4 pb-20 animate-fade-in">
+        <div className="container max-w-4xl mx-auto px-4 pb-20 animate-fade-in relative z-10">
           <Outlet />
         </div>
       </main>

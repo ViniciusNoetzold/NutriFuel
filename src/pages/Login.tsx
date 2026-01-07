@@ -27,9 +27,9 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-gray-100 to-gray-300 dark:from-gray-900 dark:to-black">
+    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-gray-100 to-gray-300 dark:from-gray-800 dark:to-gray-900">
       {/* Background Texture Overlay */}
-      <div className="absolute inset-0 opacity-20 pointer-events-none bg-[url('https://img.usecurling.com/p/100/100?q=brushed%20metal&color=gray')] bg-repeat z-0" />
+      <div className="absolute inset-0 opacity-[0.04] pointer-events-none bg-texture-overlay mix-blend-overlay z-0" />
 
       {/* Center Light */}
       <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/10 to-white/30 dark:via-white/5 pointer-events-none" />
