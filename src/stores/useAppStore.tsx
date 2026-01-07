@@ -11,9 +11,13 @@ import {
 } from '@/lib/types'
 import { MOCK_USER, MOCK_RECIPES } from '@/lib/data'
 import { format } from 'date-fns'
+import { toast } from 'sonner'
 
 interface AppContextType {
   user: UserProfile
+  isAuthenticated: boolean
+  login: (username: string, pass: string) => boolean
+  logout: () => void
   updateUser: (data: Partial<UserProfile>) => void
   recipes: Recipe[]
   mealPlan: MealSlot[]
@@ -61,6 +65,7 @@ const MOCK_NOTIFICATIONS: Notification[] = [
 ]
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState<UserProfile>(MOCK_USER)
   const [recipes] = useState<Recipe[]>(MOCK_RECIPES)
   const [mealPlan, setMealPlan] = useState<MealSlot[]>([])
@@ -80,6 +85,21 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ])
     }
   }, [])
+
+  const login = (u: string, p: string) => {
+    if (u === 'user' && p === '1234') {
+      setIsAuthenticated(true)
+      toast.success('Bem-vindo de volta!')
+      return true
+    }
+    toast.error('Credenciais inválidas')
+    return false
+  }
+
+  const logout = () => {
+    setIsAuthenticated(false)
+    toast.info('Sessão encerrada')
+  }
 
   const updateUser = (data: Partial<UserProfile>) => {
     setUser((prev) => ({ ...prev, ...data }))
@@ -153,8 +173,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logWeight = (weight: number, date: string) => {
-    // Check for PR (Simplistic: if new weight is closer to goal or just different in a good way)
-    // Assuming weight loss goal: if new weight < min(previous weights)
     const previousWeights = dailyLogs
       .filter((l) => l.weight)
       .map((l) => l.weight!)
@@ -164,7 +182,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (weight < minWeight && user.goal === 'Emagrecer') {
       setHasNewPR(true)
     } else if (weight > minWeight && user.goal === 'Ganhar Massa') {
-      // Logic for mass gain could be max weight
       const maxWeight =
         previousWeights.length > 0 ? Math.max(...previousWeights) : user.weight
       if (weight > maxWeight) setHasNewPR(true)
@@ -240,6 +257,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <AppContext.Provider
       value={{
         user,
+        isAuthenticated,
+        login,
+        logout,
         updateUser,
         recipes,
         mealPlan,

@@ -14,13 +14,24 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import { useState } from 'react'
-import { User, Sun, Moon } from 'lucide-react'
+import { User, Sun, Moon, Camera, LogOut } from 'lucide-react'
 import { useTheme } from 'next-themes'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { useNavigate } from 'react-router-dom'
 
 export default function Profile() {
-  const { user, updateUser } = useAppStore()
+  const { user, updateUser, logout } = useAppStore()
+  const navigate = useNavigate()
   const [formData, setFormData] = useState(user)
   const { setTheme, theme } = useTheme()
+  const [avatarUrl, setAvatarUrl] = useState(user.avatar)
+  const [isAvatarDialogOpen, setIsAvatarDialogOpen] = useState(false)
 
   const handleSave = () => {
     updateUser(formData)
@@ -29,6 +40,17 @@ export default function Profile() {
 
   const handleChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleAvatarChange = () => {
+    handleChange('avatar', avatarUrl)
+    setIsAvatarDialogOpen(false)
+    toast.success('Foto atualizada!')
+  }
+
+  const handleLogout = () => {
+    logout()
+    navigate('/login')
   }
 
   return (
@@ -42,6 +64,52 @@ export default function Profile() {
               <User className="h-12 w-12" />
             </AvatarFallback>
           </Avatar>
+          <Dialog
+            open={isAvatarDialogOpen}
+            onOpenChange={setIsAvatarDialogOpen}
+          >
+            <DialogTrigger asChild>
+              <Button
+                size="icon"
+                className="absolute bottom-0 right-0 rounded-full h-10 w-10 shadow-lg z-20 bg-white text-primary hover:bg-white/90"
+              >
+                <Camera className="h-5 w-5" />
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="aero-glass">
+              <DialogHeader>
+                <DialogTitle>Alterar Foto de Perfil</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <Label>URL da Imagem</Label>
+                <Input
+                  value={avatarUrl}
+                  onChange={(e) => setAvatarUrl(e.target.value)}
+                  className="aero-input"
+                  placeholder="https://..."
+                />
+                <div className="flex gap-2 justify-center">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() =>
+                      setAvatarUrl(
+                        `https://img.usecurling.com/ppl/medium?gender=${formData.gender}&seed=${Math.random()}`,
+                      )
+                    }
+                  >
+                    Gerar Aleatória
+                  </Button>
+                </div>
+                <Button
+                  onClick={handleAvatarChange}
+                  className="w-full aero-button"
+                >
+                  Salvar Foto
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
         <div className="text-center">
           <h2 className="text-2xl font-bold text-shadow">{formData.name}</h2>
@@ -202,6 +270,14 @@ export default function Profile() {
           onClick={handleSave}
         >
           Salvar Alterações
+        </Button>
+
+        <Button
+          variant="ghost"
+          className="w-full text-red-500 hover:bg-red-100/20 hover:text-red-600"
+          onClick={handleLogout}
+        >
+          <LogOut className="mr-2 h-4 w-4" /> Sair
         </Button>
       </div>
     </div>

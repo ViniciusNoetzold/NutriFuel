@@ -1,24 +1,29 @@
 import { useAppStore } from '@/stores/useAppStore'
 import { format } from 'date-fns'
-import { Plus, Minus, Droplets, ChevronRight } from 'lucide-react'
+import {
+  Plus,
+  Minus,
+  Droplets,
+  ChevronRight,
+  Calendar,
+  Scale,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { Link } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
+import { GlossyCardButton } from '@/components/GlossyCardButton'
 
 export default function Index() {
   const { user, dailyLogs, logWater, getDailyNutrition, mealPlan, recipes } =
     useAppStore()
+  const navigate = useNavigate()
   const today = format(new Date(), 'yyyy-MM-dd')
   const todayLog = dailyLogs.find((l) => l.date === today) || {
     waterIntake: 0,
     weight: user.weight,
   }
   const nutrition = getDailyNutrition(today)
-  const caloriesPct = Math.min(
-    100,
-    Math.round((nutrition.calories / user.calorieGoal) * 100),
-  )
 
   const todayMeals = mealPlan
     .filter((slot) => slot.date === today)
@@ -35,7 +40,7 @@ export default function Index() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 pb-20">
       {/* Hero Section */}
       <div className="flex flex-col md:flex-row items-center gap-6">
         <div className="flex-1 space-y-2">
@@ -50,7 +55,7 @@ export default function Index() {
 
       {/* Central Water Bubble / Weight Display */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <Card className="aero-glass border-0 relative overflow-hidden min-h-[300px] flex items-center justify-center">
+        <Card className="aero-glass border-0 relative overflow-hidden min-h-[300px] flex items-center justify-center transition-all duration-700 hover:shadow-2xl">
           <CardContent className="p-6 text-center z-10 w-full">
             <h3 className="text-lg font-semibold mb-6 text-muted-foreground uppercase tracking-widest">
               Status Atual
@@ -147,24 +152,18 @@ export default function Index() {
             </CardContent>
           </Card>
 
-          {/* Quick Actions */}
+          {/* Quick Actions with Glossy Icons */}
           <div className="grid grid-cols-2 gap-4">
-            <Link to="/plan" className="block">
-              <div className="aero-card p-4 flex flex-col items-center justify-center h-32 text-center group">
-                <span className="text-3xl mb-2 group-hover:scale-110 transition-transform">
-                  📅
-                </span>
-                <span className="font-bold text-sm">Ver Plano</span>
-              </div>
-            </Link>
-            <Link to="/progress" className="block">
-              <div className="aero-card p-4 flex flex-col items-center justify-center h-32 text-center group">
-                <span className="text-3xl mb-2 group-hover:scale-110 transition-transform">
-                  📈
-                </span>
-                <span className="font-bold text-sm">Registrar Peso</span>
-              </div>
-            </Link>
+            <GlossyCardButton
+              icon={Calendar}
+              title="Ver Plano"
+              onClick={() => navigate('/plan')}
+            />
+            <GlossyCardButton
+              icon={Scale}
+              title="Registrar Peso"
+              onClick={() => navigate('/progress')}
+            />
           </div>
         </div>
       </div>

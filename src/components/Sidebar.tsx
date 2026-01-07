@@ -7,6 +7,7 @@ import {
   User,
   TrendingUp,
   Dumbbell,
+  Crown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -20,6 +21,7 @@ export function Sidebar() {
     { icon: Calendar, label: 'Plano', href: '/plan' },
     { icon: ShoppingCart, label: 'Compras', href: '/shop' },
     { icon: TrendingUp, label: 'Progresso', href: '/progress' },
+    { icon: Crown, label: 'Planos', href: '/plans' },
     { icon: User, label: 'Perfil', href: '/profile' },
   ]
 

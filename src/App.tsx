@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Toaster } from '@/components/ui/toaster'
 import { Toaster as Sonner } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
@@ -11,8 +11,43 @@ import ShoppingList from './pages/ShoppingList'
 import Progress from './pages/Progress'
 import Profile from './pages/Profile'
 import NotFound from './pages/NotFound'
-import { AppProvider } from './stores/useAppStore'
+import Login from './pages/Login'
+import Plans from './pages/Plans'
+import { AppProvider, useAppStore } from './stores/useAppStore'
 import { ThemeProvider } from 'next-themes'
+
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated } = useAppStore()
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />
+  }
+  return <>{children}</>
+}
+
+const AppRoutes = () => {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route
+        element={
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
+        }
+      >
+        <Route path="/" element={<Index />} />
+        <Route path="/recipes" element={<Recipes />} />
+        <Route path="/recipes/:id" element={<RecipeDetail />} />
+        <Route path="/plan" element={<MealPlan />} />
+        <Route path="/shop" element={<ShoppingList />} />
+        <Route path="/progress" element={<Progress />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/plans" element={<Plans />} />
+      </Route>
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  )
+}
 
 const App = () => (
   <BrowserRouter
@@ -23,18 +58,7 @@ const App = () => (
         <TooltipProvider>
           <Toaster />
           <Sonner />
-          <Routes>
-            <Route element={<Layout />}>
-              <Route path="/" element={<Index />} />
-              <Route path="/recipes" element={<Recipes />} />
-              <Route path="/recipes/:id" element={<RecipeDetail />} />
-              <Route path="/plan" element={<MealPlan />} />
-              <Route path="/shop" element={<ShoppingList />} />
-              <Route path="/progress" element={<Progress />} />
-              <Route path="/profile" element={<Profile />} />
-            </Route>
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AppRoutes />
         </TooltipProvider>
       </AppProvider>
     </ThemeProvider>

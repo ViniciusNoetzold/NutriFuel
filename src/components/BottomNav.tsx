@@ -6,6 +6,7 @@ import {
   ShoppingCart,
   User,
   TrendingUp,
+  Crown,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -19,12 +20,13 @@ export function BottomNav() {
     { icon: Calendar, label: 'Plano', href: '/plan' },
     { icon: ShoppingCart, label: 'Compras', href: '/shop' },
     { icon: TrendingUp, label: 'Progresso', href: '/progress' },
+    { icon: Crown, label: 'Planos', href: '/plans' },
     { icon: User, label: 'Perfil', href: '/profile' },
   ]
 
   return (
-    <nav className="fixed bottom-4 left-4 right-4 z-50 aero-glass md:hidden pb-safe shadow-2xl">
-      <div className="flex h-16 items-center justify-around px-2">
+    <nav className="fixed bottom-4 left-4 right-4 z-50 aero-glass md:hidden pb-safe shadow-2xl overflow-x-auto">
+      <div className="flex h-16 items-center justify-between px-2 min-w-max md:min-w-0 md:justify-around gap-2">
         {items.map((item) => {
           const isActive = path === item.href
           return (
@@ -32,7 +34,7 @@ export function BottomNav() {
               key={item.href}
               to={item.href}
               className={cn(
-                'flex flex-col items-center justify-center space-y-1 rounded-2xl px-2 py-1 transition-all duration-300',
+                'flex flex-col items-center justify-center space-y-1 rounded-2xl px-3 py-1 transition-all duration-300',
                 isActive
                   ? 'text-primary -translate-y-2'
                   : 'text-muted-foreground hover:text-foreground',

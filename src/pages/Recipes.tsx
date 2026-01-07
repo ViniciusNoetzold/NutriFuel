@@ -54,14 +54,14 @@ export default function Recipes() {
   }
 
   return (
-    <div className="space-y-6 pb-20">
+    <div className="space-y-6 pb-24 px-1">
       {/* Search & Filter Bar */}
       <div className="flex gap-3 sticky top-20 z-30 py-2">
         <div className="relative flex-1 group">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
           <Input
             placeholder="Buscar receitas..."
-            className="pl-10 aero-input h-12"
+            className="pl-10 aero-input h-12 w-full"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
@@ -71,7 +71,7 @@ export default function Recipes() {
             <Button
               variant="outline"
               size="icon"
-              className={`h-12 w-12 rounded-xl aero-input border-0 ${
+              className={`h-12 w-12 flex-shrink-0 rounded-xl aero-input border-0 ${
                 activeFilters.length > 0 ? 'bg-primary/20 text-primary' : ''
               }`}
             >
@@ -123,13 +123,17 @@ export default function Recipes() {
         </Sheet>
       </div>
 
-      {/* Categories */}
-      <div className="flex gap-3 overflow-x-auto pb-4 -mx-4 px-4 scrollbar-hide">
+      {/* Categories - Mobile Scroll */}
+      <div className="flex gap-3 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide snap-x">
         {CATEGORIES.map((cat) => (
           <Button
             key={cat}
             variant={selectedCategory === cat ? 'default' : 'outline'}
-            className={`rounded-full flex-shrink-0 px-6 backdrop-blur-md transition-all duration-300 ${selectedCategory === cat ? 'aero-button border-0' : 'bg-white/30 border-white/40 hover:bg-white/50'}`}
+            className={`snap-center rounded-full flex-shrink-0 px-6 backdrop-blur-md transition-all duration-300 ${
+              selectedCategory === cat
+                ? 'aero-button border-0 text-white'
+                : 'bg-white/30 border-white/40 hover:bg-white/50 text-foreground'
+            }`}
             onClick={() => setSelectedCategory(cat)}
           >
             {cat}
@@ -164,10 +168,12 @@ export default function Recipes() {
         </div>
       )}
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+      {/* Grid - Strictly Responsive */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
         {filteredRecipes.map((recipe) => (
-          <RecipeCard key={recipe.id} recipe={recipe} />
+          <div key={recipe.id} className="w-full">
+            <RecipeCard recipe={recipe} />
+          </div>
         ))}
       </div>
 

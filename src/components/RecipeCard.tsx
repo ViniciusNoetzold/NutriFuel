@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { Clock, Flame, Star, Plus } from 'lucide-react'
+import { Clock, Flame, Plus } from 'lucide-react'
 import { Recipe } from '@/lib/types'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -20,15 +20,6 @@ export function RecipeCard({ recipe, onAdd }: RecipeCardProps) {
             alt={recipe.title}
             className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
-          <div className="absolute top-2 right-2">
-            <Badge
-              variant="secondary"
-              className="flex items-center gap-1 bg-white/80 backdrop-blur-md text-orange-600 shadow-sm border border-white/50"
-            >
-              <Star className="h-3 w-3 fill-orange-500 text-orange-500" />
-              {recipe.rating}
-            </Badge>
-          </div>
           <div className="absolute bottom-2 left-2 flex gap-1">
             <Badge
               variant="secondary"

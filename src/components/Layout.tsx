@@ -44,7 +44,7 @@ export default function Layout() {
       </div>
 
       <Sidebar />
-      <main className="flex-1 md:pl-64 pb-24 md:pb-0 z-10 relative">
+      <main className="flex-1 md:pl-64 pb-24 md:pb-0 z-10 relative h-screen overflow-y-auto">
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between px-4 aero-glass mx-4 mt-4 mb-4">
           <div className="flex items-center gap-2">
             {isRecipeDetail && (
@@ -64,6 +64,7 @@ export default function Layout() {
               {location.pathname === '/shop' && 'Compras'}
               {location.pathname === '/progress' && 'Progresso'}
               {location.pathname === '/profile' && 'Perfil'}
+              {location.pathname === '/plans' && 'Planos'}
               {isRecipeDetail && 'Detalhes'}
             </h1>
           </div>
@@ -147,7 +148,7 @@ export default function Layout() {
             </Link>
           </div>
         </header>
-        <div className="container max-w-4xl mx-auto px-4 animate-fade-in">
+        <div className="container max-w-4xl mx-auto px-4 pb-20 animate-fade-in">
           <Outlet />
         </div>
       </main>
