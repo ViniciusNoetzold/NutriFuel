@@ -6,10 +6,8 @@ import {
   Droplets,
   ChevronRight,
   Calendar,
-  Scale,
   Flame,
-  Utensils,
-  Activity,
+  Zap,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -41,19 +39,22 @@ export default function Index() {
 
   const burned = todayLog.exerciseBurned || 0
   const dailyGoal = user.calorieGoal
-  // Formula: Daily Goal - (Consumed + Exercise) -> Wait, if Exercise adds to the "budget", it should be Goal + Exercise - Consumed.
-  // But based on user story explicit formula "Daily Goal - (Consumed + Exercise)",
-  // I will assume "Exercise" acts as a credit.
-  // To make it functional as "Remaining":
-  // Remaining = (Goal + Exercise) - Consumed
   const remainingCalories = dailyGoal + burned - consumed.calories
 
-  // Progress for liquid bar (Consumed / (Goal + Exercise))
+  // Progress for Circular Bar (Consumed / (Goal + Exercise))
   const totalBudget = dailyGoal + burned
   const progressPercentCalories = Math.min(
     100,
     (consumed.calories / totalBudget) * 100,
   )
+
+  // Circular Progress Dimensions
+  const radius = 80
+  const stroke = 12
+  const normalizedRadius = radius - stroke * 2
+  const circumference = normalizedRadius * 2 * Math.PI
+  const strokeDashoffset =
+    circumference - (progressPercentCalories / 100) * circumference
 
   const todayMeals = mealPlan
     .filter((slot) => slot.date === today)
@@ -95,7 +96,7 @@ export default function Index() {
         <CardContent className="p-6 relative z-10">
           <div className="flex justify-between items-center mb-6">
             <h3 className="text-lg font-semibold text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-              <Activity className="w-5 h-5 text-primary" />
+              <Zap className="w-5 h-5 text-primary fill-primary/20" />
               Status
             </h3>
             <span className="text-xs font-bold bg-white/30 px-2 py-1 rounded-lg text-foreground/70">
@@ -104,30 +105,95 @@ export default function Index() {
           </div>
 
           <div className="flex flex-col items-center gap-6">
-            {/* Primary Metric: Remaining Calories */}
-            <div className="text-center relative">
-              <p className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-b from-primary to-cyan-600 dark:to-cyan-400 drop-shadow-sm">
-                {Math.floor(remainingCalories)}
-              </p>
-              <p className="text-sm font-bold text-muted-foreground uppercase tracking-wide mt-1">
-                Calorias Restantes
-              </p>
-              <div className="text-xs text-muted-foreground/60 mt-2 font-medium">
-                Meta: {dailyGoal} + Treino: {burned} - Consumo:{' '}
-                {consumed.calories}
-              </div>
-            </div>
-
-            {/* Liquid Progress Bar */}
-            <div className="w-full max-w-md h-8 bg-black/5 dark:bg-white/10 rounded-full overflow-hidden border border-white/30 shadow-inner relative">
-              <div
-                className="h-full bg-gradient-to-r from-primary via-cyan-400 to-blue-500 animate-liquid-flow shadow-[0_0_20px_rgba(6,182,212,0.6)] relative"
-                style={{ width: `${progressPercentCalories}%` }}
+            {/* Primary Metric: Circular Progress with Fire Icon */}
+            <div className="relative w-64 h-64 flex items-center justify-center">
+              {/* SVG Circle */}
+              <svg
+                className="w-full h-full rotate-[-90deg] drop-shadow-xl"
+                viewBox="0 0 200 200"
               >
-                {/* Liquid Glare */}
-                <div className="absolute top-0 left-0 right-0 h-1/2 bg-white/40 rounded-t-full" />
-                {/* Bubbles */}
-                <div className="absolute inset-0 opacity-50 bg-[url('https://img.usecurling.com/p/64/64?q=bubbles&color=white')] bg-repeat-x animate-liquid-flow mix-blend-overlay" />
+                <defs>
+                  <linearGradient
+                    id="progressGradient"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="0%"
+                  >
+                    <stop offset="0%" stopColor="#22c55e" />{' '}
+                    {/* green-500 start */}
+                    <stop offset="100%" stopColor="#06b6d4" />{' '}
+                    {/* cyan-500 end */}
+                  </linearGradient>
+                  {/* Glossy Reflection Gradient */}
+                  <linearGradient
+                    id="glossReflection"
+                    x1="0%"
+                    y1="0%"
+                    x2="100%"
+                    y2="100%"
+                  >
+                    <stop offset="0%" stopColor="white" stopOpacity="0.4" />
+                    <stop offset="100%" stopColor="transparent" />
+                  </linearGradient>
+                </defs>
+
+                {/* Track Background */}
+                <circle
+                  cx="100"
+                  cy="100"
+                  r={normalizedRadius}
+                  fill="transparent"
+                  stroke="currentColor"
+                  strokeWidth={stroke}
+                  className="text-black/5 dark:text-white/5"
+                />
+
+                {/* Progress Arc */}
+                <circle
+                  cx="100"
+                  cy="100"
+                  r={normalizedRadius}
+                  fill="transparent"
+                  stroke="url(#progressGradient)"
+                  strokeWidth={stroke}
+                  strokeDasharray={`${circumference} ${circumference}`}
+                  style={{ strokeDashoffset }}
+                  strokeLinecap="round"
+                  className="transition-[stroke-dashoffset] duration-1000 ease-out drop-shadow-[0_0_8px_rgba(6,182,212,0.4)]"
+                />
+
+                {/* Optional: Glassy overlay on the stroke for extra Frutiger feel */}
+                <circle
+                  cx="100"
+                  cy="100"
+                  r={normalizedRadius}
+                  fill="transparent"
+                  stroke="url(#glossReflection)"
+                  strokeWidth={stroke}
+                  strokeDasharray={`${circumference} ${circumference}`}
+                  style={{ strokeDashoffset }}
+                  strokeLinecap="round"
+                  className="transition-[stroke-dashoffset] duration-1000 ease-out pointer-events-none"
+                />
+              </svg>
+
+              {/* Inner Content - Fire & Calories */}
+              <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
+                <div className="mb-2 p-3 bg-gradient-to-br from-orange-400 to-red-600 rounded-full shadow-[0_4px_12px_rgba(249,115,22,0.5),inset_0_2px_4px_rgba(255,255,255,0.4)] border border-white/40 backdrop-blur-sm group">
+                  <Flame className="w-7 h-7 text-white fill-white animate-pulse" />
+                </div>
+                <div className="text-center">
+                  <p className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-b from-primary to-cyan-600 dark:to-cyan-400 drop-shadow-sm leading-none">
+                    {Math.floor(remainingCalories)}
+                  </p>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
+                    Kcal Restantes
+                  </p>
+                  <p className="text-[9px] text-muted-foreground/60 mt-1 font-medium">
+                    Meta: {dailyGoal}
+                  </p>
+                </div>
               </div>
             </div>
 
@@ -155,7 +221,7 @@ export default function Index() {
               ].map((m) => (
                 <div
                   key={m.label}
-                  className="flex flex-col items-center p-3 rounded-2xl bg-white/20 dark:bg-white/5 border border-white/30 backdrop-blur-sm"
+                  className="flex flex-col items-center p-3 rounded-2xl bg-white/20 dark:bg-white/5 border border-white/30 backdrop-blur-sm shadow-sm transition-transform hover:scale-105"
                 >
                   <span className="text-xs font-bold text-muted-foreground mb-1">
                     {m.label}
@@ -201,7 +267,7 @@ export default function Index() {
                 </div>
               </div>
 
-              {/* Liquid Progress Bar */}
+              {/* Liquid Progress Bar for Water */}
               <div className="h-6 w-full bg-white/50 dark:bg-black/20 rounded-full overflow-hidden border border-white/30 shadow-inner mb-6 relative">
                 <div
                   className="h-full bg-gradient-to-r from-cyan-400 to-cyan-600 shadow-[0_0_20px_rgba(6,182,212,0.5)] transition-all duration-1000 ease-out animate-liquid-flow"
