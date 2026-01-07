@@ -17,6 +17,7 @@ import {
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 
+// Updated categories to match User Story requirements
 const CATEGORIES = ['Todas', 'Salgadas', 'Lanches', 'Sobremesas', 'Drinks']
 const DIETARY_FILTERS = [
   'Sem Glúten',

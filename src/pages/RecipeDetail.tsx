@@ -1,6 +1,15 @@
 import { useParams, useNavigate } from 'react-router-dom'
 import { useAppStore } from '@/stores/useAppStore'
-import { Clock, Users, Flame, ChefHat, Heart, Share2, Plus } from 'lucide-react'
+import {
+  Clock,
+  Users,
+  Flame,
+  ChefHat,
+  Heart,
+  Share2,
+  Plus,
+  ShoppingCart,
+} from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
@@ -13,6 +22,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Select,
   SelectContent,
@@ -25,7 +35,7 @@ import { format } from 'date-fns'
 
 export default function RecipeDetail() {
   const { id } = useParams()
-  const { recipes, addMealToPlan } = useAppStore()
+  const { recipes, addMealToPlan, addIngredientsToShoppingList } = useAppStore()
   const navigate = useNavigate()
   const recipe = recipes.find((r) => r.id === id)
 
@@ -34,16 +44,39 @@ export default function RecipeDetail() {
   )
   const [selectedMealType, setSelectedMealType] = useState<string>('Almoço')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [selectedIngredients, setSelectedIngredients] = useState<string[]>([])
 
   if (!recipe) {
     return <div className="p-8 text-center">Receita não encontrada.</div>
   }
 
   const handleAddToPlan = () => {
-    // Cast string to MealType (safe because of select options)
     addMealToPlan(selectedDate, selectedMealType as any, recipe.id)
     toast.success(`${recipe.title} adicionado ao plano!`)
     setIsDialogOpen(false)
+  }
+
+  const handleToggleIngredient = (name: string) => {
+    setSelectedIngredients((prev) =>
+      prev.includes(name) ? prev.filter((i) => i !== name) : [...prev, name],
+    )
+  }
+
+  const handleAddIngredientsToShop = () => {
+    const ingredientsToAdd = recipe.ingredients.filter((ing) =>
+      selectedIngredients.includes(ing.name),
+    )
+
+    if (ingredientsToAdd.length === 0) {
+      toast.error('Selecione pelo menos um ingrediente.')
+      return
+    }
+
+    addIngredientsToShoppingList(ingredientsToAdd)
+    toast.success(
+      `${ingredientsToAdd.length} itens adicionados à lista de compras!`,
+    )
+    setSelectedIngredients([])
   }
 
   return (
@@ -188,13 +221,42 @@ export default function RecipeDetail() {
             <TabsTrigger value="method">Preparo</TabsTrigger>
           </TabsList>
           <TabsContent value="ingredients" className="space-y-4">
+            <div className="flex justify-between items-center mb-2">
+              <p className="text-sm text-muted-foreground">
+                Selecione para comprar
+              </p>
+              {selectedIngredients.length > 0 && (
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  onClick={handleAddIngredientsToShop}
+                >
+                  <ShoppingCart className="h-3 w-3 mr-2" /> Adicionar (
+                  {selectedIngredients.length})
+                </Button>
+              )}
+            </div>
             {recipe.ingredients.map((ing, i) => (
               <div
                 key={i}
-                className="flex items-center justify-between p-3 rounded-lg border bg-card"
+                className="flex items-center p-3 rounded-lg border bg-card gap-3"
               >
-                <span className="font-medium">{ing.name}</span>
-                <span className="text-muted-foreground">{ing.amount}</span>
+                <Checkbox
+                  id={`ing-${i}`}
+                  checked={selectedIngredients.includes(ing.name)}
+                  onCheckedChange={() => handleToggleIngredient(ing.name)}
+                />
+                <div className="flex-1 flex justify-between items-center">
+                  <Label
+                    htmlFor={`ing-${i}`}
+                    className="font-medium cursor-pointer"
+                  >
+                    {ing.name}
+                  </Label>
+                  <span className="text-muted-foreground text-sm">
+                    {ing.amount}
+                  </span>
+                </div>
               </div>
             ))}
           </TabsContent>

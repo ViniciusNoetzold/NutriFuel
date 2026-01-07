@@ -14,6 +14,7 @@ import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { Separator } from '@/components/ui/separator'
 import { toast } from 'sonner'
 import { useState } from 'react'
+import { User } from 'lucide-react'
 
 export default function Profile() {
   const { user, updateUser } = useAppStore()
@@ -34,7 +35,9 @@ export default function Profile() {
         <div className="relative">
           <Avatar className="h-24 w-24 border-4 border-background shadow-xl">
             <AvatarImage src={formData.avatar} />
-            <AvatarFallback>User</AvatarFallback>
+            <AvatarFallback>
+              <User className="h-12 w-12" />
+            </AvatarFallback>
           </Avatar>
           <Button
             size="icon"
@@ -56,6 +59,30 @@ export default function Profile() {
         <div className="space-y-4">
           <h3 className="font-semibold text-lg">Dados Pessoais</h3>
           <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="age">Idade</Label>
+              <Input
+                id="age"
+                type="number"
+                value={formData.age}
+                onChange={(e) => handleChange('age', Number(e.target.value))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gender">Gênero</Label>
+              <Select
+                value={formData.gender}
+                onValueChange={(val) => handleChange('gender', val)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="male">Masculino</SelectItem>
+                  <SelectItem value="female">Feminino</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="space-y-2">
               <Label htmlFor="weight">Peso (kg)</Label>
               <Input
@@ -142,29 +169,48 @@ export default function Profile() {
         <Separator />
 
         <div className="space-y-4">
-          <h3 className="font-semibold text-lg">Preferências</h3>
+          <h3 className="font-semibold text-lg">Restrições e Preferências</h3>
           <div className="flex items-center justify-between">
             <Label htmlFor="notif" className="text-base font-normal">
               Notificações de Água
             </Label>
             <Switch id="notif" defaultChecked />
           </div>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="diet-vegan" className="text-base font-normal">
-              Modo Vegetariano
+          <div className="space-y-2 pt-2">
+            <Label className="text-base font-normal mb-2 block">
+              Restrições Alimentares
             </Label>
-            <Switch
-              id="diet-vegan"
-              checked={formData.dietaryRestrictions.includes('Vegetariano')}
-              onCheckedChange={(checked) => {
-                const newRestrictions = checked
-                  ? [...formData.dietaryRestrictions, 'Vegetariano']
-                  : formData.dietaryRestrictions.filter(
-                      (r) => r !== 'Vegetariano',
-                    )
-                handleChange('dietaryRestrictions', newRestrictions)
-              }}
-            />
+            <div className="flex flex-wrap gap-2">
+              {['Sem Glúten', 'Sem Lactose', 'Vegetariano', 'Vegan'].map(
+                (restriction) => (
+                  <div
+                    key={restriction}
+                    className="flex items-center gap-2 border p-2 rounded-md bg-card"
+                  >
+                    <Switch
+                      id={`r-${restriction}`}
+                      checked={formData.dietaryRestrictions.includes(
+                        restriction,
+                      )}
+                      onCheckedChange={(checked) => {
+                        const newRestrictions = checked
+                          ? [...formData.dietaryRestrictions, restriction]
+                          : formData.dietaryRestrictions.filter(
+                              (r) => r !== restriction,
+                            )
+                        handleChange('dietaryRestrictions', newRestrictions)
+                      }}
+                    />
+                    <Label
+                      htmlFor={`r-${restriction}`}
+                      className="cursor-pointer"
+                    >
+                      {restriction}
+                    </Label>
+                  </div>
+                ),
+              )}
+            </div>
           </div>
         </div>
 

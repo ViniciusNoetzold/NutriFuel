@@ -54,3 +54,16 @@ export interface DayLog {
   waterIntake: number // in ml
   weight?: number
 }
+
+export interface Notification {
+  id: string
+  title: string
+  message: string
+  date: string
+  read: boolean
+}
+
+export interface ShoppingItem extends Ingredient {
+  id: string
+  checked: boolean
+}

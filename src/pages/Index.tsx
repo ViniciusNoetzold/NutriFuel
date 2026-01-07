@@ -1,13 +1,11 @@
-import { useState } from 'react'
 import { useAppStore } from '@/stores/useAppStore'
 import { format } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
 import { Plus, Minus, Droplets, ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Progress } from '@/components/ui/progress'
 import { Link } from 'react-router-dom'
-import { RecipeCard } from '@/components/RecipeCard'
+import { toast } from 'sonner'
 
 export default function Index() {
   const { user, dailyLogs, logWater, getDailyNutrition, mealPlan, recipes } =
@@ -33,6 +31,9 @@ export default function Index() {
 
   const handleWater = (amount: number) => {
     logWater(amount, today)
+    if (amount > 0) {
+      toast.success('Hidratação registrada!')
+    }
   }
 
   return (
@@ -45,11 +46,6 @@ export default function Index() {
           </h2>
           <p className="text-muted-foreground">Vamos manter o foco hoje?</p>
         </div>
-        <img
-          src={user.avatar}
-          alt="User"
-          className="h-10 w-10 rounded-full border-2 border-primary"
-        />
       </div>
 
       {/* Summary Card */}
@@ -147,16 +143,17 @@ export default function Index() {
             <Button
               variant="outline"
               className="flex-1 border-blue-200 text-blue-700 hover:bg-blue-100 hover:text-blue-800"
-              onClick={() => handleWater(250)}
+              onClick={() => handleWater(-250)}
+              disabled={todayLog.waterIntake <= 0}
             >
-              <Plus className="h-4 w-4 mr-1" /> 250ml
+              <Minus className="h-4 w-4 mr-1" /> 250ml
             </Button>
             <Button
               variant="outline"
               className="flex-1 border-blue-200 text-blue-700 hover:bg-blue-100 hover:text-blue-800"
-              onClick={() => handleWater(500)}
+              onClick={() => handleWater(250)}
             >
-              <Plus className="h-4 w-4 mr-1" /> 500ml
+              <Plus className="h-4 w-4 mr-1" /> 250ml
             </Button>
           </div>
         </CardContent>
@@ -179,32 +176,31 @@ export default function Index() {
               const recipe = recipes.find((r) => r.id === slot.recipeId)
               if (!recipe) return null
               return (
-                <div
-                  key={index}
-                  className="flex items-center gap-3 p-3 rounded-xl bg-card border shadow-sm"
-                >
-                  <img
-                    src={recipe.image}
-                    className="h-16 w-16 rounded-lg object-cover"
-                    alt={recipe.title}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs text-muted-foreground font-medium mb-0.5">
-                      {slot.type}
-                    </p>
-                    <p className="font-semibold truncate">{recipe.title}</p>
-                    <p className="text-xs text-orange-600 font-medium">
-                      {recipe.calories} kcal
-                    </p>
+                <Link to={`/recipes/${recipe.id}`} key={index}>
+                  <div className="flex items-center gap-3 p-3 rounded-xl bg-card border shadow-sm hover:shadow-md transition-all cursor-pointer mb-3">
+                    <img
+                      src={recipe.image}
+                      className="h-16 w-16 rounded-lg object-cover"
+                      alt={recipe.title}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs text-muted-foreground font-medium mb-0.5">
+                        {slot.type}
+                      </p>
+                      <p className="font-semibold truncate">{recipe.title}</p>
+                      <p className="text-xs text-orange-600 font-medium">
+                        {recipe.calories} kcal
+                      </p>
+                    </div>
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="text-muted-foreground"
+                    >
+                      <ChevronRight className="h-5 w-5" />
+                    </Button>
                   </div>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    className="text-muted-foreground"
-                  >
-                    <ChevronRight className="h-5 w-5" />
-                  </Button>
-                </div>
+                </Link>
               )
             })}
           </div>

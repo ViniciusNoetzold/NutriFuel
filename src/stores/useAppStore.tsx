@@ -6,14 +6,11 @@ import {
   DayLog,
   MealType,
   Ingredient,
+  Notification,
+  ShoppingItem,
 } from '@/lib/types'
 import { MOCK_USER, MOCK_RECIPES } from '@/lib/data'
 import { format } from 'date-fns'
-
-interface ShoppingItem extends Ingredient {
-  id: string
-  checked: boolean
-}
 
 interface AppContextType {
   user: UserProfile
@@ -25,9 +22,15 @@ interface AppContextType {
   autoGeneratePlan: (startDate: string) => void
   dailyLogs: DayLog[]
   logWater: (amount: number, date: string) => void
+  logWeight: (weight: number, date: string) => void
   shoppingList: ShoppingItem[]
+  addShoppingItem: (item: Omit<ShoppingItem, 'id' | 'checked'>) => void
+  addIngredientsToShoppingList: (ingredients: Ingredient[]) => void
   toggleShoppingItem: (id: string) => void
+  removeShoppingItem: (id: string) => void
   clearShoppingList: () => void
+  notifications: Notification[]
+  markNotificationsAsRead: () => void
   getDailyNutrition: (date: string) => {
     calories: number
     protein: number
@@ -38,41 +41,42 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
 
+const MOCK_NOTIFICATIONS: Notification[] = [
+  {
+    id: '1',
+    title: 'Hora de beber água!',
+    message: 'Você ainda não bateu sua meta de hoje.',
+    date: new Date().toISOString(),
+    read: false,
+  },
+  {
+    id: '2',
+    title: 'Nova Receita',
+    message: 'Confira a nova receita de Smoothie Verde.',
+    date: new Date(Date.now() - 86400000).toISOString(),
+    read: false,
+  },
+]
+
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<UserProfile>(MOCK_USER)
   const [recipes] = useState<Recipe[]>(MOCK_RECIPES)
   const [mealPlan, setMealPlan] = useState<MealSlot[]>([])
   const [dailyLogs, setDailyLogs] = useState<DayLog[]>([])
   const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([])
+  const [notifications, setNotifications] =
+    useState<Notification[]>(MOCK_NOTIFICATIONS)
 
   // Load initial empty logs or plan if needed
   useEffect(() => {
     const today = format(new Date(), 'yyyy-MM-dd')
     if (!dailyLogs.find((l) => l.date === today)) {
-      setDailyLogs((prev) => [...prev, { date: today, waterIntake: 0 }])
+      setDailyLogs((prev) => [
+        ...prev,
+        { date: today, waterIntake: 0, weight: user.weight },
+      ])
     }
   }, [])
-
-  // Sync shopping list when meal plan changes
-  useEffect(() => {
-    const newItems: ShoppingItem[] = []
-    mealPlan.forEach((slot) => {
-      if (slot.recipeId) {
-        const recipe = recipes.find((r) => r.id === slot.recipeId)
-        recipe?.ingredients.forEach((ing) => {
-          // Simple key generation to avoid duplicates if possible, or just list all
-          const id = `${slot.date}-${slot.type}-${ing.name}`
-          const existing = shoppingList.find((i) => i.id === id)
-          newItems.push({
-            ...ing,
-            id,
-            checked: existing ? existing.checked : false,
-          })
-        })
-      }
-    })
-    setShoppingList(newItems)
-  }, [mealPlan, recipes])
 
   const updateUser = (data: Partial<UserProfile>) => {
     setUser((prev) => ({ ...prev, ...data }))
@@ -94,7 +98,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const autoGeneratePlan = (startDate: string) => {
-    // Simple mock generator
     const days = 7
     const newPlan: MealSlot[] = []
     const types: MealType[] = ['Café da Manhã', 'Almoço', 'Lanche', 'Jantar']
@@ -105,7 +108,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const dateStr = format(date, 'yyyy-MM-dd')
 
       types.forEach((type) => {
-        // Pick random recipe based on type roughly
         let categoryFilter: string[] = []
         if (type === 'Café da Manhã' || type === 'Lanche')
           categoryFilter = ['Lanches', 'Sobremesas', 'Drinks']
@@ -139,9 +141,43 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             : l,
         )
       } else {
-        return [...prev, { date, waterIntake: amount }]
+        return [
+          ...prev,
+          { date, waterIntake: Math.max(0, amount), weight: user.weight },
+        ]
       }
     })
+  }
+
+  const logWeight = (weight: number, date: string) => {
+    setDailyLogs((prev) => {
+      const existing = prev.find((l) => l.date === date)
+      if (existing) {
+        return prev.map((l) => (l.date === date ? { ...l, weight: weight } : l))
+      } else {
+        return [...prev, { date, waterIntake: 0, weight: weight }]
+      }
+    })
+    // Also update user profile current weight
+    updateUser({ weight })
+  }
+
+  const addShoppingItem = (item: Omit<ShoppingItem, 'id' | 'checked'>) => {
+    const newItem: ShoppingItem = {
+      ...item,
+      id: Math.random().toString(36).substring(7),
+      checked: false,
+    }
+    setShoppingList((prev) => [...prev, newItem])
+  }
+
+  const addIngredientsToShoppingList = (ingredients: Ingredient[]) => {
+    const newItems = ingredients.map((ing) => ({
+      ...ing,
+      id: Math.random().toString(36).substring(7),
+      checked: false,
+    }))
+    setShoppingList((prev) => [...prev, ...newItems])
   }
 
   const toggleShoppingItem = (id: string) => {
@@ -152,8 +188,16 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
+  const removeShoppingItem = (id: string) => {
+    setShoppingList((prev) => prev.filter((item) => item.id !== id))
+  }
+
   const clearShoppingList = () => {
-    setShoppingList((prev) => prev.filter((item) => !item.checked))
+    setShoppingList([])
+  }
+
+  const markNotificationsAsRead = () => {
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
   }
 
   const getDailyNutrition = (date: string) => {
@@ -183,9 +227,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         autoGeneratePlan,
         dailyLogs,
         logWater,
+        logWeight,
         shoppingList,
+        addShoppingItem,
+        addIngredientsToShoppingList,
         toggleShoppingItem,
+        removeShoppingItem,
         clearShoppingList,
+        notifications,
+        markNotificationsAsRead,
         getDailyNutrition,
       }}
     >
