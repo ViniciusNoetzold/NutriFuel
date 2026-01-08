@@ -19,7 +19,10 @@ interface AppContextType {
   login: (username: string, pass: string) => boolean
   logout: () => void
   updateUser: (data: Partial<UserProfile>) => void
+  toggleWidget: (widget: string) => void
   recipes: Recipe[]
+  addRecipe: (recipe: Recipe) => void
+  toggleFavorite: (id: string) => void
   mealPlan: MealSlot[]
   addMealToPlan: (date: string, type: MealType, recipeId: string) => void
   removeMealFromPlan: (date: string, type: MealType) => void
@@ -29,6 +32,7 @@ interface AppContextType {
   logWater: (amount: number, date: string) => void
   logWeight: (weight: number, date: string, photo?: string) => void
   logExercise: (calories: number, date: string) => void
+  logSleep: (hours: number, date: string) => void
   shoppingList: ShoppingItem[]
   addShoppingItem: (item: Omit<ShoppingItem, 'id' | 'checked'>) => void
   addIngredientsToShoppingList: (ingredients: Ingredient[]) => void
@@ -37,6 +41,8 @@ interface AppContextType {
   clearShoppingList: () => void
   notifications: Notification[]
   markNotificationsAsRead: () => void
+  hydrationSettings: { enabled: boolean; sound: boolean }
+  toggleHydrationSettings: (setting: 'enabled' | 'sound') => void
   getDailyNutrition: (date: string) => {
     calories: number
     protein: number
@@ -75,13 +81,17 @@ const MOCK_NOTIFICATIONS: Notification[] = [
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
   const [user, setUser] = useState<UserProfile>(MOCK_USER)
-  const [recipes] = useState<Recipe[]>(MOCK_RECIPES as Recipe[])
+  const [recipes, setRecipes] = useState<Recipe[]>(MOCK_RECIPES as Recipe[])
   const [mealPlan, setMealPlan] = useState<MealSlot[]>([])
   const [dailyLogs, setDailyLogs] = useState<DayLog[]>([])
   const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([])
   const [notifications, setNotifications] =
     useState<Notification[]>(MOCK_NOTIFICATIONS)
   const [hasNewPR, setHasNewPR] = useState(false)
+  const [hydrationSettings, setHydrationSettings] = useState({
+    enabled: true,
+    sound: true,
+  })
 
   // Load initial empty logs or plan if needed
   useEffect(() => {
@@ -94,6 +104,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           waterIntake: 0,
           weight: user.weight,
           exerciseBurned: 0,
+          sleepHours: 0,
         },
       ])
     }
@@ -116,6 +127,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const updateUser = (data: Partial<UserProfile>) => {
     setUser((prev) => ({ ...prev, ...data }))
+  }
+
+  const toggleWidget = (widget: string) => {
+    setUser((prev) => {
+      const widgets = prev.visibleWidgets || []
+      if (widgets.includes(widget)) {
+        return {
+          ...prev,
+          visibleWidgets: widgets.filter((w) => w !== widget),
+        }
+      } else {
+        return {
+          ...prev,
+          visibleWidgets: [...widgets, widget],
+        }
+      }
+    })
+  }
+
+  const addRecipe = (recipe: Recipe) => {
+    setRecipes((prev) => [...prev, recipe])
+  }
+
+  const toggleFavorite = (id: string) => {
+    setRecipes((prev) =>
+      prev.map((r) => (r.id === id ? { ...r, isFavorite: !r.isFavorite } : r)),
+    )
   }
 
   const addMealToPlan = (date: string, type: MealType, recipeId: string) => {
@@ -199,6 +237,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             waterIntake: Math.max(0, amount),
             weight: user.weight,
             exerciseBurned: 0,
+            sleepHours: 0,
           },
         ]
       }
@@ -237,6 +276,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             weight: weight,
             photo: photo,
             exerciseBurned: 0,
+            sleepHours: 0,
           },
         ]
       }
@@ -264,6 +304,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             waterIntake: 0,
             weight: user.weight,
             exerciseBurned: calories,
+            sleepHours: 0,
+          },
+        ]
+      }
+    })
+  }
+
+  const logSleep = (hours: number, date: string) => {
+    setDailyLogs((prev) => {
+      const existing = prev.find((l) => l.date === date)
+      if (existing) {
+        return prev.map((l) =>
+          l.date === date ? { ...l, sleepHours: hours } : l,
+        )
+      } else {
+        return [
+          ...prev,
+          {
+            date,
+            waterIntake: 0,
+            weight: user.weight,
+            exerciseBurned: 0,
+            sleepHours: hours,
           },
         ]
       }
@@ -310,6 +373,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
   }
 
+  const toggleHydrationSettings = (setting: 'enabled' | 'sound') => {
+    setHydrationSettings((prev) => ({ ...prev, [setting]: !prev[setting] }))
+  }
+
   const getDailyNutrition = (date: string) => {
     const slots = mealPlan.filter((s) => s.date === date)
     const nutrition = { calories: 0, protein: 0, carbs: 0, fats: 0 }
@@ -348,7 +415,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         login,
         logout,
         updateUser,
+        toggleWidget,
         recipes,
+        addRecipe,
+        toggleFavorite,
         mealPlan,
         addMealToPlan,
         removeMealFromPlan,
@@ -358,6 +428,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         logWater,
         logWeight,
         logExercise,
+        logSleep,
         shoppingList,
         addShoppingItem,
         addIngredientsToShoppingList,
@@ -366,6 +437,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         clearShoppingList,
         notifications,
         markNotificationsAsRead,
+        hydrationSettings,
+        toggleHydrationSettings,
         getDailyNutrition,
         getConsumedNutrition,
         hasNewPR,

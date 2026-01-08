@@ -1,5 +1,13 @@
 import { Link, useLocation } from 'react-router-dom'
-import { Home, Search, Calendar, ShoppingCart, User, Crown } from 'lucide-react'
+import {
+  Home,
+  Search,
+  Calendar,
+  ShoppingCart,
+  User,
+  Crown,
+  TrendingUp,
+} from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface BottomNavProps {
@@ -14,8 +22,8 @@ export function BottomNav({ isVisible }: BottomNavProps) {
     { icon: Home, label: 'Início', href: '/' },
     { icon: Search, label: 'Receitas', href: '/recipes' },
     { icon: Calendar, label: 'Plano', href: '/plan' },
+    { icon: TrendingUp, label: 'Evo', href: '/evolution' },
     { icon: ShoppingCart, label: 'Lista', href: '/shop' },
-    { icon: Crown, label: 'Planos', href: '/plans' },
     { icon: User, label: 'Perfil', href: '/profile' },
   ]
 
@@ -26,7 +34,7 @@ export function BottomNav({ isVisible }: BottomNavProps) {
         isVisible ? 'translate-y-0' : 'translate-y-[150%]',
       )}
     >
-      <div className="flex h-16 items-center justify-around px-2 relative">
+      <div className="flex h-16 items-center justify-around px-1 relative">
         {items.map((item) => {
           const isActive = path === item.href
           return (
@@ -55,7 +63,7 @@ export function BottomNav({ isVisible }: BottomNavProps) {
                 />
                 <span
                   className={cn(
-                    'text-[10px] font-bold mt-0.5 transition-all duration-300',
+                    'text-[9px] font-bold mt-0.5 transition-all duration-300',
                     isActive
                       ? 'opacity-100 translate-y-0'
                       : 'opacity-0 translate-y-2 hidden',

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useAppStore } from '@/stores/useAppStore'
-import { Search, Filter, X } from 'lucide-react'
+import { Search, Filter, X, Plus, ScanLine, Heart } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -17,8 +17,9 @@ import {
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
+import { Link } from 'react-router-dom'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-// Reordered categories per User Story
 const CATEGORIES = ['Todas', 'Salgadas', 'Lanches', 'Doces', 'Drinks']
 const DIETARY_FILTERS = [
   'Sem Glúten',
@@ -34,6 +35,7 @@ export default function Recipes() {
   const [search, setSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('Todas')
   const [activeFilters, setActiveFilters] = useState<string[]>([])
+  const [showFavorites, setShowFavorites] = useState(false)
 
   const filteredRecipes = recipes.filter((recipe) => {
     const matchesSearch = recipe.title
@@ -44,7 +46,11 @@ export default function Recipes() {
     const matchesFilters = activeFilters.every((filter) =>
       recipe.tags.includes(filter),
     )
-    return matchesSearch && matchesCategory && matchesFilters
+    const matchesFavorites = !showFavorites || recipe.isFavorite
+
+    return (
+      matchesSearch && matchesCategory && matchesFilters && matchesFavorites
+    )
   })
 
   const toggleFilter = (filter: string) => {
@@ -96,7 +102,6 @@ export default function Recipes() {
                   {DIETARY_FILTERS.map((filter) => (
                     <div
                       key={filter}
-                      // Frosted glass UI: backdrop-blur, 30-40% opacity, 1px white border
                       className="frosted-glass flex items-center space-x-3 p-3 text-sm font-medium transition-all hover:bg-white/50 cursor-pointer"
                       onClick={() => toggleFilter(filter)}
                     >
@@ -127,6 +132,35 @@ export default function Recipes() {
         </Sheet>
       </div>
 
+      <div className="flex justify-between items-center px-1">
+        <Tabs
+          defaultValue="all"
+          className="w-[200px]"
+          onValueChange={(val) => setShowFavorites(val === 'fav')}
+        >
+          <TabsList className="grid w-full grid-cols-2 h-10 bg-white/40 dark:bg-white/10 p-1 rounded-lg">
+            <TabsTrigger value="all" className="text-xs">
+              Todas
+            </TabsTrigger>
+            <TabsTrigger value="fav" className="text-xs">
+              <Heart className="w-3 h-3 mr-1" /> Favoritas
+            </TabsTrigger>
+          </TabsList>
+        </Tabs>
+        <div className="flex gap-2">
+          <Link to="/recipes/scan">
+            <Button size="icon" variant="ghost" className="rounded-full">
+              <ScanLine className="h-5 w-5 text-primary" />
+            </Button>
+          </Link>
+          <Link to="/recipes/create">
+            <Button size="sm" className="aero-button rounded-full">
+              <Plus className="h-4 w-4 mr-1" /> Criar
+            </Button>
+          </Link>
+        </div>
+      </div>
+
       {/* Categories - Crystal Bubbles */}
       <div className="flex gap-3 overflow-x-auto pb-4 pt-2 -mx-4 px-4 scrollbar-hide snap-x">
         {CATEGORIES.map((cat) => (
@@ -141,7 +175,6 @@ export default function Recipes() {
             )}
           >
             <span className="relative z-10 text-shadow-sm">{cat}</span>
-            {/* Inner Glare for Crystal Effect */}
             <span className="absolute top-1 left-2 right-2 h-[2px] bg-white/60 rounded-full blur-[1px]" />
           </button>
         ))}

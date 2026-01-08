@@ -7,6 +7,10 @@ export interface Ingredient {
     | 'Laticínios'
     | 'Despensa'
     | 'Outros'
+  calories?: number // approximate calories per amount
+  protein?: number
+  carbs?: number
+  fats?: number
 }
 
 export interface Recipe {
@@ -25,6 +29,8 @@ export interface Recipe {
   ingredients: Ingredient[]
   instructions: string[]
   rating: number
+  isFavorite?: boolean
+  isCustom?: boolean
 }
 
 export interface UserProfile {
@@ -42,6 +48,7 @@ export interface UserProfile {
   carbsGoal: number
   fatsGoal: number
   waterGoal: number
+  visibleWidgets: string[] // 'macros', 'hydration', 'meals', 'sleep', 'content'
 }
 
 export type MealType = 'Café da Manhã' | 'Almoço' | 'Lanche' | 'Jantar'
@@ -59,6 +66,7 @@ export interface DayLog {
   weight?: number
   photo?: string // URL to shape photo
   exerciseBurned?: number // Calories burned
+  sleepHours?: number
 }
 
 export interface Notification {
@@ -72,4 +80,13 @@ export interface Notification {
 export interface ShoppingItem extends Ingredient {
   id: string
   checked: boolean
+}
+
+export interface Article {
+  id: string
+  title: string
+  excerpt: string
+  image: string
+  category: 'Nutrição' | 'Exercício' | 'Bem-estar'
+  readTime: string
 }

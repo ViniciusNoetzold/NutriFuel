@@ -1,4 +1,4 @@
-import { Recipe, UserProfile } from './types'
+import { Recipe, UserProfile, Article } from './types'
 
 export const MOCK_USER: UserProfile = {
   name: 'Alex Silva',
@@ -15,7 +15,36 @@ export const MOCK_USER: UserProfile = {
   carbsGoal: 200,
   fatsGoal: 70,
   waterGoal: 2500,
+  visibleWidgets: ['macros', 'hydration', 'meals', 'sleep', 'content'],
 }
+
+export const MOCK_ARTICLES: Article[] = [
+  {
+    id: '1',
+    title: 'O Poder da Hidratação no Treino',
+    excerpt:
+      'Descubra como a água influencia sua performance e recuperação muscular.',
+    image: 'https://img.usecurling.com/p/300/200?q=water%20gym',
+    category: 'Bem-estar',
+    readTime: '3 min',
+  },
+  {
+    id: '2',
+    title: 'Proteína: Antes ou Depois?',
+    excerpt: 'O guia definitivo sobre o timing de nutrientes para hipertrofia.',
+    image: 'https://img.usecurling.com/p/300/200?q=protein%20shake',
+    category: 'Nutrição',
+    readTime: '5 min',
+  },
+  {
+    id: '3',
+    title: '5 Alongamentos para Manhãs',
+    excerpt: 'Comece o dia com mais energia e menos dores nas costas.',
+    image: 'https://img.usecurling.com/p/300/200?q=stretching%20morning',
+    category: 'Exercício',
+    readTime: '4 min',
+  },
+]
 
 export const MOCK_RECIPES: Recipe[] = [
   {
@@ -32,10 +61,42 @@ export const MOCK_RECIPES: Recipe[] = [
     category: 'Salgadas',
     tags: ['Sem Glúten', 'Proteico'],
     ingredients: [
-      { name: 'Peito de Frango', amount: '150g', category: 'Carnes/Proteínas' },
-      { name: 'Quinoa Cozida', amount: '100g', category: 'Despensa' },
-      { name: 'Abacate', amount: '1/2 unid', category: 'Hortifrúti' },
-      { name: 'Tomate Cereja', amount: '50g', category: 'Hortifrúti' },
+      {
+        name: 'Peito de Frango',
+        amount: '150g',
+        category: 'Carnes/Proteínas',
+        calories: 165,
+        protein: 31,
+        carbs: 0,
+        fats: 3.6,
+      },
+      {
+        name: 'Quinoa Cozida',
+        amount: '100g',
+        category: 'Despensa',
+        calories: 120,
+        protein: 4,
+        carbs: 21,
+        fats: 1.9,
+      },
+      {
+        name: 'Abacate',
+        amount: '1/2 unid',
+        category: 'Hortifrúti',
+        calories: 160,
+        protein: 2,
+        carbs: 9,
+        fats: 15,
+      },
+      {
+        name: 'Tomate Cereja',
+        amount: '50g',
+        category: 'Hortifrúti',
+        calories: 9,
+        protein: 0.5,
+        carbs: 2,
+        fats: 0.1,
+      },
     ],
     instructions: [
       'Corte o peito de frango em cubos de 2cm e tempere com sal, pimenta e limão.',
@@ -45,6 +106,7 @@ export const MOCK_RECIPES: Recipe[] = [
       'Monte o bowl colocando a quinoa na base, o frango ao lado, e finalize com os vegetais.',
     ],
     rating: 4.8,
+    isFavorite: true,
   },
   {
     id: '2',
@@ -73,6 +135,7 @@ export const MOCK_RECIPES: Recipe[] = [
       'Despeje porções da massa e doure por cerca de 2 minutos de cada lado.',
     ],
     rating: 4.5,
+    isFavorite: false,
   },
   {
     id: '3',
@@ -102,6 +165,7 @@ export const MOCK_RECIPES: Recipe[] = [
       'Cozinhe por mais 3-4 minutos até o salmão estar no ponto e aspargos macios.',
     ],
     rating: 4.9,
+    isFavorite: false,
   },
   {
     id: '4',
@@ -131,6 +195,7 @@ export const MOCK_RECIPES: Recipe[] = [
       'Sirva imediatamente sem coar para aproveitar as fibras.',
     ],
     rating: 4.2,
+    isFavorite: true,
   },
   {
     id: '5',
@@ -160,6 +225,7 @@ export const MOCK_RECIPES: Recipe[] = [
       'Dobre a omelete ao meio e deixe dourar por mais 1 minuto.',
     ],
     rating: 4.6,
+    isFavorite: false,
   },
   {
     id: '6',
@@ -189,5 +255,6 @@ export const MOCK_RECIPES: Recipe[] = [
       'Cubra com o restante do iogurte e finalize com mais frutas e sementes de chia.',
     ],
     rating: 4.7,
+    isFavorite: false,
   },
 ]

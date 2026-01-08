@@ -22,9 +22,13 @@ export default function Layout() {
   const [showNavbar, setShowNavbar] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
 
-  const isRecipeDetail =
-    location.pathname.startsWith('/recipes/') &&
-    location.pathname !== '/recipes'
+  // Determine if back button should be shown
+  const isDetailPage =
+    (location.pathname.startsWith('/recipes/') &&
+      location.pathname !== '/recipes') ||
+    location.pathname === '/evolution' ||
+    location.pathname === '/recipes/create' ||
+    location.pathname === '/recipes/scan'
 
   const unreadCount = notifications.filter((n) => !n.read).length
 
@@ -66,7 +70,7 @@ export default function Layout() {
       >
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between px-4 aero-glass mx-4 mt-4 mb-4 transition-transform duration-300">
           <div className="flex items-center gap-2">
-            {isRecipeDetail && (
+            {isDetailPage && (
               <Button
                 variant="ghost"
                 size="icon"
@@ -83,7 +87,14 @@ export default function Layout() {
               {location.pathname === '/shop' && 'Compras'}
               {location.pathname === '/profile' && 'Perfil'}
               {location.pathname === '/plans' && 'Planos'}
-              {isRecipeDetail && 'Detalhes'}
+              {location.pathname === '/evolution' && 'Evolução'}
+              {location.pathname === '/recipes/create' && 'Nova Receita'}
+              {location.pathname === '/recipes/scan' && 'Scanner'}
+              {location.pathname.startsWith('/recipes/') &&
+                !['/recipes', '/recipes/create', '/recipes/scan'].includes(
+                  location.pathname,
+                ) &&
+                'Detalhes'}
             </h1>
           </div>
 

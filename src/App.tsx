@@ -12,8 +12,13 @@ import Profile from './pages/Profile'
 import NotFound from './pages/NotFound'
 import Login from './pages/Login'
 import Plans from './pages/Plans'
+import CreateRecipe from './pages/CreateRecipe'
+import Scanner from './pages/Scanner'
+import Evolution from './pages/Evolution'
 import { AppProvider, useAppStore } from './stores/useAppStore'
 import { ThemeProvider } from 'next-themes'
+import { useState, useEffect } from 'react'
+import { SplashScreen } from './components/SplashScreen'
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAppStore()
@@ -36,10 +41,13 @@ const AppRoutes = () => {
       >
         <Route path="/" element={<Index />} />
         <Route path="/recipes" element={<Recipes />} />
+        <Route path="/recipes/create" element={<CreateRecipe />} />
+        <Route path="/recipes/scan" element={<Scanner />} />
         <Route path="/recipes/:id" element={<RecipeDetail />} />
         <Route path="/plan" element={<MealPlan />} />
         <Route path="/shop" element={<ShoppingList />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/evolution" element={<Evolution />} />
         <Route path="/plans" element={<Plans />} />
       </Route>
       <Route path="*" element={<NotFound />} />
@@ -47,20 +55,32 @@ const AppRoutes = () => {
   )
 }
 
-const App = () => (
-  <BrowserRouter
-    future={{ v7_startTransition: false, v7_relativeSplatPath: false }}
-  >
-    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-      <AppProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <AppRoutes />
-        </TooltipProvider>
-      </AppProvider>
-    </ThemeProvider>
-  </BrowserRouter>
-)
+const App = () => {
+  const [loading, setLoading] = useState(true)
+
+  if (loading) {
+    return (
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <SplashScreen onFinish={() => setLoading(false)} />
+      </ThemeProvider>
+    )
+  }
+
+  return (
+    <BrowserRouter
+      future={{ v7_startTransition: false, v7_relativeSplatPath: false }}
+    >
+      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+        <AppProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <AppRoutes />
+          </TooltipProvider>
+        </AppProvider>
+      </ThemeProvider>
+    </BrowserRouter>
+  )
+}
 
 export default App

@@ -6,28 +6,28 @@
 
 @layer base {
   :root {
-    /* Ice Blue Light Mode - Refined for High Contrast & Better Readability */
-    --background: 205 50% 94%; /* Slightly darker Ice Blue base */
-    --foreground: 215 60% 15%; /* Dark Navy for high contrast text */
+    /* Slightly darkened blue tones for better contrast in Light Mode */
+    --background: 205 50% 92%; /* Slightly darker Ice Blue base */
+    --foreground: 215 70% 12%; /* Darker Navy for high contrast text */
     --card: 0 0% 100%;
-    --card-foreground: 215 60% 15%;
+    --card-foreground: 215 70% 12%;
     --popover: 0 0% 100%;
-    --popover-foreground: 215 60% 15%;
-    --primary: 195 100% 32%; /* Deep Intense Cyan/Teal for accessibility */
+    --popover-foreground: 215 70% 12%;
+    --primary: 195 100% 28%; /* Darker Cyan/Teal for accessibility */
     --primary-foreground: 0 0% 100%;
     --secondary: 205 30% 90%;
-    --secondary-foreground: 215 60% 15%;
+    --secondary-foreground: 215 70% 12%;
     --muted: 205 20% 85%;
-    --muted-foreground: 215 30% 35%; /* Darker muted text for readability on glass */
+    --muted-foreground: 215 30% 30%; /* Darker muted text for readability on glass */
     --accent: 195 40% 90%;
-    --accent-foreground: 215 60% 15%;
+    --accent-foreground: 215 70% 12%;
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-    --border: 205 25% 75%; /* More visible border */
-    --input: 205 25% 75%;
-    --ring: 195 100% 32%;
+    --border: 205 25% 70%; /* More visible border */
+    --input: 205 25% 70%;
+    --ring: 195 100% 28%;
     --radius: 1.25rem;
-    --chart-1: 195 100% 32%;
+    --chart-1: 195 100% 28%;
     --chart-2: 215 60% 15%;
     --chart-3: 200 50% 50%;
     --chart-4: 43 74% 66%;
@@ -70,7 +70,7 @@
 @layer components {
   /* Frutiger Glass (Light Mode) - Improved Shadows for Contrast */
   .frutiger-glass {
-    @apply bg-white/50 backdrop-blur-2xl border border-white/80 shadow-[0_8px_32px_0_rgba(31,38,135,0.15),inset_0_1px_0_rgba(255,255,255,0.95)] rounded-[24px];
+    @apply bg-white/60 backdrop-blur-2xl border border-white/80 shadow-[0_8px_32px_0_rgba(31,38,135,0.15),inset_0_1px_0_rgba(255,255,255,0.95)] rounded-[24px];
   }
 
   /* Obsidian Glass (Dark Mode) */

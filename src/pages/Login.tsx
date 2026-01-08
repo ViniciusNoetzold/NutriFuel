@@ -56,7 +56,7 @@ export default function Login() {
               <div className="space-y-2">
                 <Label
                   htmlFor="username"
-                  className="ml-1 text-foreground font-bold"
+                  className="ml-1 text-foreground font-extrabold"
                 >
                   Usuário
                 </Label>
@@ -66,7 +66,7 @@ export default function Login() {
                     id="username"
                     value={username}
                     onChange={(e) => setUsername(e.target.value)}
-                    className="pl-12 h-14 aero-input rounded-2xl transition-all border-white/70 bg-white/70 dark:bg-black/30 text-lg font-medium"
+                    className="pl-12 h-14 aero-input rounded-2xl transition-all border-white/70 bg-white/70 dark:bg-black/30 text-lg font-medium placeholder:text-muted-foreground/60"
                     placeholder="user"
                     required
                   />
@@ -75,7 +75,7 @@ export default function Login() {
               <div className="space-y-2">
                 <Label
                   htmlFor="password"
-                  className="ml-1 text-foreground font-bold"
+                  className="ml-1 text-foreground font-extrabold"
                 >
                   Senha
                 </Label>
@@ -86,7 +86,7 @@ export default function Login() {
                     type="password"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-12 h-14 aero-input rounded-2xl transition-all border-white/70 bg-white/70 dark:bg-black/30 text-lg font-medium"
+                    className="pl-12 h-14 aero-input rounded-2xl transition-all border-white/70 bg-white/70 dark:bg-black/30 text-lg font-medium placeholder:text-muted-foreground/60"
                     placeholder="1234"
                     required
                   />
