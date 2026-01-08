@@ -227,6 +227,7 @@ export default function Recipes() {
               setSearch('')
               setActiveFilters([])
               setSelectedCategory('Todas')
+              setShowFavorites(false)
             }}
           >
             Limpar busca

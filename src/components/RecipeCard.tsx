@@ -1,9 +1,11 @@
 import { Link } from 'react-router-dom'
-import { Clock, Flame, Plus } from 'lucide-react'
+import { Clock, Flame, Plus, Heart } from 'lucide-react'
 import { Recipe } from '@/lib/types'
 import { Card, CardContent, CardFooter } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
+import { useAppStore } from '@/stores/useAppStore'
+import { cn } from '@/lib/utils'
 
 interface RecipeCardProps {
   recipe: Recipe
@@ -11,6 +13,14 @@ interface RecipeCardProps {
 }
 
 export function RecipeCard({ recipe, onAdd }: RecipeCardProps) {
+  const { toggleFavorite } = useAppStore()
+
+  const handleFavorite = (e: React.MouseEvent) => {
+    e.preventDefault()
+    e.stopPropagation()
+    toggleFavorite(recipe.id)
+  }
+
   return (
     <Link to={`/recipes/${recipe.id}`} className="block group h-full">
       <Card className="aero-card h-full flex flex-col overflow-hidden border-0 relative">
@@ -30,6 +40,20 @@ export function RecipeCard({ recipe, onAdd }: RecipeCardProps) {
               {recipe.difficulty}
             </Badge>
           </div>
+          <Button
+            size="icon"
+            variant="ghost"
+            onClick={handleFavorite}
+            className="absolute top-2 right-2 z-20 h-8 w-8 rounded-full bg-black/20 hover:bg-black/40 backdrop-blur-sm text-white"
+          >
+            <Heart
+              className={cn(
+                'h-4 w-4',
+                recipe.isFavorite && 'fill-red-500 text-red-500',
+              )}
+            />
+          </Button>
+
           {/* Glass glare on image */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-white/10 opacity-60" />
         </div>

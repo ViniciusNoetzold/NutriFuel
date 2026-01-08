@@ -16,8 +16,6 @@ import { toast } from 'sonner'
 import { useState, useEffect } from 'react'
 import {
   User,
-  Sun,
-  Moon,
   Camera,
   LogOut,
   TrendingUp,
@@ -25,6 +23,7 @@ import {
   Image as ImageIcon,
   X,
   Check,
+  ChevronRight,
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import {
@@ -34,7 +33,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { Card, CardContent } from '@/components/ui/card'
 import {
   ChartContainer,
@@ -284,8 +283,17 @@ export default function Profile() {
         <section className="space-y-6">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-lg flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-primary" /> Evolução do Shape
+              <TrendingUp className="h-5 w-5 text-primary" /> Progresso
             </h3>
+            <Link to="/evolution">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="text-xs text-primary"
+              >
+                Ver Shape Evolution <ChevronRight className="h-3 w-3 ml-1" />
+              </Button>
+            </Link>
           </div>
 
           {/* Weight & Photo Entry */}
@@ -479,33 +487,6 @@ export default function Profile() {
             </CardContent>
           </Card>
         </section>
-
-        <Separator className="bg-white/20" />
-
-        {/* Theme Switcher */}
-        <div className="flex items-center justify-between bg-gradient-to-br from-white/30 to-white/10 dark:from-white/10 dark:to-black/20 p-4 rounded-2xl border border-white/20 shadow-lg">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-full bg-black/10 dark:bg-white/10">
-              {theme === 'dark' ? (
-                <Moon className="h-4 w-4" />
-              ) : (
-                <Sun className="h-4 w-4" />
-              )}
-            </div>
-            <span className="font-semibold text-base">Modo Ambiente</span>
-          </div>
-
-          <div
-            className="relative w-16 h-8 bg-gray-200 dark:bg-gray-800 rounded-full shadow-inner cursor-pointer p-1 transition-colors border border-black/5 dark:border-white/5"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-          >
-            <div
-              className={`w-6 h-6 rounded-full bg-gradient-to-b from-white to-gray-200 shadow-md transform transition-transform duration-300 ease-spring border border-white/50 ${theme === 'dark' ? 'translate-x-8' : 'translate-x-0'}`}
-            >
-              <div className="absolute top-1 left-1 w-1.5 h-1.5 bg-white rounded-full opacity-60" />
-            </div>
-          </div>
-        </div>
 
         <Separator className="bg-white/20" />
 

@@ -23,36 +23,52 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { Checkbox } from '@/components/ui/checkbox'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { useState } from 'react'
 import { format } from 'date-fns'
+import { Slider } from '@/components/ui/slider'
+import { MealType } from '@/lib/types'
+
+const MEAL_TYPES: MealType[] = ['Café da Manhã', 'Almoço', 'Lanche', 'Jantar']
 
 export default function RecipeDetail() {
   const { id } = useParams()
-  const { recipes, addMealToPlan, addIngredientsToShoppingList } = useAppStore()
+  const {
+    recipes,
+    addMealToPlan,
+    addIngredientsToShoppingList,
+    toggleFavorite,
+  } = useAppStore()
   const navigate = useNavigate()
   const recipe = recipes.find((r) => r.id === id)
 
   const [selectedDate, setSelectedDate] = useState<string>(
     format(new Date(), 'yyyy-MM-dd'),
   )
-  const [selectedMealType, setSelectedMealType] = useState<string>('Almoço')
+  const [selectedMealTypes, setSelectedMealTypes] = useState<MealType[]>([
+    'Almoço',
+  ])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedIngredients, setSelectedIngredients] = useState<string[]>([])
+  const [portionScale, setPortionScale] = useState(1)
 
   if (!recipe) {
     return <div className="p-8 text-center">Receita não encontrada.</div>
   }
 
   const handleAddToPlan = () => {
-    addMealToPlan(selectedDate, selectedMealType as any, recipe.id)
-    toast.success(`${recipe.title} adicionado ao plano!`)
+    if (selectedMealTypes.length === 0) {
+      toast.error('Selecione pelo menos um tipo de refeição.')
+      return
+    }
+
+    selectedMealTypes.forEach((type) => {
+      addMealToPlan(selectedDate, type, recipe.id)
+    })
+
+    // Confetti logic could be here, implementing simple toast for now
+    toast.success(`${recipe.title} adicionado ao plano!`, {
+      description: 'Refeição registrada com sucesso.',
+    })
     setIsDialogOpen(false)
   }
 
@@ -78,6 +94,18 @@ export default function RecipeDetail() {
     )
     setSelectedIngredients([])
   }
+
+  const toggleMealType = (type: MealType) => {
+    setSelectedMealTypes((prev) =>
+      prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
+    )
+  }
+
+  // Calculated macros
+  const calories = Math.round(recipe.calories * portionScale)
+  const protein = Math.round(recipe.protein * portionScale)
+  const carbs = Math.round(recipe.carbs * portionScale)
+  const fats = Math.round(recipe.fats * portionScale)
 
   return (
     <div className="space-y-6 pb-20">
@@ -109,8 +137,7 @@ export default function RecipeDetail() {
           </h1>
           <div className="flex items-center gap-4 text-sm text-gray-200 font-medium">
             <span className="flex items-center gap-1">
-              <Flame className="h-4 w-4 text-orange-400" /> {recipe.calories}{' '}
-              kcal
+              <Flame className="h-4 w-4 text-orange-400" /> {calories} kcal
             </span>
             <span className="w-1 h-1 bg-white/50 rounded-full" />
             <span>{recipe.difficulty}</span>
@@ -119,30 +146,30 @@ export default function RecipeDetail() {
       </div>
 
       <div className="px-1">
-        {/* Macros */}
+        {/* Macros - Dynamic based on portion */}
         <div className="grid grid-cols-4 gap-3 mb-8">
           {[
             {
               label: 'Calorias',
-              val: recipe.calories,
+              val: calories,
               unit: 'kcal',
               color: 'bg-orange-100 text-orange-700',
             },
             {
               label: 'Proteína',
-              val: recipe.protein,
+              val: protein,
               unit: 'g',
               color: 'bg-blue-100 text-blue-700',
             },
             {
               label: 'Carbos',
-              val: recipe.carbs,
+              val: carbs,
               unit: 'g',
               color: 'bg-green-100 text-green-700',
             },
             {
               label: 'Gorduras',
-              val: recipe.fats,
+              val: fats,
               unit: 'g',
               color: 'bg-yellow-100 text-yellow-700',
             },
@@ -186,7 +213,9 @@ export default function RecipeDetail() {
               <p className="text-xs text-muted-foreground font-semibold uppercase">
                 Porções
               </p>
-              <p className="font-bold">{recipe.portions} pes.</p>
+              <p className="font-bold">
+                {(recipe.portions * portionScale).toFixed(1)} pes.
+              </p>
             </div>
           </div>
           <div className="w-px h-8 bg-black/10 dark:bg-white/10" />
@@ -225,25 +254,49 @@ export default function RecipeDetail() {
                     onChange={(e) => setSelectedDate(e.target.value)}
                   />
                 </div>
+
                 <div className="space-y-2">
-                  <Label>Tipo de Refeição</Label>
-                  <Select
-                    value={selectedMealType}
-                    onValueChange={setSelectedMealType}
-                  >
-                    <SelectTrigger className="h-12 rounded-xl bg-white/50 border-white/30 backdrop-blur-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Café da Manhã">
-                        Café da Manhã
-                      </SelectItem>
-                      <SelectItem value="Almoço">Almoço</SelectItem>
-                      <SelectItem value="Lanche">Lanche</SelectItem>
-                      <SelectItem value="Jantar">Jantar</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label>Tipo de Refeição (Multipla Escolha)</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {MEAL_TYPES.map((type) => (
+                      <div
+                        key={type}
+                        className="flex items-center space-x-2 p-3 bg-white/40 dark:bg-white/10 rounded-xl"
+                      >
+                        <Checkbox
+                          id={type}
+                          checked={selectedMealTypes.includes(type)}
+                          onCheckedChange={() => toggleMealType(type)}
+                        />
+                        <Label htmlFor={type} className="cursor-pointer">
+                          {type}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
+
+                <div className="space-y-4">
+                  <div className="flex justify-between">
+                    <Label>Ajustar Porção</Label>
+                    <span className="text-sm font-bold text-primary">
+                      {portionScale.toFixed(1)}x
+                    </span>
+                  </div>
+                  <Slider
+                    defaultValue={[1]}
+                    max={3}
+                    min={0.5}
+                    step={0.1}
+                    value={[portionScale]}
+                    onValueChange={(val) => setPortionScale(val[0])}
+                    className="py-4"
+                  />
+                  <p className="text-xs text-muted-foreground text-center">
+                    Os macros serão recalculados automaticamente.
+                  </p>
+                </div>
+
                 <Button
                   className="w-full aero-button"
                   onClick={handleAddToPlan}
@@ -258,8 +311,14 @@ export default function RecipeDetail() {
               variant="outline"
               size="lg"
               className="flex-1 h-14 rounded-2xl border-white/40 bg-white/30 backdrop-blur-md hover:bg-white/50"
+              onClick={() => toggleFavorite(recipe.id)}
             >
-              <Heart className="h-5 w-5" />
+              <Heart
+                className={cn(
+                  'h-5 w-5',
+                  recipe.isFavorite && 'fill-red-500 text-red-500',
+                )}
+              />
             </Button>
             <Button
               variant="outline"

@@ -2,7 +2,16 @@ import React, { useRef, useState, useEffect } from 'react'
 import { Outlet, useLocation, useNavigate, Link } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
-import { Bell, ArrowLeft, Check, User } from 'lucide-react'
+import {
+  Bell,
+  ArrowLeft,
+  Check,
+  User,
+  Settings,
+  Sun,
+  Moon,
+  LayoutGrid,
+} from 'lucide-react'
 import { Button } from './ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar'
 import { useAppStore } from '@/stores/useAppStore'
@@ -12,12 +21,17 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
+import { useTheme } from 'next-themes'
 
 export default function Layout() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { user, notifications, markNotificationsAsRead } = useAppStore()
+  const { user, notifications, markNotificationsAsRead, toggleWidget } =
+    useAppStore()
+  const { setTheme, theme } = useTheme()
   const mainRef = useRef<HTMLDivElement>(null)
   const [showNavbar, setShowNavbar] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
@@ -57,6 +71,9 @@ export default function Layout() {
       }
     }
   }, [lastScrollY])
+
+  const isWidgetVisible = (id: string) =>
+    user.visibleWidgets?.includes(id) ?? true
 
   return (
     <div className="flex min-h-screen transition-colors duration-500 theme-light-bg dark:theme-dark-bg text-foreground overflow-hidden relative">
@@ -98,7 +115,68 @@ export default function Layout() {
             </h1>
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            {/* Widget & Theme Menu */}
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="hover:bg-white/20 rounded-full"
+                >
+                  <LayoutGrid className="h-5 w-5" />
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-64 aero-glass" align="end">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between border-b border-white/20 pb-2">
+                    <span className="font-semibold text-sm">Dashboard</span>
+                    <Settings className="h-4 w-4 opacity-50" />
+                  </div>
+                  <div className="space-y-2">
+                    {[
+                      { id: 'macros', label: 'Macros & Status' },
+                      { id: 'hydration', label: 'Hidratação' },
+                      { id: 'meals', label: 'Refeições' },
+                      { id: 'sleep', label: 'Sono' },
+                    ].map((w) => (
+                      <div
+                        key={w.id}
+                        className="flex items-center justify-between"
+                      >
+                        <Label htmlFor={w.id} className="text-xs">
+                          {w.label}
+                        </Label>
+                        <Switch
+                          id={w.id}
+                          checked={isWidgetVisible(w.id)}
+                          onCheckedChange={() => toggleWidget(w.id)}
+                          className="scale-75 origin-right"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="flex items-center justify-between border-t border-white/20 pt-2">
+                    <span className="text-xs font-semibold">Tema</span>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() =>
+                        setTheme(theme === 'dark' ? 'light' : 'dark')
+                      }
+                      className="h-8 w-8 rounded-full"
+                    >
+                      {theme === 'dark' ? (
+                        <Moon className="h-4 w-4" />
+                      ) : (
+                        <Sun className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              </PopoverContent>
+            </Popover>
+
             <Popover>
               <PopoverTrigger asChild>
                 <Button

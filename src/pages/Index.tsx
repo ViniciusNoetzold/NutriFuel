@@ -1,29 +1,12 @@
 import { useAppStore } from '@/stores/useAppStore'
 import { format } from 'date-fns'
-import {
-  Plus,
-  Minus,
-  Droplets,
-  ChevronRight,
-  Flame,
-  Zap,
-  Settings,
-} from 'lucide-react'
+import { Plus, Minus, Droplets, ChevronRight, Flame, Zap } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
-import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import { ContentFeed } from '@/components/ContentFeed'
 import { SleepTracker } from '@/components/SleepTracker'
 
@@ -36,9 +19,6 @@ export default function Index() {
     mealPlan,
     recipes,
     toggleMealCompletion,
-    toggleWidget,
-    hydrationSettings,
-    toggleHydrationSettings,
   } = useAppStore()
 
   const today = format(new Date(), 'yyyy-MM-dd')
@@ -50,22 +30,7 @@ export default function Index() {
   }
   const consumed = getConsumedNutrition(today)
   const dailyGoal = user.calorieGoal
-  // STRICT LOGIC: Daily Goal - Calories Consumed (Exercise disregarded here per AC)
   const remainingCalories = dailyGoal - consumed.calories
-
-  // Progress for Circular Bar
-  const progressPercentCalories = Math.min(
-    100,
-    (consumed.calories / dailyGoal) * 100,
-  )
-
-  // Circular Progress Dimensions
-  const radius = 80
-  const stroke = 12
-  const normalizedRadius = radius - stroke * 2
-  const circumference = normalizedRadius * 2 * Math.PI
-  const strokeDashoffset =
-    circumference - (progressPercentCalories / 100) * circumference
 
   const todayMeals = mealPlan
     .filter((slot) => slot.date === today)
@@ -76,10 +41,7 @@ export default function Index() {
 
   const handleWater = (amount: number) => {
     logWater(amount, today)
-    if (amount > 0 && hydrationSettings.sound) {
-      // Mock sound effect visual feedback
-      toast.success('Hidratação +250ml 💧 (Glug glug!)')
-    } else if (amount > 0) {
+    if (amount > 0) {
       toast.success('Hidratação +250ml')
     }
   }
@@ -99,49 +61,9 @@ export default function Index() {
             Seu corpo, seu combustível.
           </p>
         </div>
-        <Dialog>
-          <DialogTrigger asChild>
-            <Button variant="outline" size="sm" className="aero-button">
-              <Settings className="w-4 h-4 mr-2" /> Widgets
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="aero-glass">
-            <DialogHeader>
-              <DialogTitle>Personalizar Dashboard</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              {[
-                { id: 'macros', label: 'Macros & Status' },
-                { id: 'hydration', label: 'Hidratação' },
-                { id: 'meals', label: 'Refeições' },
-                { id: 'sleep', label: 'Monitoramento de Sono' },
-                { id: 'content', label: 'Conteúdo Educativo' },
-              ].map((w) => (
-                <div key={w.id} className="flex items-center justify-between">
-                  <Label htmlFor={w.id}>{w.label}</Label>
-                  <Switch
-                    id={w.id}
-                    checked={isWidgetVisible(w.id)}
-                    onCheckedChange={() => toggleWidget(w.id)}
-                  />
-                </div>
-              ))}
-              <div className="pt-4 border-t border-white/20">
-                <h4 className="font-semibold mb-3 text-sm">Config. Água</h4>
-                <div className="flex items-center justify-between mb-2">
-                  <Label>Lembretes Sonoros</Label>
-                  <Switch
-                    checked={hydrationSettings.sound}
-                    onCheckedChange={() => toggleHydrationSettings('sound')}
-                  />
-                </div>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
       </div>
 
-      {/* 1. Status - Dashboard */}
+      {/* 1. Status - Dashboard with Liquid Bubble */}
       {isWidgetVisible('macros') && (
         <Card className="aero-glass border-0 relative overflow-hidden transition-all duration-700 hover:shadow-2xl">
           <div className="absolute inset-0 bg-gradient-to-tr from-cyan-100/30 via-transparent to-blue-100/30 pointer-events-none" />
@@ -157,84 +79,21 @@ export default function Index() {
             </div>
 
             <div className="flex flex-col items-center gap-6">
+              {/* Liquid Bubble Calorie Counter */}
               <div className="relative w-64 h-64 flex items-center justify-center">
-                <svg
-                  className="w-full h-full rotate-[-90deg] drop-shadow-xl"
-                  viewBox="0 0 200 200"
-                >
-                  <defs>
-                    <linearGradient
-                      id="progressGradient"
-                      x1="0%"
-                      y1="0%"
-                      x2="100%"
-                      y2="0%"
-                    >
-                      <stop offset="0%" stopColor="#22c55e" />
-                      <stop offset="100%" stopColor="hsl(var(--primary))" />
-                    </linearGradient>
-                    <linearGradient
-                      id="glossReflection"
-                      x1="0%"
-                      y1="0%"
-                      x2="100%"
-                      y2="100%"
-                    >
-                      <stop offset="0%" stopColor="white" stopOpacity="0.4" />
-                      <stop offset="100%" stopColor="transparent" />
-                    </linearGradient>
-                  </defs>
+                <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-cyan-500/20 liquid-shape blur-xl opacity-60 animate-liquid" />
+                <div className="absolute inset-2 bg-gradient-to-tl from-white/40 to-white/5 dark:from-white/10 dark:to-transparent liquid-shape border border-white/30 backdrop-blur-md animate-liquid animation-delay-2000" />
 
-                  <circle
-                    cx="100"
-                    cy="100"
-                    r={normalizedRadius}
-                    fill="transparent"
-                    stroke="currentColor"
-                    strokeWidth={stroke}
-                    className="text-black/10 dark:text-white/5"
-                  />
-
-                  <circle
-                    cx="100"
-                    cy="100"
-                    r={normalizedRadius}
-                    fill="transparent"
-                    stroke="url(#progressGradient)"
-                    strokeWidth={stroke}
-                    strokeDasharray={`${circumference} ${circumference}`}
-                    style={{ strokeDashoffset }}
-                    strokeLinecap="round"
-                    className="transition-[stroke-dashoffset] duration-1000 ease-out drop-shadow-[0_0_8px_rgba(6,182,212,0.4)]"
-                  />
-
-                  <circle
-                    cx="100"
-                    cy="100"
-                    r={normalizedRadius}
-                    fill="transparent"
-                    stroke="url(#glossReflection)"
-                    strokeWidth={stroke}
-                    strokeDasharray={`${circumference} ${circumference}`}
-                    style={{ strokeDashoffset }}
-                    strokeLinecap="round"
-                    className="transition-[stroke-dashoffset] duration-1000 ease-out pointer-events-none"
-                  />
-                </svg>
-
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10">
+                <div className="relative z-10 flex flex-col items-center justify-center">
                   <div className="mb-2 p-3 bg-gradient-to-br from-orange-400 to-red-600 rounded-full shadow-[0_4px_12px_rgba(249,115,22,0.5),inset_0_2px_4px_rgba(255,255,255,0.4)] border border-white/40 backdrop-blur-sm group">
-                    <Flame className="w-7 h-7 text-white fill-white animate-pulse" />
+                    <Flame className="w-8 h-8 text-white fill-white animate-pulse" />
                   </div>
                   <div className="text-center">
-                    <p className="text-4xl font-black text-transparent bg-clip-text bg-gradient-to-b from-primary to-cyan-700 dark:to-cyan-400 drop-shadow-sm leading-none">
+                    <p className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-primary to-cyan-700 dark:to-cyan-400 drop-shadow-sm leading-none">
                       {Math.max(0, Math.floor(remainingCalories))}
                     </p>
-                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
+                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
                       Kcal Restantes
-                    </p>
-                    <p className="text-[9px] text-muted-foreground/80 mt-1 font-medium">
-                      Meta: {dailyGoal}
                     </p>
                   </div>
                 </div>
@@ -370,7 +229,7 @@ export default function Index() {
                   if (!recipe) return null
                   return (
                     <div
-                      key={`${slot.date}-${slot.type}`}
+                      key={`${slot.date}-${slot.type}-${slot.recipeId}`}
                       className={cn(
                         'aero-card p-3 flex items-center gap-4 group transition-all duration-500',
                         slot.completed && 'opacity-70 grayscale-[0.3]',
@@ -439,7 +298,7 @@ export default function Index() {
         )}
       </div>
 
-      {/* 5. Content Feed */}
+      {/* 5. Content Feed - Interative Glass Cards */}
       {isWidgetVisible('content') && <ContentFeed />}
     </div>
   )

@@ -1,13 +1,5 @@
 import { Link, useLocation } from 'react-router-dom'
-import {
-  Home,
-  Search,
-  Calendar,
-  ShoppingCart,
-  User,
-  Crown,
-  TrendingUp,
-} from 'lucide-react'
+import { Home, Search, Calendar, User, TrendingUp } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
 interface BottomNavProps {
@@ -18,12 +10,12 @@ export function BottomNav({ isVisible }: BottomNavProps) {
   const location = useLocation()
   const path = location.pathname
 
+  // Removed Shopping Cart as per User Story
   const items = [
     { icon: Home, label: 'Início', href: '/' },
     { icon: Search, label: 'Receitas', href: '/recipes' },
     { icon: Calendar, label: 'Plano', href: '/plan' },
     { icon: TrendingUp, label: 'Evo', href: '/evolution' },
-    { icon: ShoppingCart, label: 'Lista', href: '/shop' },
     { icon: User, label: 'Perfil', href: '/profile' },
   ]
 

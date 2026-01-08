@@ -8,6 +8,7 @@ import {
   Ingredient,
   Notification,
   ShoppingItem,
+  ScannedProduct,
 } from '@/lib/types'
 import { MOCK_USER, MOCK_RECIPES } from '@/lib/data'
 import { format } from 'date-fns'
@@ -57,6 +58,8 @@ interface AppContextType {
   }
   hasNewPR: boolean
   resetPR: () => void
+  scannedHistory: ScannedProduct[]
+  addScannedProduct: (product: ScannedProduct) => void
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -92,6 +95,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     enabled: true,
     sound: true,
   })
+  const [scannedHistory, setScannedHistory] = useState<ScannedProduct[]>([])
 
   // Load initial empty logs or plan if needed
   useEffect(() => {
@@ -158,17 +162,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const addMealToPlan = (date: string, type: MealType, recipeId: string) => {
     setMealPlan((prev) => {
-      const filtered = prev.filter(
-        (slot) => !(slot.date === date && slot.type === type),
+      // Don't remove existing meals of same type, allow stacking if needed or just replace
+      // User Story implies multiple meals, so we allow stacking.
+      // But for simplicity in UI display, we might want to check duplicates.
+      const isDuplicate = prev.some(
+        (s) => s.date === date && s.type === type && s.recipeId === recipeId,
       )
-      return [...filtered, { date, type, recipeId, completed: false }]
+      if (isDuplicate) return prev
+
+      return [...prev, { date, type, recipeId, completed: false }]
     })
   }
 
   const removeMealFromPlan = (date: string, type: MealType) => {
-    setMealPlan((prev) =>
-      prev.filter((slot) => !(slot.date === date && slot.type === type)),
-    )
+    // Only removes the first match in this simple implementation
+    setMealPlan((prev) => {
+      const index = prev.findIndex((s) => s.date === date && s.type === type)
+      if (index === -1) return prev
+      const newPlan = [...prev]
+      newPlan.splice(index, 1)
+      return newPlan
+    })
   }
 
   const toggleMealCompletion = (date: string, type: MealType) => {
@@ -214,6 +228,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       })
     }
     setMealPlan((prev) => {
+      // Remove overlaps for auto-gen
       const existingDates = new Set(newPlan.map((p) => p.date))
       const filteredPrev = prev.filter((p) => !existingDates.has(p.date))
       return [...filteredPrev, ...newPlan]
@@ -407,6 +422,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     return nutrition
   }
 
+  const addScannedProduct = (product: ScannedProduct) => {
+    setScannedHistory((prev) => [product, ...prev])
+  }
+
   return (
     <AppContext.Provider
       value={{
@@ -443,6 +462,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         getConsumedNutrition,
         hasNewPR,
         resetPR,
+        scannedHistory,
+        addScannedProduct,
       }}
     >
       {children}

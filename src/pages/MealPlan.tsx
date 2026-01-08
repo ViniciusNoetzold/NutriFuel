@@ -21,7 +21,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet'
-import { Link } from 'react-router-dom'
+import { ShoppingListContent } from '@/pages/ShoppingList'
 import { Badge } from '@/components/ui/badge'
 
 const MEAL_TYPES = ['Café da Manhã', 'Almoço', 'Lanche', 'Jantar'] as const
@@ -86,11 +86,22 @@ export default function MealPlan() {
       <div className="flex items-center justify-between aero-glass p-4">
         <h2 className="text-xl font-bold">Planejamento</h2>
         <div className="flex gap-2">
-          <Link to="/shop">
-            <Button variant="ghost" size="sm" className="hover:bg-white/20">
-              <ShoppingCart className="h-4 w-4 mr-2" /> Lista
-            </Button>
-          </Link>
+          {/* Shopping List Overlay Trigger */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="sm" className="hover:bg-white/20">
+                <ShoppingCart className="h-4 w-4 mr-2" /> Lista
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              side="bottom"
+              className="h-[90vh] rounded-t-3xl aero-glass"
+            >
+              <div className="overflow-y-auto h-full pb-10">
+                <ShoppingListContent />
+              </div>
+            </SheetContent>
+          </Sheet>
 
           {/* Magic Button - Minimalist Hat/Wand */}
           <Button

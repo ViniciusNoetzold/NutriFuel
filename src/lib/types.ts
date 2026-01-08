@@ -89,4 +89,17 @@ export interface Article {
   image: string
   category: 'Nutrição' | 'Exercício' | 'Bem-estar'
   readTime: string
+  content?: string // Full content for the overlay
+}
+
+export interface ScannedProduct {
+  code: string
+  name: string
+  brand: string
+  calories: number
+  protein: number
+  carbs: number
+  fats: number
+  image?: string
+  dateScanned: string
 }

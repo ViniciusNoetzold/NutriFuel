@@ -1,27 +1,53 @@
 import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card } from '@/components/ui/card'
-import { Share2, Upload, ArrowLeft } from 'lucide-react'
+import { Share2, Upload, ArrowLeft, Camera, History } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog'
+import { useAppStore } from '@/stores/useAppStore'
+import { format } from 'date-fns'
 
 export default function Evolution() {
   const navigate = useNavigate()
+  const { dailyLogs } = useAppStore()
   const [beforeImage, setBeforeImage] = useState<string | null>(null)
   const [afterImage, setAfterImage] = useState<string | null>(null)
+  const [activeSlot, setActiveSlot] = useState<'before' | 'after' | null>(null)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
 
-  const handleUpload = (type: 'before' | 'after') => {
-    // Simulating file upload with random placeholder
+  const handleSlotClick = (slot: 'before' | 'after') => {
+    setActiveSlot(slot)
+    setIsDialogOpen(true)
+  }
+
+  const handleSelectImage = (src: string) => {
+    if (activeSlot === 'before') setBeforeImage(src)
+    else setAfterImage(src)
+    setIsDialogOpen(false)
+    toast.success('Foto atualizada!')
+  }
+
+  const handleUploadNew = () => {
+    // Simulating file upload
     const mockImage = `https://img.usecurling.com/ppl/medium?gender=female&seed=${Math.random()}`
-    if (type === 'before') setBeforeImage(mockImage)
-    else setAfterImage(mockImage)
-    toast.success('Foto carregada!')
+    handleSelectImage(mockImage)
   }
 
   const handleShare = () => {
     toast.success('Card gerado! Compartilhando...')
   }
+
+  const historyPhotos = dailyLogs
+    .filter((l) => l.photo)
+    .map((l) => ({ date: l.date, src: l.photo! }))
 
   return (
     <div className="space-y-6 pb-24 px-1">
@@ -34,8 +60,46 @@ export default function Evolution() {
         >
           <ArrowLeft className="h-5 w-5" />
         </Button>
-        <h2 className="text-2xl font-bold">Minha Evolução</h2>
+        <h2 className="text-2xl font-bold">Shape Evolution Hub</h2>
       </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="aero-glass">
+          <DialogHeader>
+            <DialogTitle>Selecionar Imagem</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Button
+              className="w-full h-12 aero-button justify-start px-4"
+              onClick={handleUploadNew}
+            >
+              <Camera className="mr-3 h-5 w-5" /> Nova Foto / Galeria
+            </Button>
+
+            {historyPhotos.length > 0 && (
+              <div>
+                <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                  <History className="h-4 w-4" /> Histórico de Peso
+                </h4>
+                <div className="grid grid-cols-3 gap-2">
+                  {historyPhotos.map((p, idx) => (
+                    <div
+                      key={idx}
+                      className="relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 border-transparent hover:border-primary"
+                      onClick={() => handleSelectImage(p.src)}
+                    >
+                      <img src={p.src} className="w-full h-full object-cover" />
+                      <div className="absolute bottom-0 w-full bg-black/50 text-[10px] text-white text-center py-0.5">
+                        {format(new Date(p.date), 'dd/MM')}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
 
       <div className="aero-glass p-2 md:p-6 rounded-[24px]">
         {/* Frame Container */}
@@ -60,7 +124,7 @@ export default function Evolution() {
             {/* Before */}
             <div
               className="flex-1 bg-black/20 rounded-l-xl overflow-hidden relative group cursor-pointer border-r border-white/20"
-              onClick={() => handleUpload('before')}
+              onClick={() => handleSlotClick('before')}
             >
               {beforeImage ? (
                 <img src={beforeImage} className="w-full h-full object-cover" />
@@ -78,7 +142,7 @@ export default function Evolution() {
             {/* After */}
             <div
               className="flex-1 bg-black/20 rounded-r-xl overflow-hidden relative group cursor-pointer"
-              onClick={() => handleUpload('after')}
+              onClick={() => handleSlotClick('after')}
             >
               {afterImage ? (
                 <img src={afterImage} className="w-full h-full object-cover" />
