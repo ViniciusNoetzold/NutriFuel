@@ -27,6 +27,7 @@ import { useState } from 'react'
 import { format } from 'date-fns'
 import { Slider } from '@/components/ui/slider'
 import { MealType } from '@/lib/types'
+import { cn } from '@/lib/utils'
 
 const MEAL_TYPES: MealType[] = ['Café da Manhã', 'Almoço', 'Lanche', 'Jantar']
 
