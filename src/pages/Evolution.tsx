@@ -20,7 +20,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { useAppStore } from '@/stores/useAppStore'
-import { format, subDays } from 'date-fns'
+import { format } from 'date-fns'
 import {
   ChartContainer,
   ChartTooltip,
@@ -199,7 +199,7 @@ export default function Evolution() {
                     <div className="flex flex-col items-center text-muted-foreground">
                       <Camera className="h-8 w-8 mb-2" />
                       <span className="text-xs">
-                        Toque para selecionar e editar
+                        Toque para selecionar e editar (1080x1080)
                       </span>
                     </div>
                   </Label>
@@ -333,7 +333,7 @@ export default function Evolution() {
         </DialogContent>
       </Dialog>
 
-      {/* Card Generator Modal */}
+      {/* Card Generator Modal - Story Card */}
       <Dialog open={cardPreviewOpen} onOpenChange={setCardPreviewOpen}>
         <DialogContent className="aero-glass border-0 bg-transparent shadow-none p-0 flex items-center justify-center">
           {selectedLogForCard && (

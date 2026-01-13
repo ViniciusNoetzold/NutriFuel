@@ -90,6 +90,7 @@ export default function Scanner() {
   const handleEat = async () => {
     if (scannedProduct) {
       try {
+        // This adds to 'meals' table. DB trigger updates 'daily_logs'.
         await addMeal({
           date: format(new Date(), 'yyyy-MM-dd'),
           name: scannedProduct.name,
@@ -98,7 +99,7 @@ export default function Scanner() {
           carbs: scannedProduct.carbs,
           fats: scannedProduct.fats,
         })
-        toast.success('Refeição registrada!')
+        toast.success('Refeição registrada e macros atualizados!')
         setScannedProduct(null)
         setScanning(true)
       } catch (e) {

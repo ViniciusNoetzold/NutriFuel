@@ -6,9 +6,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { Slider } from '@/components/ui/slider'
-import { Check, X, RotateCcw } from 'lucide-react'
-import { processImage } from '@/lib/utils'
+import { Check, X } from 'lucide-react'
 import { toast } from 'sonner'
 
 interface ImageEditorProps {
@@ -38,7 +36,7 @@ export function ImageEditor({
   const handleProcess = async (file: File) => {
     try {
       setLoading(true)
-      const blob = await processImage(file)
+      const blob = await processImageToSquare(file)
       setProcessedPreview(URL.createObjectURL(blob))
     } catch (error) {
       toast.error('Erro ao processar imagem.')
@@ -49,10 +47,8 @@ export function ImageEditor({
 
   const handleConfirm = async () => {
     if (initialFile && processedPreview) {
-      // Re-process one last time to ensure binary data is fresh or just use logic
-      // For MVP, we trust the processImage utility.
       try {
-        const blob = await processImage(initialFile)
+        const blob = await processImageToSquare(initialFile)
         const newFile = new File([blob], initialFile.name, {
           type: 'image/jpeg',
         })
@@ -122,4 +118,41 @@ export function ImageEditor({
       </DialogContent>
     </Dialog>
   )
+}
+
+async function processImageToSquare(file: File): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    img.src = URL.createObjectURL(file)
+    img.onload = () => {
+      const canvas = document.createElement('canvas')
+      canvas.width = 1080
+      canvas.height = 1080
+      const ctx = canvas.getContext('2d')
+      if (!ctx) {
+        reject(new Error('Canvas context not available'))
+        return
+      }
+
+      ctx.fillStyle = '#FFFFFF'
+      ctx.fillRect(0, 0, 1080, 1080)
+
+      // Calculate cover logic
+      const scale = Math.max(1080 / img.width, 1080 / img.height)
+      const x = (1080 - img.width * scale) / 2
+      const y = (1080 - img.height * scale) / 2
+
+      ctx.drawImage(img, x, y, img.width * scale, img.height * scale)
+
+      canvas.toBlob(
+        (blob) => {
+          if (blob) resolve(blob)
+          else reject(new Error('Canvas to Blob failed'))
+        },
+        'image/jpeg',
+        0.9,
+      )
+    }
+    img.onerror = reject
+  })
 }

@@ -6,7 +6,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { formatDistanceToNow, subHours } from 'date-fns'
+import { formatDistanceToNow, getHours } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { Bell } from 'lucide-react'
 
@@ -21,24 +21,24 @@ export function NotificationHistory({
 }: NotificationHistoryProps) {
   const { notifications } = useAppStore()
 
-  // Filter for last 16 hours
-  const cutoff = subHours(new Date(), 16)
-  const recentNotifications = notifications.filter(
-    (n) => new Date(n.date) > cutoff,
-  )
+  // Filter for reminders sent between 07:00 and 22:00
+  const filteredNotifications = notifications.filter((n) => {
+    const hour = getHours(new Date(n.date))
+    return hour >= 7 && hour <= 22
+  })
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="aero-glass">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Bell className="h-5 w-5 text-primary" /> Histórico (16h)
+            <Bell className="h-5 w-5 text-primary" /> Histórico (07h-22h)
           </DialogTitle>
         </DialogHeader>
         <ScrollArea className="h-[300px] mt-2">
-          {recentNotifications.length > 0 ? (
+          {filteredNotifications.length > 0 ? (
             <div className="space-y-3">
-              {recentNotifications.map((n) => (
+              {filteredNotifications.map((n) => (
                 <div
                   key={n.id}
                   className="p-3 rounded-xl bg-white/40 dark:bg-white/5 border border-white/20"
@@ -58,7 +58,7 @@ export function NotificationHistory({
             </div>
           ) : (
             <div className="text-center py-8 text-muted-foreground text-sm">
-              Nenhuma notificação recente.
+              Nenhuma notificação no período.
             </div>
           )}
         </ScrollArea>
