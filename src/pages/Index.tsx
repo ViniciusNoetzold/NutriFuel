@@ -19,6 +19,7 @@ export default function Index() {
     mealPlan,
     recipes,
     toggleMealCompletion,
+    getDailyNutrition,
   } = useAppStore()
 
   const today = format(new Date(), 'yyyy-MM-dd')
@@ -28,7 +29,18 @@ export default function Index() {
     exerciseBurned: 0,
     sleepHours: 0,
   }
-  const consumed = getConsumedNutrition(today)
+
+  // Combine Consumed from Meal Plan + Daily Log Totals (for simplicity in this view we use getConsumedNutrition for planned meals)
+  // But now we have totalCalories from triggers.
+  // For the hierarchy circle, let's use the DB calculated totals if available, otherwise fallback.
+  const dbTotals = getDailyNutrition(today)
+  const consumed = {
+    calories: dbTotals.calories,
+    protein: dbTotals.protein,
+    carbs: dbTotals.carbs,
+    fats: dbTotals.fats,
+  }
+
   const dailyGoal = user.calorieGoal
   const remainingCalories = dailyGoal - consumed.calories
 
@@ -264,8 +276,8 @@ export default function Index() {
         )}
       </div>
 
-      {/* 5. Content Feed - Interative Glass Cards */}
-      {isWidgetVisible('content') && <ContentFeed />}
+      {/* 5. Content Feed - Interative Glass Cards - Respect Settings */}
+      {!user.hideArticles && isWidgetVisible('content') && <ContentFeed />}
     </div>
   )
 }

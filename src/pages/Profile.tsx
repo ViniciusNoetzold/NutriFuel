@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
 import {
   Select,
   SelectContent,
@@ -17,6 +18,7 @@ import { User, LogOut, Camera, Loader2, Lock } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
+import { ImageEditor } from '@/components/ImageEditor'
 
 export default function Profile() {
   const { user, updateUser, logout } = useAppStore()
@@ -25,6 +27,8 @@ export default function Profile() {
   const [formData, setFormData] = useState(user)
   const [uploading, setUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [editorOpen, setEditorOpen] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
   const handleSave = () => {
     updateUser(formData)
@@ -40,17 +44,24 @@ export default function Profile() {
     navigate('/login')
   }
 
-  const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setSelectedFile(file)
+      setEditorOpen(true)
+    }
+  }
+
+  const handleAvatarUpload = async (file: File) => {
     try {
       setUploading(true)
-      const file = e.target.files?.[0]
-      if (!file || !authUser) return
+      if (!authUser) return
 
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${authUser.id}/${Math.random()}.${fileExt}`
+      const fileExt = 'jpg'
+      const fileName = `${authUser.id}/${Date.now()}.${fileExt}`
       const { error: uploadError } = await supabase.storage
         .from('avatars')
-        .upload(fileName, file, { upsert: true })
+        .upload(fileName, file, { upsert: true, contentType: 'image/jpeg' })
 
       if (uploadError) throw uploadError
 
@@ -70,6 +81,13 @@ export default function Profile() {
 
   return (
     <div className="space-y-8 pb-24 relative">
+      <ImageEditor
+        open={editorOpen}
+        onOpenChange={setEditorOpen}
+        initialFile={selectedFile}
+        onSave={handleAvatarUpload}
+      />
+
       <div className="flex flex-col items-center justify-center space-y-4 pt-4">
         <div className="relative group cursor-pointer">
           <div className="absolute inset-0 bg-gradient-to-tr from-primary to-blue-300 rounded-full blur-lg opacity-50 group-hover:opacity-80 transition-opacity" />
@@ -91,7 +109,7 @@ export default function Profile() {
             ref={fileInputRef}
             className="hidden"
             accept="image/*"
-            onChange={handleAvatarUpload}
+            onChange={handleFileSelect}
             disabled={uploading}
           />
           <Button
@@ -130,7 +148,7 @@ export default function Profile() {
               <Input
                 value={formData.email || ''}
                 readOnly
-                className="aero-input bg-gray-100/50 dark:bg-black/20 text-muted-foreground cursor-not-allowed"
+                className="aero-input bg-gray-100/50 dark:bg-black/20 text-muted-foreground cursor-not-allowed opacity-70"
               />
             </div>
             <div className="space-y-2">
@@ -138,16 +156,29 @@ export default function Profile() {
               <Input
                 value={formData.phone || ''}
                 readOnly
-                className="aero-input bg-gray-100/50 dark:bg-black/20 text-muted-foreground cursor-not-allowed"
+                className="aero-input bg-gray-100/50 dark:bg-black/20 text-muted-foreground cursor-not-allowed opacity-70"
                 placeholder="Não cadastrado"
               />
             </div>
             <div className="space-y-2">
               <Label>Objetivo Pessoal</Label>
-              <div className="aero-input bg-gray-100/50 dark:bg-black/20 text-muted-foreground flex items-center px-3 py-2 rounded-xl cursor-not-allowed">
+              <div className="aero-input bg-gray-100/50 dark:bg-black/20 text-muted-foreground flex items-center px-3 py-2 rounded-xl cursor-not-allowed opacity-70">
                 {formData.goal}
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Settings */}
+        <div className="space-y-4 pb-4 border-b border-white/20">
+          <h3 className="font-semibold text-lg">Configurações</h3>
+          <div className="flex items-center justify-between">
+            <Label htmlFor="hide-articles">Ocultar Artigos/Dicas</Label>
+            <Switch
+              id="hide-articles"
+              checked={formData.hideArticles}
+              onCheckedChange={(val) => handleChange('hideArticles', val)}
+            />
           </div>
         </div>
 
