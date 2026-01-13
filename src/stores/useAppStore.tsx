@@ -19,6 +19,7 @@ import { useAuth } from '@/hooks/use-auth'
 interface AppContextType {
   user: UserProfile
   isAuthenticated: boolean
+  isLoading: boolean
   login: (username: string, pass: string) => boolean
   logout: () => void
   updateUser: (data: Partial<UserProfile>) => void
@@ -79,6 +80,7 @@ const MOCK_NOTIFICATIONS: AppNotification[] = [
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const { user: authUser, signIn, signOut } = useAuth()
   const [user, setUser] = useState<UserProfile>(MOCK_USER)
+  const [isLoading, setIsLoading] = useState(true)
   const [recipes, setRecipes] = useState<Recipe[]>(MOCK_RECIPES as Recipe[])
   const [mealPlan, setMealPlan] = useState<MealSlot[]>([])
   const [dailyLogs, setDailyLogs] = useState<DayLog[]>([])
@@ -94,15 +96,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   useEffect(() => {
     if (authUser) {
-      // Fetch Profile
-      supabase
+      setIsLoading(true)
+      const fetchProfile = supabase
         .from('profiles')
         .select('*')
         .eq('id', authUser.id)
         .single()
         .then(({ data, error }) => {
           if (data) {
-            // Robustly map data ensuring no null values propagate to UI for critical fields
             setUser((prev) => ({
               ...prev,
               id: data.id,
@@ -128,8 +129,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }
         })
 
-      // Fetch Logs
-      supabase
+      const fetchLogs = supabase
         .from('daily_logs')
         .select('*')
         .eq('user_id', authUser.id)
@@ -145,8 +145,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               sleepHours: d.sleep_hours,
             }))
             setDailyLogs(logs)
+          } else {
+            setDailyLogs([])
           }
         })
+
+      Promise.all([fetchProfile, fetchLogs]).finally(() => setIsLoading(false))
+    } else {
+      setIsLoading(false)
     }
   }, [authUser])
 
@@ -519,6 +525,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       value={{
         user,
         isAuthenticated: !!authUser,
+        isLoading,
         login,
         logout,
         updateUser,
