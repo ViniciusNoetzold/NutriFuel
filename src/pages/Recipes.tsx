@@ -161,7 +161,7 @@ export default function Recipes() {
         </div>
       </div>
 
-      {/* Categories - Crystal Bubbles */}
+      {/* Categories */}
       <div className="flex gap-3 overflow-x-auto pb-4 pt-2 -mx-4 px-4 scrollbar-hide snap-x">
         {CATEGORIES.map((cat) => (
           <button
@@ -180,35 +180,8 @@ export default function Recipes() {
         ))}
       </div>
 
-      {/* Active Filters Display */}
-      {activeFilters.length > 0 && (
-        <div className="flex gap-2 flex-wrap">
-          {activeFilters.map((filter) => (
-            <Badge
-              key={filter}
-              variant="secondary"
-              className="gap-1 pl-3 py-1.5 rounded-full bg-white/40 border border-white/30 backdrop-blur-sm shadow-sm text-foreground font-medium"
-            >
-              {filter}
-              <X
-                className="h-3 w-3 cursor-pointer hover:text-destructive transition-colors"
-                onClick={() => toggleFilter(filter)}
-              />
-            </Badge>
-          ))}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 text-xs px-3 rounded-full hover:bg-red-100/50 hover:text-red-500"
-            onClick={() => setActiveFilters([])}
-          >
-            Limpar
-          </Button>
-        </div>
-      )}
-
-      {/* Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+      {/* Grid Optimized for Mobile */}
+      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
         {filteredRecipes.map((recipe) => (
           <div key={recipe.id} className="w-full h-full">
             <RecipeCard recipe={recipe} />

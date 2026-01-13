@@ -1,42 +1,49 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useAppStore } from '@/stores/useAppStore'
+import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { InteractiveDumbbell } from '@/components/InteractiveDumbbell'
 import { Lock, User, ArrowRight } from 'lucide-react'
+import { toast } from 'sonner'
 
 export default function Login() {
-  const { login } = useAppStore()
+  const { signIn, signUp } = useAuth()
   const navigate = useNavigate()
-  const [username, setUsername] = useState('')
+  const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [isSignUp, setIsSignUp] = useState(false)
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
-    setTimeout(() => {
-      const success = login(username, password)
-      if (success) {
+    try {
+      if (isSignUp) {
+        const { error } = await signUp(email, password)
+        if (error) throw error
+        toast.success('Cadastro realizado! Verifique seu e-mail.')
+      } else {
+        const { error } = await signIn(email, password)
+        if (error) throw error
         navigate('/')
+        toast.success('Bem-vindo!')
       }
+    } catch (error: any) {
+      toast.error(error.message || 'Erro de autenticação')
+    } finally {
       setIsLoading(false)
-    }, 1500)
+    }
   }
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden bg-gradient-to-br from-sky-200 to-blue-200 dark:from-[#0f172a] dark:to-[#1e293b]">
-      {/* Background Texture Overlay */}
       <div className="absolute inset-0 opacity-[0.04] pointer-events-none bg-texture-overlay mix-blend-overlay z-0" />
-
-      {/* Center Light */}
       <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/10 to-white/30 dark:via-cyan-900/10 pointer-events-none" />
 
       <div className="w-full max-w-md z-10 animate-fade-in-up">
         <div className="aero-glass p-8 rounded-[32px] shadow-2xl space-y-8 relative overflow-hidden border border-white/60 dark:border-white/10">
-          {/* Top sheen */}
           <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-white/80 to-transparent" />
 
           <div className="flex flex-col items-center space-y-4">
@@ -55,19 +62,20 @@ export default function Login() {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label
-                  htmlFor="username"
+                  htmlFor="email"
                   className="ml-1 text-foreground font-extrabold"
                 >
-                  Usuário
+                  Email
                 </Label>
                 <div className="relative group">
                   <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                   <Input
-                    id="username"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="pl-12 h-14 aero-input rounded-2xl transition-all border-white/70 bg-white/70 dark:bg-black/30 text-lg font-medium placeholder:text-muted-foreground/60"
-                    placeholder="user"
+                    placeholder="voce@exemplo.com"
                     required
                   />
                 </div>
@@ -87,7 +95,7 @@ export default function Login() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="pl-12 h-14 aero-input rounded-2xl transition-all border-white/70 bg-white/70 dark:bg-black/30 text-lg font-medium placeholder:text-muted-foreground/60"
-                    placeholder="1234"
+                    placeholder="******"
                     required
                   />
                 </div>
@@ -100,7 +108,11 @@ export default function Login() {
               disabled={isLoading}
             >
               <span className="relative z-10 flex items-center gap-2 justify-center">
-                {isLoading ? 'Acessando...' : 'Entrar'}{' '}
+                {isLoading
+                  ? 'Processando...'
+                  : isSignUp
+                    ? 'Criar Conta'
+                    : 'Entrar'}{' '}
                 {!isLoading && <ArrowRight className="h-5 w-5" />}
               </span>
               <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 rounded-full" />
@@ -108,9 +120,15 @@ export default function Login() {
           </form>
 
           <div className="text-center">
-            <p className="text-xs text-muted-foreground font-semibold">
-              Teste: user / 1234
-            </p>
+            <Button
+              variant="link"
+              onClick={() => setIsSignUp(!isSignUp)}
+              className="text-muted-foreground"
+            >
+              {isSignUp
+                ? 'Já tem conta? Entrar'
+                : 'Não tem conta? Crie agora (Grátis)'}
+            </Button>
           </div>
         </div>
       </div>

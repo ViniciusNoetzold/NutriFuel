@@ -34,6 +34,7 @@ export interface Recipe {
 }
 
 export interface UserProfile {
+  id?: string
   name: string
   avatar: string
   gender: 'male' | 'female'
@@ -48,7 +49,7 @@ export interface UserProfile {
   carbsGoal: number
   fatsGoal: number
   waterGoal: number
-  visibleWidgets: string[] // 'macros', 'hydration', 'meals', 'sleep', 'content'
+  visibleWidgets: string[]
 }
 
 export type MealType = 'Café da Manhã' | 'Almoço' | 'Lanche' | 'Jantar'

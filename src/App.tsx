@@ -11,18 +11,19 @@ import ShoppingList from './pages/ShoppingList'
 import Profile from './pages/Profile'
 import NotFound from './pages/NotFound'
 import Login from './pages/Login'
-import Plans from './pages/Plans'
 import CreateRecipe from './pages/CreateRecipe'
 import Scanner from './pages/Scanner'
 import Evolution from './pages/Evolution'
 import { AppProvider, useAppStore } from './stores/useAppStore'
 import { ThemeProvider } from 'next-themes'
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { SplashScreen } from './components/SplashScreen'
+import { AuthProvider, useAuth } from './hooks/use-auth'
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated } = useAppStore()
-  if (!isAuthenticated) {
+  const { user, loading } = useAuth()
+  if (loading) return null
+  if (!user) {
     return <Navigate to="/login" replace />
   }
   return <>{children}</>
@@ -48,7 +49,6 @@ const AppRoutes = () => {
         <Route path="/shop" element={<ShoppingList />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/evolution" element={<Evolution />} />
-        <Route path="/plans" element={<Plans />} />
       </Route>
       <Route path="*" element={<NotFound />} />
     </Routes>
@@ -71,13 +71,15 @@ const App = () => {
       future={{ v7_startTransition: false, v7_relativeSplatPath: false }}
     >
       <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-        <AppProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <AppRoutes />
-          </TooltipProvider>
-        </AppProvider>
+        <AuthProvider>
+          <AppProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <AppRoutes />
+            </TooltipProvider>
+          </AppProvider>
+        </AuthProvider>
       </ThemeProvider>
     </BrowserRouter>
   )

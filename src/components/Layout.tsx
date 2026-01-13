@@ -2,16 +2,7 @@ import React, { useRef, useState, useEffect } from 'react'
 import { Outlet, useLocation, useNavigate, Link } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
-import {
-  Bell,
-  ArrowLeft,
-  Check,
-  User,
-  Settings,
-  Sun,
-  Moon,
-  LayoutGrid,
-} from 'lucide-react'
+import { Bell, ArrowLeft, Check, User, Sun, Moon, Settings } from 'lucide-react'
 import { Button } from './ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar'
 import { useAppStore } from '@/stores/useAppStore'
@@ -77,7 +68,6 @@ export default function Layout() {
 
   return (
     <div className="flex min-h-screen transition-colors duration-500 theme-light-bg dark:theme-dark-bg text-foreground overflow-hidden relative">
-      {/* Universal Background Texture Overlay */}
       <div className="absolute inset-0 z-0 opacity-[0.04] pointer-events-none bg-texture-overlay mix-blend-overlay" />
 
       <Sidebar />
@@ -103,8 +93,7 @@ export default function Layout() {
               {location.pathname === '/plan' && 'Plano Alimentar'}
               {location.pathname === '/shop' && 'Compras'}
               {location.pathname === '/profile' && 'Perfil'}
-              {location.pathname === '/plans' && 'Planos'}
-              {location.pathname === '/evolution' && 'Evolução'}
+              {location.pathname === '/evolution' && 'Registro de evolução'}
               {location.pathname === '/recipes/create' && 'Nova Receita'}
               {location.pathname === '/recipes/scan' && 'Scanner'}
               {location.pathname.startsWith('/recipes/') &&
@@ -116,7 +105,7 @@ export default function Layout() {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Widget & Theme Menu */}
+            {/* Widget & Theme Menu (Renamed to Configurações) */}
             <Popover>
               <PopoverTrigger asChild>
                 <Button
@@ -124,13 +113,13 @@ export default function Layout() {
                   size="icon"
                   className="hover:bg-white/20 rounded-full"
                 >
-                  <LayoutGrid className="h-5 w-5" />
+                  <Settings className="h-5 w-5" />
                 </Button>
               </PopoverTrigger>
               <PopoverContent className="w-64 aero-glass" align="end">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between border-b border-white/20 pb-2">
-                    <span className="font-semibold text-sm">Dashboard</span>
+                    <span className="font-semibold text-sm">Configurações</span>
                     <Settings className="h-4 w-4 opacity-50" />
                   </div>
                   <div className="space-y-2">

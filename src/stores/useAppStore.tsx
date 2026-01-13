@@ -13,6 +13,8 @@ import {
 import { MOCK_USER, MOCK_RECIPES } from '@/lib/data'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
+import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/hooks/use-auth'
 
 interface AppContextType {
   user: UserProfile
@@ -67,22 +69,15 @@ const AppContext = createContext<AppContextType | undefined>(undefined)
 const MOCK_NOTIFICATIONS: Notification[] = [
   {
     id: '1',
-    title: 'Hora de beber água!',
-    message: 'Você ainda não bateu sua meta de hoje.',
+    title: 'NutriFuel Grátis',
+    message: 'Aproveite todos os recursos desbloqueados!',
     date: new Date().toISOString(),
-    read: false,
-  },
-  {
-    id: '2',
-    title: 'Nova Receita',
-    message: 'Confira a nova receita de Smoothie Verde.',
-    date: new Date(Date.now() - 86400000).toISOString(),
     read: false,
   },
 ]
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const { user: authUser, signIn, signOut } = useAuth()
   const [user, setUser] = useState<UserProfile>(MOCK_USER)
   const [recipes, setRecipes] = useState<Recipe[]>(MOCK_RECIPES as Recipe[])
   const [mealPlan, setMealPlan] = useState<MealSlot[]>([])
@@ -97,57 +92,84 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   })
   const [scannedHistory, setScannedHistory] = useState<ScannedProduct[]>([])
 
-  // Load initial empty logs or plan if needed
   useEffect(() => {
-    const today = format(new Date(), 'yyyy-MM-dd')
-    if (!dailyLogs.find((l) => l.date === today)) {
-      setDailyLogs((prev) => [
-        ...prev,
-        {
-          date: today,
-          waterIntake: 0,
-          weight: user.weight,
-          exerciseBurned: 0,
-          sleepHours: 0,
-        },
-      ])
+    if (authUser) {
+      // Fetch Profile
+      supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authUser.id)
+        .single()
+        .then(({ data, error }) => {
+          if (data) {
+            setUser({
+              ...MOCK_USER,
+              ...data,
+              avatar: data.avatar_url || MOCK_USER.avatar,
+              visibleWidgets: data.visible_widgets || MOCK_USER.visibleWidgets,
+            })
+          }
+        })
+
+      // Fetch Logs
+      supabase
+        .from('daily_logs')
+        .select('*')
+        .eq('user_id', authUser.id)
+        .order('date', { ascending: true })
+        .then(({ data }) => {
+          if (data) {
+            const logs: DayLog[] = data.map((d: any) => ({
+              date: d.date,
+              waterIntake: d.water_intake,
+              weight: d.weight,
+              photo: d.photo_url,
+              exerciseBurned: d.exercise_burned,
+              sleepHours: d.sleep_hours,
+            }))
+            setDailyLogs(logs)
+          }
+        })
     }
-  }, [])
+  }, [authUser])
 
   const login = (u: string, p: string) => {
-    if (u === 'user' && p === '1234') {
-      setIsAuthenticated(true)
-      toast.success('Bem-vindo de volta ao NutriFuel!')
-      return true
-    }
-    toast.error('Credenciais inválidas')
-    return false
+    signIn(u, p).then(({ error }) => {
+      if (error) toast.error('Erro ao entrar: ' + error.message)
+      else toast.success('Bem-vindo!')
+    })
+    return true
   }
 
   const logout = () => {
-    setIsAuthenticated(false)
-    toast.info('Sessão encerrada')
+    signOut()
   }
 
-  const updateUser = (data: Partial<UserProfile>) => {
+  const updateUser = async (data: Partial<UserProfile>) => {
     setUser((prev) => ({ ...prev, ...data }))
+    if (authUser) {
+      await supabase
+        .from('profiles')
+        .update({
+          name: data.name,
+          avatar_url: data.avatar,
+          weight: data.weight,
+          height: data.height,
+          age: data.age,
+          gender: data.gender,
+          activity_level: data.activityLevel,
+          visible_widgets: data.visibleWidgets,
+        })
+        .eq('id', authUser.id)
+    }
   }
 
   const toggleWidget = (widget: string) => {
-    setUser((prev) => {
-      const widgets = prev.visibleWidgets || []
-      if (widgets.includes(widget)) {
-        return {
-          ...prev,
-          visibleWidgets: widgets.filter((w) => w !== widget),
-        }
-      } else {
-        return {
-          ...prev,
-          visibleWidgets: [...widgets, widget],
-        }
-      }
-    })
+    const currentWidgets = user.visibleWidgets || []
+    const newWidgets = currentWidgets.includes(widget)
+      ? currentWidgets.filter((w) => w !== widget)
+      : [...currentWidgets, widget]
+    updateUser({ visibleWidgets: newWidgets })
   }
 
   const addRecipe = (recipe: Recipe) => {
@@ -161,21 +183,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const addMealToPlan = (date: string, type: MealType, recipeId: string) => {
-    setMealPlan((prev) => {
-      // Don't remove existing meals of same type, allow stacking if needed or just replace
-      // User Story implies multiple meals, so we allow stacking.
-      // But for simplicity in UI display, we might want to check duplicates.
-      const isDuplicate = prev.some(
-        (s) => s.date === date && s.type === type && s.recipeId === recipeId,
-      )
-      if (isDuplicate) return prev
-
-      return [...prev, { date, type, recipeId, completed: false }]
-    })
+    setMealPlan((prev) => [...prev, { date, type, recipeId, completed: false }])
   }
 
   const removeMealFromPlan = (date: string, type: MealType) => {
-    // Only removes the first match in this simple implementation
     setMealPlan((prev) => {
       const index = prev.findIndex((s) => s.date === date && s.type === type)
       if (index === -1) return prev
@@ -196,6 +207,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const autoGeneratePlan = (startDate: string) => {
+    // Keep implementation in memory for now
     const days = 7
     const newPlan: MealSlot[] = []
     const types: MealType[] = ['Café da Manhã', 'Almoço', 'Lanche', 'Jantar']
@@ -228,28 +240,27 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       })
     }
     setMealPlan((prev) => {
-      // Remove overlaps for auto-gen
       const existingDates = new Set(newPlan.map((p) => p.date))
       const filteredPrev = prev.filter((p) => !existingDates.has(p.date))
       return [...filteredPrev, ...newPlan]
     })
   }
 
-  const logWater = (amount: number, date: string) => {
+  const logWater = async (amount: number, date: string) => {
+    const existing = dailyLogs.find((l) => l.date === date)
+    const newAmount = Math.max(0, (existing?.waterIntake || 0) + amount)
+
     setDailyLogs((prev) => {
-      const existing = prev.find((l) => l.date === date)
       if (existing) {
         return prev.map((l) =>
-          l.date === date
-            ? { ...l, waterIntake: Math.max(0, l.waterIntake + amount) }
-            : l,
+          l.date === date ? { ...l, waterIntake: newAmount } : l,
         )
       } else {
         return [
           ...prev,
           {
             date,
-            waterIntake: Math.max(0, amount),
+            waterIntake: newAmount,
             weight: user.weight,
             exerciseBurned: 0,
             sleepHours: 0,
@@ -257,9 +268,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ]
       }
     })
+
+    if (authUser) {
+      const { error } = await supabase.from('daily_logs').upsert(
+        {
+          user_id: authUser.id,
+          date,
+          water_intake: newAmount,
+        },
+        { onConflict: 'user_id,date' },
+      )
+    }
   }
 
-  const logWeight = (weight: number, date: string, photo?: string) => {
+  const logWeight = async (weight: number, date: string, photo?: string) => {
     const previousWeights = dailyLogs
       .filter((l) => l.weight)
       .map((l) => l.weight!)
@@ -268,10 +290,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     if (weight < minWeight && user.goal === 'Emagrecer') {
       setHasNewPR(true)
-    } else if (weight > minWeight && user.goal === 'Ganhar Massa') {
-      const maxWeight =
-        previousWeights.length > 0 ? Math.max(...previousWeights) : user.weight
-      if (weight > maxWeight) setHasNewPR(true)
     }
 
     setDailyLogs((prev) => {
@@ -297,6 +315,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     })
     updateUser({ weight })
+
+    if (authUser) {
+      const payload: any = {
+        user_id: authUser.id,
+        date,
+        weight,
+      }
+      if (photo) payload.photo_url = photo
+
+      await supabase
+        .from('daily_logs')
+        .upsert(payload, { onConflict: 'user_id,date' })
+    }
   }
 
   const logExercise = (calories: number, date: string) => {
@@ -305,10 +336,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (existing) {
         return prev.map((l) =>
           l.date === date
-            ? {
-                ...l,
-                exerciseBurned: (l.exerciseBurned || 0) + calories,
-              }
+            ? { ...l, exerciseBurned: (l.exerciseBurned || 0) + calories }
             : l,
         )
       } else {
@@ -430,7 +458,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <AppContext.Provider
       value={{
         user,
-        isAuthenticated,
+        isAuthenticated: !!authUser,
         login,
         logout,
         updateUser,

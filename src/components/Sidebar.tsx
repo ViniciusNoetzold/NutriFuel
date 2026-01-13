@@ -6,7 +6,6 @@ import {
   ShoppingCart,
   User,
   Zap,
-  Crown,
   TrendingUp,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -20,9 +19,8 @@ export function Sidebar() {
     { icon: Search, label: 'Receitas', href: '/recipes' },
     { icon: Calendar, label: 'Plano', href: '/plan' },
     { icon: ShoppingCart, label: 'Compras', href: '/shop' },
-    { icon: TrendingUp, label: 'Evolução', href: '/evolution' },
-    { icon: Crown, label: 'Planos', href: '/plans' },
-    { icon: User, label: 'Perfil Unificado', href: '/profile' },
+    { icon: TrendingUp, label: 'Registro de evolução', href: '/evolution' },
+    { icon: User, label: 'Perfil', href: '/profile' },
   ]
 
   return (
@@ -69,7 +67,7 @@ export function Sidebar() {
           </div>
           <div className="text-sm">
             <p className="font-bold">Usuário</p>
-            <p className="text-xs text-muted-foreground">Pro Member</p>
+            <p className="text-xs text-muted-foreground">Free</p>
           </div>
         </div>
       </div>

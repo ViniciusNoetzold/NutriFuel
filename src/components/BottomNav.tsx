@@ -10,12 +10,11 @@ export function BottomNav({ isVisible }: BottomNavProps) {
   const location = useLocation()
   const path = location.pathname
 
-  // Removed Shopping Cart as per User Story
   const items = [
     { icon: Home, label: 'Início', href: '/' },
     { icon: Search, label: 'Receitas', href: '/recipes' },
     { icon: Calendar, label: 'Plano', href: '/plan' },
-    { icon: TrendingUp, label: 'Evo', href: '/evolution' },
+    { icon: TrendingUp, label: 'Registro de evolução', href: '/evolution' },
     { icon: User, label: 'Perfil', href: '/profile' },
   ]
 
@@ -40,7 +39,6 @@ export function BottomNav({ isVisible }: BottomNavProps) {
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              {/* Active Indicator Glow inside the bar - clipped */}
               {isActive && (
                 <div className="absolute inset-x-2 inset-y-1 bg-gradient-to-b from-white/40 to-transparent dark:from-white/10 rounded-xl shadow-[inset_0_1px_1px_rgba(255,255,255,0.5)] animate-fade-in pointer-events-none" />
               )}
@@ -53,16 +51,6 @@ export function BottomNav({ isVisible }: BottomNavProps) {
                   )}
                   strokeWidth={isActive ? 2.5 : 2}
                 />
-                <span
-                  className={cn(
-                    'text-[9px] font-bold mt-0.5 transition-all duration-300',
-                    isActive
-                      ? 'opacity-100 translate-y-0'
-                      : 'opacity-0 translate-y-2 hidden',
-                  )}
-                >
-                  {item.label}
-                </span>
               </div>
             </Link>
           )

@@ -1,6 +1,6 @@
 import { useAppStore } from '@/stores/useAppStore'
 import { format } from 'date-fns'
-import { Plus, Minus, Droplets, ChevronRight, Flame, Zap } from 'lucide-react'
+import { Plus, Minus, Droplets, ChevronRight, Flame } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import { Link } from 'react-router-dom'
@@ -63,93 +63,27 @@ export default function Index() {
         </div>
       </div>
 
-      {/* 1. Status - Dashboard with Liquid Bubble */}
+      {/* 1. Status - Perfect Pulsing Circle */}
       {isWidgetVisible('macros') && (
-        <Card className="aero-glass border-0 relative overflow-hidden transition-all duration-700 hover:shadow-2xl">
-          <div className="absolute inset-0 bg-gradient-to-tr from-cyan-100/30 via-transparent to-blue-100/30 pointer-events-none" />
-          <CardContent className="p-6 relative z-10">
-            <div className="flex justify-between items-center mb-6">
-              <h3 className="text-lg font-semibold text-foreground uppercase tracking-widest flex items-center gap-2">
-                <Zap className="w-5 h-5 text-primary fill-primary/20" />
-                Status
-              </h3>
-              <span className="text-xs font-bold bg-white/40 px-2 py-1 rounded-lg text-foreground/80 shadow-sm border border-white/20">
-                Hoje
-              </span>
-            </div>
+        <div className="flex justify-center py-6">
+          <div className="relative w-64 h-64 flex items-center justify-center rounded-full bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-xl border border-white/40 shadow-2xl animate-pulse-slow">
+            <div className="absolute inset-0 rounded-full bg-primary/10 animate-ping opacity-20" />
+            <div className="absolute inset-4 rounded-full border-2 border-white/30" />
 
-            <div className="flex flex-col items-center gap-6">
-              {/* Liquid Bubble Calorie Counter */}
-              <div className="relative w-64 h-64 flex items-center justify-center">
-                <div className="absolute inset-0 bg-gradient-to-br from-primary/30 to-cyan-500/20 liquid-shape blur-xl opacity-60 animate-liquid" />
-                <div className="absolute inset-2 bg-gradient-to-tl from-white/40 to-white/5 dark:from-white/10 dark:to-transparent liquid-shape border border-white/30 backdrop-blur-md animate-liquid animation-delay-2000" />
-
-                <div className="relative z-10 flex flex-col items-center justify-center">
-                  <div className="mb-2 p-3 bg-gradient-to-br from-orange-400 to-red-600 rounded-full shadow-[0_4px_12px_rgba(249,115,22,0.5),inset_0_2px_4px_rgba(255,255,255,0.4)] border border-white/40 backdrop-blur-sm group">
-                    <Flame className="w-8 h-8 text-white fill-white animate-pulse" />
-                  </div>
-                  <div className="text-center">
-                    <p className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-primary to-cyan-700 dark:to-cyan-400 drop-shadow-sm leading-none">
-                      {Math.max(0, Math.floor(remainingCalories))}
-                    </p>
-                    <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
-                      Kcal Restantes
-                    </p>
-                  </div>
-                </div>
+            {/* Content */}
+            <div className="relative z-10 flex flex-col items-center justify-center text-center">
+              <div className="mb-2 p-3 bg-gradient-to-br from-orange-400 to-red-600 rounded-full shadow-[0_4px_12px_rgba(249,115,22,0.5),inset_0_2px_4px_rgba(255,255,255,0.4)] border border-white/40 backdrop-blur-sm">
+                <Flame className="w-8 h-8 text-white fill-white" />
               </div>
-
-              <div className="grid grid-cols-3 gap-4 w-full max-w-md mt-2">
-                {[
-                  {
-                    label: 'Carb',
-                    val: consumed.carbs,
-                    goal: user.carbsGoal,
-                    color: 'from-green-400 to-green-600',
-                  },
-                  {
-                    label: 'Prot',
-                    val: consumed.protein,
-                    goal: user.proteinGoal,
-                    color: 'from-blue-400 to-blue-600',
-                  },
-                  {
-                    label: 'Gord',
-                    val: consumed.fats,
-                    goal: user.fatsGoal,
-                    color: 'from-yellow-400 to-orange-500',
-                  },
-                ].map((m) => (
-                  <div
-                    key={m.label}
-                    className="flex flex-col items-center p-3 rounded-2xl bg-white/40 dark:bg-white/5 border border-white/40 dark:border-white/10 backdrop-blur-sm shadow-sm transition-transform hover:scale-105"
-                  >
-                    <span className="text-xs font-bold text-muted-foreground mb-1">
-                      {m.label}
-                    </span>
-                    <div className="text-lg font-bold text-foreground">
-                      {m.val}
-                      <span className="text-xs text-muted-foreground font-normal">
-                        /{m.goal}g
-                      </span>
-                    </div>
-                    <div className="w-full h-1.5 bg-black/10 rounded-full mt-2 overflow-hidden">
-                      <div
-                        className={cn(
-                          'h-full rounded-full bg-gradient-to-r',
-                          m.color,
-                        )}
-                        style={{
-                          width: `${Math.min(100, (m.val / m.goal) * 100)}%`,
-                        }}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+              <p className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-primary to-cyan-700 dark:to-cyan-400 drop-shadow-sm leading-none">
+                {Math.max(0, Math.floor(remainingCalories))}
+              </p>
+              <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
+                Kcal Restantes
+              </p>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
