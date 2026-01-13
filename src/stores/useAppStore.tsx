@@ -6,7 +6,7 @@ import {
   DayLog,
   MealType,
   Ingredient,
-  Notification,
+  Notification as AppNotification,
   ShoppingItem,
   ScannedProduct,
 } from '@/lib/types'
@@ -42,7 +42,7 @@ interface AppContextType {
   toggleShoppingItem: (id: string) => void
   removeShoppingItem: (id: string) => void
   clearShoppingList: () => void
-  notifications: Notification[]
+  notifications: AppNotification[]
   markNotificationsAsRead: () => void
   hydrationSettings: { enabled: boolean; sound: boolean }
   toggleHydrationSettings: (setting: 'enabled' | 'sound') => void
@@ -66,7 +66,7 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
 
-const MOCK_NOTIFICATIONS: Notification[] = [
+const MOCK_NOTIFICATIONS: AppNotification[] = [
   {
     id: '1',
     title: 'NutriFuel Grátis',
@@ -84,7 +84,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [dailyLogs, setDailyLogs] = useState<DayLog[]>([])
   const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([])
   const [notifications, setNotifications] =
-    useState<Notification[]>(MOCK_NOTIFICATIONS)
+    useState<AppNotification[]>(MOCK_NOTIFICATIONS)
   const [hasNewPR, setHasNewPR] = useState(false)
   const [hydrationSettings, setHydrationSettings] = useState({
     enabled: true,
