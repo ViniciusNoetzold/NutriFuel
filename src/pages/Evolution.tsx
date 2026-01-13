@@ -1,6 +1,15 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
-import { Share2, Upload, ArrowLeft, Camera, History, Plus } from 'lucide-react'
+import {
+  Share2,
+  Upload,
+  ArrowLeft,
+  Camera,
+  History,
+  Plus,
+  X,
+  Loader2,
+} from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import {
@@ -9,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import { useAppStore } from '@/stores/useAppStore'
 import { format, subDays } from 'date-fns'
@@ -24,17 +34,29 @@ import {
   YAxis,
   CartesianGrid,
   ResponsiveContainer,
-  Dot,
 } from 'recharts'
 import { Card, CardContent } from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { supabase } from '@/lib/supabase/client'
+import { useAuth } from '@/hooks/use-auth'
 
 export default function Evolution() {
   const navigate = useNavigate()
-  const { dailyLogs, user } = useAppStore()
+  const { dailyLogs, user, logWeight } = useAppStore()
+  const { user: authUser } = useAuth()
   const [beforeImage, setBeforeImage] = useState<string | null>(null)
   const [afterImage, setAfterImage] = useState<string | null>(null)
   const [activeSlot, setActiveSlot] = useState<'before' | 'after' | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+
+  // New Entry State
+  const [isNewEntryOpen, setIsNewEntryOpen] = useState(false)
+  const [newWeight, setNewWeight] = useState(user.weight.toString())
+  const [newPhoto, setNewPhoto] = useState<File | null>(null)
+  const [uploading, setUploading] = useState(false)
+  const [cardPreviewOpen, setCardPreviewOpen] = useState(false)
+  const [selectedLogForCard, setSelectedLogForCard] = useState<any>(null)
 
   const handleSlotClick = (slot: 'before' | 'after') => {
     setActiveSlot(slot)
@@ -52,9 +74,49 @@ export default function Evolution() {
     toast.success('Card gerado! Compartilhando...')
   }
 
+  const handleNewEntry = async () => {
+    if (!newWeight) {
+      toast.error('Informe o peso atual.')
+      return
+    }
+
+    setUploading(true)
+    let photoUrl = undefined
+
+    try {
+      if (newPhoto && authUser) {
+        const fileExt = newPhoto.name.split('.').pop()
+        const fileName = `${authUser.id}/${Date.now()}.${fileExt}`
+        const { error: uploadError } = await supabase.storage
+          .from('evolution')
+          .upload(fileName, newPhoto, { upsert: true })
+
+        if (uploadError) throw uploadError
+
+        const {
+          data: { publicUrl },
+        } = supabase.storage.from('evolution').getPublicUrl(fileName)
+        photoUrl = publicUrl
+      }
+
+      await logWeight(
+        Number(newWeight),
+        format(new Date(), 'yyyy-MM-dd'),
+        photoUrl,
+      )
+      toast.success('Registro adicionado com sucesso!')
+      setIsNewEntryOpen(false)
+      setNewPhoto(null)
+    } catch (error: any) {
+      toast.error('Erro ao salvar: ' + error.message)
+    } finally {
+      setUploading(false)
+    }
+  }
+
   const historyPhotos = dailyLogs
     .filter((l) => l.photo)
-    .map((l) => ({ date: l.date, src: l.photo! }))
+    .map((l) => ({ date: l.date, src: l.photo!, weight: l.weight }))
 
   // Chart Data
   const historyData = Array.from({ length: 14 }).map((_, i) => {
@@ -76,16 +138,91 @@ export default function Evolution() {
 
   return (
     <div className="space-y-6 pb-24 px-1">
-      <div className="flex items-center gap-2 mb-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={() => navigate(-1)}
-          className="rounded-full"
-        >
-          <ArrowLeft className="h-5 w-5" />
-        </Button>
-        <h2 className="text-2xl font-bold">Registro de evolução</h2>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+            className="rounded-full"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+          <h2 className="text-2xl font-bold">Evolução</h2>
+        </div>
+        <Dialog open={isNewEntryOpen} onOpenChange={setIsNewEntryOpen}>
+          <DialogTrigger asChild>
+            <Button size="sm" className="aero-button rounded-full">
+              <Plus className="h-4 w-4 mr-2" /> Registrar
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="aero-glass">
+            <DialogHeader>
+              <DialogTitle>Novo Registro</DialogTitle>
+              <DialogDescription>
+                Registre seu peso e uma foto para acompanhar sua jornada.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Peso Atual (kg)</Label>
+                <Input
+                  type="number"
+                  value={newWeight}
+                  onChange={(e) => setNewWeight(e.target.value)}
+                  className="aero-input"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Foto (Opcional)</Label>
+                <div className="flex items-center gap-4">
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    id="photo-upload"
+                    onChange={(e) => setNewPhoto(e.target.files?.[0] || null)}
+                  />
+                  <Label
+                    htmlFor="photo-upload"
+                    className="flex items-center justify-center w-full h-32 border-2 border-dashed border-white/40 rounded-xl cursor-pointer hover:bg-white/10 transition-colors"
+                  >
+                    {newPhoto ? (
+                      <div className="relative w-full h-full">
+                        <img
+                          src={URL.createObjectURL(newPhoto)}
+                          className="w-full h-full object-cover rounded-xl"
+                        />
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                          <p className="text-white text-xs font-bold">
+                            Alterar
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex flex-col items-center text-muted-foreground">
+                        <Camera className="h-8 w-8 mb-2" />
+                        <span className="text-xs">Toque para adicionar</span>
+                      </div>
+                    )}
+                  </Label>
+                </div>
+              </div>
+              <Button
+                className="w-full aero-button"
+                onClick={handleNewEntry}
+                disabled={uploading}
+              >
+                {uploading ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <Share2 className="h-4 w-4 mr-2" />
+                )}
+                Salvar Registro
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       {/* Weight Chart */}
@@ -169,22 +306,94 @@ export default function Evolution() {
                 {historyPhotos.map((p, idx) => (
                   <div
                     key={idx}
-                    className="relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 border-transparent hover:border-primary"
+                    className="relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 border-transparent hover:border-primary group"
                     onClick={() => handleSelectImage(p.src)}
                   >
                     <img src={p.src} className="w-full h-full object-cover" />
                     <div className="absolute bottom-0 w-full bg-black/50 text-[10px] text-white text-center py-0.5">
                       {format(new Date(p.date), 'dd/MM')}
                     </div>
+                    {/* Share Button Overlay */}
+                    <button
+                      className="absolute top-1 right-1 p-1 bg-white/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        setSelectedLogForCard(p)
+                        setCardPreviewOpen(true)
+                      }}
+                    >
+                      <Share2 className="h-3 w-3 text-white" />
+                    </button>
                   </div>
                 ))}
               </div>
             ) : (
               <p className="text-center text-muted-foreground">
-                Nenhuma foto no histórico. Adicione no seu perfil!
+                Nenhuma foto no histórico.
               </p>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Card Generator Modal */}
+      <Dialog open={cardPreviewOpen} onOpenChange={setCardPreviewOpen}>
+        <DialogContent className="aero-glass border-0 bg-transparent shadow-none p-0 flex items-center justify-center">
+          {selectedLogForCard && (
+            <div className="relative w-80 aspect-[9/16] bg-gradient-to-br from-gray-900 to-black rounded-[32px] overflow-hidden shadow-2xl flex flex-col items-center justify-between p-6 border border-white/20">
+              <div className="absolute inset-0 bg-[url('https://img.usecurling.com/p/64/64?q=noise&color=gray')] opacity-10 pointer-events-none mix-blend-overlay" />
+
+              {/* Header */}
+              <div className="w-full flex justify-between items-center z-10">
+                <span className="font-bold text-white tracking-widest text-xs">
+                  NUTRIFUEL
+                </span>
+                <span className="text-[10px] text-white/60">
+                  {format(new Date(selectedLogForCard.date), 'dd MMMM yyyy')}
+                </span>
+              </div>
+
+              {/* Photo */}
+              <div className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden border border-white/10 shadow-lg my-4 group">
+                <img
+                  src={selectedLogForCard.src}
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute bottom-0 inset-x-0 h-1/3 bg-gradient-to-t from-black/80 to-transparent" />
+                <div className="absolute bottom-4 left-4">
+                  <p className="text-3xl font-black text-white">
+                    {selectedLogForCard.weight}
+                    <span className="text-base font-normal text-white/60 ml-1">
+                      kg
+                    </span>
+                  </p>
+                  <p className="text-[10px] text-white/80 uppercase tracking-wider font-bold">
+                    Progresso
+                  </p>
+                </div>
+              </div>
+
+              {/* Footer */}
+              <div className="w-full z-10">
+                <Button
+                  className="w-full bg-white text-black hover:bg-white/90 rounded-full font-bold"
+                  onClick={() =>
+                    toast.success('Card pronto para compartilhar!')
+                  }
+                >
+                  Compartilhar
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="w-full text-white/50 text-xs mt-2"
+                  onClick={() => setCardPreviewOpen(false)}
+                >
+                  Fechar
+                </Button>
+              </div>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -245,7 +454,7 @@ export default function Evolution() {
           className="w-full mt-6 h-12 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 text-white font-bold shadow-lg"
           disabled={!beforeImage || !afterImage}
         >
-          <Share2 className="mr-2 h-5 w-5" /> Compartilhar Stories
+          <Share2 className="mr-2 h-5 w-5" /> Compartilhar Comparativo
         </Button>
       </div>
     </div>

@@ -37,6 +37,8 @@ export interface UserProfile {
   id?: string
   name: string
   avatar: string
+  email?: string
+  phone?: string
   gender: 'male' | 'female'
   age: number
   weight: number

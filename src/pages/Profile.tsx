@@ -13,7 +13,7 @@ import {
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar'
 import { toast } from 'sonner'
 import { useState, useRef } from 'react'
-import { User, LogOut, Camera, Loader2 } from 'lucide-react'
+import { User, LogOut, Camera, Loader2, Lock } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
@@ -119,6 +119,38 @@ export default function Profile() {
       </div>
 
       <div className="aero-glass p-6 space-y-8">
+        {/* Read-Only Identity Section */}
+        <div className="space-y-4 pb-4 border-b border-white/20">
+          <h3 className="font-semibold text-lg flex items-center gap-2">
+            Identidade <Lock className="h-4 w-4 text-muted-foreground" />
+          </h3>
+          <div className="grid grid-cols-1 gap-4">
+            <div className="space-y-2">
+              <Label>Email da Conta</Label>
+              <Input
+                value={formData.email || ''}
+                readOnly
+                className="aero-input bg-gray-100/50 dark:bg-black/20 text-muted-foreground cursor-not-allowed"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Telefone</Label>
+              <Input
+                value={formData.phone || ''}
+                readOnly
+                className="aero-input bg-gray-100/50 dark:bg-black/20 text-muted-foreground cursor-not-allowed"
+                placeholder="Não cadastrado"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Objetivo Pessoal</Label>
+              <div className="aero-input bg-gray-100/50 dark:bg-black/20 text-muted-foreground flex items-center px-3 py-2 rounded-xl cursor-not-allowed">
+                {formData.goal}
+              </div>
+            </div>
+          </div>
+        </div>
+
         <div className="space-y-4">
           <h3 className="font-semibold text-lg">Dados Pessoais</h3>
           <div className="grid grid-cols-2 gap-4">

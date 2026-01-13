@@ -16,7 +16,7 @@ import Scanner from './pages/Scanner'
 import Evolution from './pages/Evolution'
 import { AppProvider, useAppStore } from './stores/useAppStore'
 import { ThemeProvider } from 'next-themes'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { SplashScreen } from './components/SplashScreen'
 import { AuthProvider, useAuth } from './hooks/use-auth'
 
@@ -57,6 +57,11 @@ const AppRoutes = () => {
 
 const App = () => {
   const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    // Internationalization: Set language to pt-br
+    document.documentElement.lang = 'pt-br'
+  }, [])
 
   if (loading) {
     return (

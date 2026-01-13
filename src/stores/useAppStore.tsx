@@ -105,6 +105,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             setUser({
               ...MOCK_USER,
               ...data,
+              email: authUser.email,
               avatar: data.avatar_url || MOCK_USER.avatar,
               visibleWidgets: data.visible_widgets || MOCK_USER.visibleWidgets,
             })
@@ -133,6 +134,42 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [authUser])
 
+  // Notification Logic
+  useEffect(() => {
+    if (!('Notification' in window)) return
+
+    if (Notification.permission !== 'granted') {
+      Notification.requestPermission()
+    }
+
+    const checkNotifications = () => {
+      const now = new Date()
+      const hours = now.getHours()
+      const minutes = now.getMinutes()
+      const scheduledHours = [7, 10, 13, 16, 19, 22]
+
+      if (scheduledHours.includes(hours) && minutes === 0) {
+        // Simple throttle to avoid multiple notifications in the same minute
+        // In a real app we'd track last notification time
+        const title =
+          hours % 2 === 0 ? 'Hora da Refeição!' : 'Hora de Beber Água!'
+        const body =
+          hours % 2 === 0
+            ? 'Mantenha o foco na sua dieta.'
+            : 'Mantenha-se hidratado.'
+
+        if (Notification.permission === 'granted') {
+          new Notification(title, { body, icon: '/favicon.ico' })
+        } else {
+          toast.info(title, { description: body })
+        }
+      }
+    }
+
+    const interval = setInterval(checkNotifications, 60000) // Check every minute
+    return () => clearInterval(interval)
+  }, [])
+
   const login = (u: string, p: string) => {
     signIn(u, p).then(({ error }) => {
       if (error) toast.error('Erro ao entrar: ' + error.message)
@@ -159,6 +196,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           gender: data.gender,
           activity_level: data.activityLevel,
           visible_widgets: data.visibleWidgets,
+          phone: data.phone,
         })
         .eq('id', authUser.id)
     }
@@ -207,7 +245,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const autoGeneratePlan = (startDate: string) => {
-    // Keep implementation in memory for now
     const days = 7
     const newPlan: MealSlot[] = []
     const types: MealType[] = ['Café da Manhã', 'Almoço', 'Lanche', 'Jantar']
@@ -270,7 +307,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     })
 
     if (authUser) {
-      const { error } = await supabase.from('daily_logs').upsert(
+      await supabase.from('daily_logs').upsert(
         {
           user_id: authUser.id,
           date,
