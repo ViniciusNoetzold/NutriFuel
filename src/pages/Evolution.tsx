@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Share2,
@@ -7,7 +7,6 @@ import {
   Camera,
   History,
   Plus,
-  X,
   Loader2,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
@@ -21,7 +20,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { useAppStore } from '@/stores/useAppStore'
-import { format, subDays } from 'date-fns'
+import { format } from 'date-fns'
 import {
   ChartContainer,
   ChartTooltip,
@@ -40,10 +39,11 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
+import { ImageEditor } from '@/components/ImageEditor'
 
 export default function Evolution() {
   const navigate = useNavigate()
-  const { dailyLogs, user, logWeight } = useAppStore()
+  const { evolutionLogs, user, logWeight } = useAppStore()
   const { user: authUser } = useAuth()
   const [beforeImage, setBeforeImage] = useState<string | null>(null)
   const [afterImage, setAfterImage] = useState<string | null>(null)
@@ -53,10 +53,13 @@ export default function Evolution() {
   // New Entry State
   const [isNewEntryOpen, setIsNewEntryOpen] = useState(false)
   const [newWeight, setNewWeight] = useState(user.weight.toString())
-  const [newPhoto, setNewPhoto] = useState<File | null>(null)
   const [uploading, setUploading] = useState(false)
   const [cardPreviewOpen, setCardPreviewOpen] = useState(false)
   const [selectedLogForCard, setSelectedLogForCard] = useState<any>(null)
+
+  // Image Editor
+  const [editorOpen, setEditorOpen] = useState(false)
+  const [selectedFile, setSelectedFile] = useState<File | null>(null)
 
   const handleSlotClick = (slot: 'before' | 'after') => {
     setActiveSlot(slot)
@@ -74,7 +77,15 @@ export default function Evolution() {
     toast.success('Card gerado! Compartilhando...')
   }
 
-  const handleNewEntry = async () => {
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      setSelectedFile(file)
+      setEditorOpen(true)
+    }
+  }
+
+  const handleSaveEntry = async (processedFile?: File) => {
     if (!newWeight) {
       toast.error('Informe o peso atual.')
       return
@@ -84,12 +95,15 @@ export default function Evolution() {
     let photoUrl = undefined
 
     try {
-      if (newPhoto && authUser) {
-        const fileExt = newPhoto.name.split('.').pop()
+      if (processedFile && authUser) {
+        const fileExt = 'jpg'
         const fileName = `${authUser.id}/${Date.now()}.${fileExt}`
         const { error: uploadError } = await supabase.storage
           .from('evolution')
-          .upload(fileName, newPhoto, { upsert: true })
+          .upload(fileName, processedFile, {
+            upsert: true,
+            contentType: 'image/jpeg',
+          })
 
         if (uploadError) throw uploadError
 
@@ -106,7 +120,7 @@ export default function Evolution() {
       )
       toast.success('Registro adicionado com sucesso!')
       setIsNewEntryOpen(false)
-      setNewPhoto(null)
+      setSelectedFile(null)
     } catch (error: any) {
       toast.error('Erro ao salvar: ' + error.message)
     } finally {
@@ -114,30 +128,25 @@ export default function Evolution() {
     }
   }
 
-  const historyPhotos = dailyLogs
-    .filter((l) => l.photo)
-    .map((l) => ({ date: l.date, src: l.photo!, weight: l.weight }))
+  const historyPhotos = evolutionLogs
+    .filter((l) => l.photo_url)
+    .map((l) => ({ date: l.date, src: l.photo_url!, weight: l.weight }))
 
-  // Chart Data
-  const historyData = Array.from({ length: 14 }).map((_, i) => {
-    const date = subDays(new Date(), 13 - i)
-    const dateStr = format(date, 'yyyy-MM-dd')
-    const log = dailyLogs.find((l) => l.date === dateStr)
-    return {
-      date: format(date, 'dd/MM'),
-      weight: log?.weight ?? null,
-    }
-  })
-
-  // Fill nulls
-  let lastWeight = user.weight
-  const chartData = historyData.map((d) => {
-    if (d.weight !== null) lastWeight = d.weight
-    return { ...d, weight: lastWeight }
-  })
+  // Chart Data from Evolution Logs
+  const chartData = evolutionLogs.map((l) => ({
+    date: format(new Date(l.date), 'dd/MM'),
+    weight: l.weight,
+  }))
 
   return (
     <div className="space-y-6 pb-24 px-1">
+      <ImageEditor
+        open={editorOpen}
+        onOpenChange={setEditorOpen}
+        initialFile={selectedFile}
+        onSave={(file) => handleSaveEntry(file)}
+      />
+
       <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
           <Button
@@ -181,36 +190,24 @@ export default function Evolution() {
                     accept="image/*"
                     className="hidden"
                     id="photo-upload"
-                    onChange={(e) => setNewPhoto(e.target.files?.[0] || null)}
+                    onChange={handleFileSelect}
                   />
                   <Label
                     htmlFor="photo-upload"
                     className="flex items-center justify-center w-full h-32 border-2 border-dashed border-white/40 rounded-xl cursor-pointer hover:bg-white/10 transition-colors"
                   >
-                    {newPhoto ? (
-                      <div className="relative w-full h-full">
-                        <img
-                          src={URL.createObjectURL(newPhoto)}
-                          className="w-full h-full object-cover rounded-xl"
-                        />
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                          <p className="text-white text-xs font-bold">
-                            Alterar
-                          </p>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex flex-col items-center text-muted-foreground">
-                        <Camera className="h-8 w-8 mb-2" />
-                        <span className="text-xs">Toque para adicionar</span>
-                      </div>
-                    )}
+                    <div className="flex flex-col items-center text-muted-foreground">
+                      <Camera className="h-8 w-8 mb-2" />
+                      <span className="text-xs">
+                        Toque para selecionar e editar (1080x1080)
+                      </span>
+                    </div>
                   </Label>
                 </div>
               </div>
               <Button
                 className="w-full aero-button"
-                onClick={handleNewEntry}
+                onClick={() => handleSaveEntry()}
                 disabled={uploading}
               >
                 {uploading ? (
@@ -218,7 +215,7 @@ export default function Evolution() {
                 ) : (
                   <Share2 className="h-4 w-4 mr-2" />
                 )}
-                Salvar Registro
+                Salvar sem Foto
               </Button>
             </div>
           </DialogContent>
@@ -336,7 +333,7 @@ export default function Evolution() {
         </DialogContent>
       </Dialog>
 
-      {/* Card Generator Modal */}
+      {/* Card Generator Modal - Story Card */}
       <Dialog open={cardPreviewOpen} onOpenChange={setCardPreviewOpen}>
         <DialogContent className="aero-glass border-0 bg-transparent shadow-none p-0 flex items-center justify-center">
           {selectedLogForCard && (

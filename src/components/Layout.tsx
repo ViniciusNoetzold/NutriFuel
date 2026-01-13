@@ -2,7 +2,16 @@ import React, { useRef, useState, useEffect } from 'react'
 import { Outlet, useLocation, useNavigate, Link } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
-import { Bell, ArrowLeft, Check, User, Sun, Moon, Settings } from 'lucide-react'
+import {
+  Bell,
+  ArrowLeft,
+  Check,
+  User,
+  Sun,
+  Moon,
+  Settings,
+  History,
+} from 'lucide-react'
 import { Button } from './ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar'
 import { useAppStore } from '@/stores/useAppStore'
@@ -16,6 +25,7 @@ import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { cn } from '@/lib/utils'
 import { useTheme } from 'next-themes'
+import { NotificationHistory } from '@/components/NotificationHistory'
 
 export default function Layout() {
   const location = useLocation()
@@ -26,6 +36,7 @@ export default function Layout() {
   const mainRef = useRef<HTMLDivElement>(null)
   const [showNavbar, setShowNavbar] = useState(true)
   const [lastScrollY, setLastScrollY] = useState(0)
+  const [historyOpen, setHistoryOpen] = useState(false)
 
   // Determine if back button should be shown
   const isDetailPage =
@@ -71,6 +82,8 @@ export default function Layout() {
       <div className="absolute inset-0 z-0 opacity-[0.04] pointer-events-none bg-texture-overlay mix-blend-overlay" />
 
       <Sidebar />
+      <NotificationHistory open={historyOpen} onOpenChange={setHistoryOpen} />
+
       <main
         ref={mainRef}
         className="flex-1 md:pl-64 pb-24 md:pb-0 z-10 relative h-screen overflow-y-auto scroll-smooth"
@@ -185,15 +198,25 @@ export default function Layout() {
               >
                 <div className="flex items-center justify-between px-4 py-3 border-b border-white/20 bg-white/10 dark:bg-white/5">
                   <h4 className="font-semibold text-sm">Notificações</h4>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-auto px-2 text-xs hover:bg-white/20"
-                    onClick={markNotificationsAsRead}
-                  >
-                    <Check className="mr-1 h-3 w-3" />
-                    Marcar lidas
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-6 w-6"
+                      onClick={() => setHistoryOpen(true)}
+                    >
+                      <History className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto px-2 text-xs hover:bg-white/20"
+                      onClick={markNotificationsAsRead}
+                    >
+                      <Check className="mr-1 h-3 w-3" />
+                      Lidas
+                    </Button>
+                  </div>
                 </div>
                 <ScrollArea className="h-[300px]">
                   {notifications.length > 0 ? (

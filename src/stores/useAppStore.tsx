@@ -9,6 +9,8 @@ import {
   Notification as AppNotification,
   ShoppingItem,
   ScannedProduct,
+  Meal,
+  EvolutionLog,
 } from '@/lib/types'
 import { MOCK_USER, MOCK_RECIPES } from '@/lib/data'
 import { format } from 'date-fns'
@@ -62,6 +64,8 @@ interface AppContextType {
   resetPR: () => void
   scannedHistory: ScannedProduct[]
   addScannedProduct: (product: ScannedProduct) => void
+  addMeal: (meal: Omit<Meal, 'id' | 'user_id' | 'created_at'>) => Promise<void>
+  evolutionLogs: EvolutionLog[]
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -69,8 +73,8 @@ const AppContext = createContext<AppContextType | undefined>(undefined)
 const MOCK_NOTIFICATIONS: AppNotification[] = [
   {
     id: '1',
-    title: 'NutriFuel Grátis',
-    message: 'Aproveite todos os recursos desbloqueados!',
+    title: 'Bem-vindo ao NutriFuel',
+    message: 'Configure seu perfil para começar.',
     date: new Date().toISOString(),
     read: false,
   },
@@ -91,6 +95,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     sound: true,
   })
   const [scannedHistory, setScannedHistory] = useState<ScannedProduct[]>([])
+  const [evolutionLogs, setEvolutionLogs] = useState<EvolutionLog[]>([])
 
   useEffect(() => {
     if (authUser) {
@@ -108,6 +113,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               email: authUser.email,
               avatar: data.avatar_url || MOCK_USER.avatar,
               visibleWidgets: data.visible_widgets || MOCK_USER.visibleWidgets,
+              hideArticles: data.hide_articles || false,
             })
           }
         })
@@ -127,48 +133,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               photo: d.photo_url,
               exerciseBurned: d.exercise_burned,
               sleepHours: d.sleep_hours,
+              totalCalories: d.total_calories,
+              totalProtein: d.total_protein,
+              totalCarbs: d.total_carbs,
+              totalFats: d.total_fats,
             }))
             setDailyLogs(logs)
           }
         })
+
+      // Fetch Evolution Logs
+      supabase
+        .from('evolution_logs')
+        .select('*')
+        .eq('user_id', authUser.id)
+        .order('date', { ascending: true })
+        .then(({ data }) => {
+          if (data) setEvolutionLogs(data as EvolutionLog[])
+        })
     }
   }, [authUser])
-
-  // Notification Logic
-  useEffect(() => {
-    if (!('Notification' in window)) return
-
-    if (Notification.permission !== 'granted') {
-      Notification.requestPermission()
-    }
-
-    const checkNotifications = () => {
-      const now = new Date()
-      const hours = now.getHours()
-      const minutes = now.getMinutes()
-      const scheduledHours = [7, 10, 13, 16, 19, 22]
-
-      if (scheduledHours.includes(hours) && minutes === 0) {
-        // Simple throttle to avoid multiple notifications in the same minute
-        // In a real app we'd track last notification time
-        const title =
-          hours % 2 === 0 ? 'Hora da Refeição!' : 'Hora de Beber Água!'
-        const body =
-          hours % 2 === 0
-            ? 'Mantenha o foco na sua dieta.'
-            : 'Mantenha-se hidratado.'
-
-        if (Notification.permission === 'granted') {
-          new Notification(title, { body, icon: '/favicon.ico' })
-        } else {
-          toast.info(title, { description: body })
-        }
-      }
-    }
-
-    const interval = setInterval(checkNotifications, 60000) // Check every minute
-    return () => clearInterval(interval)
-  }, [])
 
   const login = (u: string, p: string) => {
     signIn(u, p).then(({ error }) => {
@@ -197,6 +181,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           activity_level: data.activityLevel,
           visible_widgets: data.visibleWidgets,
           phone: data.phone,
+          hide_articles: data.hideArticles,
         })
         .eq('id', authUser.id)
     }
@@ -212,6 +197,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const addRecipe = (recipe: Recipe) => {
     setRecipes((prev) => [...prev, recipe])
+    if (authUser) {
+      supabase
+        .from('recipes')
+        .insert({
+          user_id: authUser.id,
+          title: recipe.title,
+          ingredients: recipe.ingredients,
+          instructions: recipe.instructions,
+          macros: {
+            calories: recipe.calories,
+            protein: recipe.protein,
+            carbs: recipe.carbs,
+            fats: recipe.fats,
+          },
+          image_url: recipe.image,
+          prep_time: recipe.prepTime,
+          difficulty: recipe.difficulty,
+          category: recipe.category,
+          tags: recipe.tags,
+        })
+        .then()
+    }
   }
 
   const toggleFavorite = (id: string) => {
@@ -245,6 +252,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const autoGeneratePlan = (startDate: string) => {
+    // Basic implementation for MVP demo
     const days = 7
     const newPlan: MealSlot[] = []
     const types: MealType[] = ['Café da Manhã', 'Almoço', 'Lanche', 'Jantar']
@@ -316,19 +324,46 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         { onConflict: 'user_id,date' },
       )
     }
+
+    // Add notification to history
+    if (amount > 0) {
+      setNotifications((prev) => [
+        {
+          id: Date.now().toString(),
+          title: 'Hidratação',
+          message: `Registrado: ${amount}ml`,
+          date: new Date().toISOString(),
+          read: false,
+        },
+        ...prev,
+      ])
+    }
   }
 
   const logWeight = async (weight: number, date: string, photo?: string) => {
-    const previousWeights = dailyLogs
-      .filter((l) => l.weight)
-      .map((l) => l.weight!)
-    const minWeight =
-      previousWeights.length > 0 ? Math.min(...previousWeights) : user.weight
+    // 1. Update Profile
+    updateUser({ weight })
 
-    if (weight < minWeight && user.goal === 'Emagrecer') {
-      setHasNewPR(true)
+    // 2. Add to Evolution Logs
+    if (authUser) {
+      await supabase.from('evolution_logs').insert({
+        user_id: authUser.id,
+        date,
+        weight,
+        photo_url: photo,
+      })
+
+      // Refresh evolution logs
+      const { data } = await supabase
+        .from('evolution_logs')
+        .select('*')
+        .eq('user_id', authUser.id)
+        .order('date', { ascending: true })
+
+      if (data) setEvolutionLogs(data as EvolutionLog[])
     }
 
+    // 3. Update Daily Logs (Backward compatibility for charts)
     setDailyLogs((prev) => {
       const existing = prev.find((l) => l.date === date)
       if (existing) {
@@ -351,7 +386,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ]
       }
     })
-    updateUser({ weight })
 
     if (authUser) {
       const payload: any = {
@@ -391,7 +425,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     })
   }
 
-  const logSleep = (hours: number, date: string) => {
+  const logSleep = async (hours: number, date: string) => {
     setDailyLogs((prev) => {
       const existing = prev.find((l) => l.date === date)
       if (existing) {
@@ -411,6 +445,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         ]
       }
     })
+
+    if (authUser) {
+      await supabase.from('daily_logs').upsert(
+        {
+          user_id: authUser.id,
+          date,
+          sleep_hours: hours,
+        },
+        { onConflict: 'user_id,date' },
+      )
+    }
   }
 
   const resetPR = () => setHasNewPR(false)
@@ -458,37 +503,83 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const getDailyNutrition = (date: string) => {
-    const slots = mealPlan.filter((s) => s.date === date)
-    const nutrition = { calories: 0, protein: 0, carbs: 0, fats: 0 }
-    slots.forEach((slot) => {
-      const recipe = recipes.find((r) => r.id === slot.recipeId)
-      if (recipe) {
-        nutrition.calories += recipe.calories
-        nutrition.protein += recipe.protein
-        nutrition.carbs += recipe.carbs
-        nutrition.fats += recipe.fats
+    // For MVP, we combine meal plan + manually logged meals via daily logs
+    // In this version, we will focus on the data from daily_logs which is now auto-aggregated
+    const log = dailyLogs.find((l) => l.date === date)
+    if (log) {
+      return {
+        calories: log.totalCalories || 0,
+        protein: log.totalProtein || 0,
+        carbs: log.totalCarbs || 0,
+        fats: log.totalFats || 0,
       }
-    })
-    return nutrition
+    }
+    return { calories: 0, protein: 0, carbs: 0, fats: 0 }
   }
 
   const getConsumedNutrition = (date: string) => {
-    const slots = mealPlan.filter((s) => s.date === date && s.completed)
-    const nutrition = { calories: 0, protein: 0, carbs: 0, fats: 0 }
-    slots.forEach((slot) => {
-      const recipe = recipes.find((r) => r.id === slot.recipeId)
-      if (recipe) {
-        nutrition.calories += recipe.calories
-        nutrition.protein += recipe.protein
-        nutrition.carbs += recipe.carbs
-        nutrition.fats += recipe.fats
+    // Use total from daily log as "consumed"
+    const log = dailyLogs.find((l) => l.date === date)
+    if (log) {
+      return {
+        calories: log.totalCalories || 0,
+        protein: log.totalProtein || 0,
+        carbs: log.totalCarbs || 0,
+        fats: log.totalFats || 0,
       }
-    })
-    return nutrition
+    }
+    return { calories: 0, protein: 0, carbs: 0, fats: 0 }
   }
 
   const addScannedProduct = (product: ScannedProduct) => {
     setScannedHistory((prev) => [product, ...prev])
+  }
+
+  const addMeal = async (meal: Omit<Meal, 'id' | 'user_id' | 'created_at'>) => {
+    if (!authUser) return
+
+    // 1. Insert Meal
+    const { error } = await supabase.from('meals').insert({
+      user_id: authUser.id,
+      ...meal,
+    })
+
+    if (error) {
+      toast.error('Erro ao adicionar refeição')
+      throw error
+    }
+
+    // 2. Fetch updated Daily Log to sync frontend state
+    const { data: logData } = await supabase
+      .from('daily_logs')
+      .select('*')
+      .eq('user_id', authUser.id)
+      .eq('date', meal.date)
+      .single()
+
+    if (logData) {
+      setDailyLogs((prev) => {
+        const idx = prev.findIndex((l) => l.date === meal.date)
+        const newLog = {
+          date: logData.date,
+          waterIntake: logData.water_intake,
+          weight: logData.weight,
+          photo: logData.photo_url,
+          exerciseBurned: logData.exercise_burned,
+          sleepHours: logData.sleep_hours,
+          totalCalories: logData.total_calories,
+          totalProtein: logData.total_protein,
+          totalCarbs: logData.total_carbs,
+          totalFats: logData.total_fats,
+        }
+        if (idx >= 0) {
+          const arr = [...prev]
+          arr[idx] = newLog
+          return arr
+        }
+        return [...prev, newLog]
+      })
+    }
   }
 
   return (
@@ -529,6 +620,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         resetPR,
         scannedHistory,
         addScannedProduct,
+        addMeal,
+        evolutionLogs,
       }}
     >
       {children}

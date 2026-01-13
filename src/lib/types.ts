@@ -52,6 +52,7 @@ export interface UserProfile {
   fatsGoal: number
   waterGoal: number
   visibleWidgets: string[]
+  hideArticles?: boolean
 }
 
 export type MealType = 'Café da Manhã' | 'Almoço' | 'Lanche' | 'Jantar'
@@ -63,6 +64,25 @@ export interface MealSlot {
   completed?: boolean
 }
 
+export interface Meal {
+  id: string
+  user_id: string
+  date: string
+  name: string
+  calories: number
+  protein: number
+  carbs: number
+  fats: number
+}
+
+export interface EvolutionLog {
+  id: string
+  user_id: string
+  date: string
+  weight: number
+  photo_url?: string
+}
+
 export interface DayLog {
   date: string
   waterIntake: number // in ml
@@ -70,6 +90,10 @@ export interface DayLog {
   photo?: string // URL to shape photo
   exerciseBurned?: number // Calories burned
   sleepHours?: number
+  totalCalories?: number
+  totalProtein?: number
+  totalCarbs?: number
+  totalFats?: number
 }
 
 export interface Notification {

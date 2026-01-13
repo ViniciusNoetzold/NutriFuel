@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, ScanLine, Search, Plus } from 'lucide-react'
+import { ArrowLeft, ScanLine, Plus } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAppStore } from '@/stores/useAppStore'
 import {
@@ -9,38 +9,69 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog'
 import { ScannedProduct } from '@/lib/types'
+import { format } from 'date-fns'
 
 export default function Scanner() {
   const navigate = useNavigate()
-  const { addScannedProduct, scannedHistory, addShoppingItem } = useAppStore()
+  const { addScannedProduct, scannedHistory, addShoppingItem, addMeal } =
+    useAppStore()
   const [scanning, setScanning] = useState(true)
   const [scannedProduct, setScannedProduct] = useState<ScannedProduct | null>(
     null,
   )
+  const videoRef = useRef<HTMLVideoElement>(null)
 
-  // Mock scan logic
-  const handleScan = () => {
-    // Simulate finding a product after 1.5s
-    setTimeout(() => {
-      const mockProduct: ScannedProduct = {
-        code: '7891000055',
-        name: 'Iogurte Grego Light',
-        brand: 'NutriDairy',
-        calories: 90,
-        protein: 12,
-        carbs: 8,
-        fats: 2.5,
-        image: 'https://img.usecurling.com/p/200/200?q=yogurt%20container',
-        dateScanned: new Date().toISOString(),
+  useEffect(() => {
+    // Start Camera
+    const startCamera = async () => {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' },
+        })
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream
+        }
+      } catch (err) {
+        console.error('Error accessing camera', err)
+        toast.error('Erro ao acessar a câmera.')
       }
-      setScannedProduct(mockProduct)
-      addScannedProduct(mockProduct)
-      setScanning(false)
-      toast.success('Código de barras identificado!')
-    }, 1000)
+    }
+
+    if (scanning) {
+      startCamera()
+    }
+
+    return () => {
+      // Stop Camera
+      if (videoRef.current && videoRef.current.srcObject) {
+        const stream = videoRef.current.srcObject as MediaStream
+        stream.getTracks().forEach((track) => track.stop())
+      }
+    }
+  }, [scanning])
+
+  const handleScanSimulation = () => {
+    // Simulate API Call with VITE_API_KEY_BARCODE logic
+    // const apiKey = import.meta.env.VITE_API_KEY_BARCODE;
+    // In real scenario: fetch(`api.com/barcode?key=${apiKey}...`)
+
+    const mockProduct: ScannedProduct = {
+      code: '7891000055',
+      name: 'Iogurte Grego Light',
+      brand: 'NutriDairy',
+      calories: 90,
+      protein: 12,
+      carbs: 8,
+      fats: 2.5,
+      image: 'https://img.usecurling.com/p/200/200?q=yogurt%20container',
+      dateScanned: new Date().toISOString(),
+    }
+    setScannedProduct(mockProduct)
+    addScannedProduct(mockProduct)
+    setScanning(false)
+    toast.success('Produto identificado!')
   }
 
   const handleAddToShoppingList = () => {
@@ -56,6 +87,27 @@ export default function Scanner() {
     }
   }
 
+  const handleEat = async () => {
+    if (scannedProduct) {
+      try {
+        // This adds to 'meals' table. DB trigger updates 'daily_logs'.
+        await addMeal({
+          date: format(new Date(), 'yyyy-MM-dd'),
+          name: scannedProduct.name,
+          calories: scannedProduct.calories,
+          protein: scannedProduct.protein,
+          carbs: scannedProduct.carbs,
+          fats: scannedProduct.fats,
+        })
+        toast.success('Refeição registrada e macros atualizados!')
+        setScannedProduct(null)
+        setScanning(true)
+      } catch (e) {
+        // Error handled in store
+      }
+    }
+  }
+
   return (
     <div className="h-[calc(100vh-80px)] flex flex-col relative bg-black/90 rounded-[30px] overflow-hidden">
       <div className="absolute top-4 left-4 z-20">
@@ -68,13 +120,22 @@ export default function Scanner() {
         </Button>
       </div>
 
-      <div className="flex-1 relative flex items-center justify-center">
-        {/* Mock Camera View */}
-        <div className="absolute inset-0 bg-[url('https://img.usecurling.com/p/400/800?q=supermarket%20shelf&blur=2')] bg-cover opacity-50" />
+      <div className="flex-1 relative flex items-center justify-center bg-black">
+        {/* Camera Feed */}
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          className={`absolute inset-0 w-full h-full object-cover opacity-80 ${!scanning ? 'hidden' : ''}`}
+        />
 
         {/* Scanning Frame */}
         {scanning && (
-          <div className="relative z-10 w-64 h-48 border-2 border-white/50 rounded-2xl flex items-center justify-center overflow-hidden">
+          <div
+            className="relative z-10 w-64 h-48 border-2 border-white/50 rounded-2xl flex items-center justify-center overflow-hidden cursor-pointer"
+            onClick={handleScanSimulation}
+          >
             <div className="absolute inset-x-0 top-0 h-1 bg-red-500 shadow-[0_0_10px_red] animate-[scan_2s_ease-in-out_infinite]" />
             <div className="corner-border top-0 left-0 border-l-4 border-t-4 border-white w-4 h-4 absolute rounded-tl-sm" />
             <div className="corner-border top-0 right-0 border-r-4 border-t-4 border-white w-4 h-4 absolute rounded-tr-sm" />
@@ -84,19 +145,11 @@ export default function Scanner() {
           </div>
         )}
 
-        <p className="absolute bottom-32 text-white/80 text-sm font-medium text-center px-8">
-          Aponte a câmera para o código de barras
+        <p className="absolute bottom-32 text-white/80 text-sm font-medium text-center px-8 z-20">
+          Toque na área de scan para simular a leitura
         </p>
 
-        <div className="absolute bottom-10 inset-x-0 flex flex-col items-center gap-4">
-          <Button
-            size="lg"
-            className="h-16 w-16 rounded-full border-4 border-white bg-transparent hover:bg-white/20"
-            onClick={handleScan}
-          >
-            <div className="w-12 h-12 bg-white rounded-full" />
-          </Button>
-
+        <div className="absolute bottom-10 inset-x-0 flex flex-col items-center gap-4 z-20">
           {/* Recent Scans */}
           {scannedHistory.length > 0 && (
             <div className="w-full px-4 overflow-x-auto">
@@ -104,7 +157,7 @@ export default function Scanner() {
                 {scannedHistory.slice(0, 5).map((prod, idx) => (
                   <div
                     key={idx}
-                    className="bg-black/40 backdrop-blur-md p-2 rounded-xl flex items-center gap-2 text-white border border-white/10 w-40 flex-shrink-0 cursor-pointer"
+                    className="bg-black/60 backdrop-blur-md p-2 rounded-xl flex items-center gap-2 text-white border border-white/10 w-40 flex-shrink-0 cursor-pointer"
                     onClick={() => setScannedProduct(prod)}
                   >
                     <img
@@ -182,13 +235,7 @@ export default function Scanner() {
                 >
                   <Plus className="h-4 w-4 mr-2" /> Comprar
                 </Button>
-                <Button
-                  className="flex-1 aero-button"
-                  onClick={() => {
-                    toast.success('Adicionado ao diário!')
-                    setScannedProduct(null)
-                  }}
-                >
+                <Button className="flex-1 aero-button" onClick={handleEat}>
                   <Plus className="h-4 w-4 mr-2" /> Comer
                 </Button>
               </div>

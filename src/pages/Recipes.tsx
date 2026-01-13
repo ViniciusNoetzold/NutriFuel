@@ -1,9 +1,8 @@
 import { useState } from 'react'
 import { useAppStore } from '@/stores/useAppStore'
-import { Search, Filter, X, Plus, ScanLine, Heart } from 'lucide-react'
+import { Search, Filter, ScanLine, Heart, Plus } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
 import { RecipeCard } from '@/components/RecipeCard'
 import {
   Sheet,
@@ -180,11 +179,13 @@ export default function Recipes() {
         ))}
       </div>
 
-      {/* Grid Optimized for Mobile */}
-      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
+      {/* Grid Optimized for Mobile: 2 cols */}
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
         {filteredRecipes.map((recipe) => (
           <div key={recipe.id} className="w-full h-full">
-            <RecipeCard recipe={recipe} />
+            <div className="text-[10px] md:text-sm p-1">
+              <RecipeCard recipe={recipe} />
+            </div>
           </div>
         ))}
       </div>
