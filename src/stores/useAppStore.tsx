@@ -662,6 +662,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const getConsumedNutrition = (date: string) => {
     // Calculate FRESH sum from meals table as per requirements
+    // This uses consumedMeals state which is updated via Realtime Subscription
     const mealsForDate = consumedMeals.filter((m) => m.date === date)
 
     if (mealsForDate.length > 0) {
@@ -683,12 +684,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const addMeal = async (meal: Omit<Meal, 'id' | 'user_id' | 'created_at'>) => {
+    // Optimistic Update can be added here if needed, but Realtime is fast enough (<200ms)
+    // for this specific requirement, we rely on Supabase Realtime to update `consumedMeals`
     if (authUser) {
       await supabase.from('meals').insert({
         user_id: authUser.id,
         ...meal,
       })
-      // No need to manually refresh, realtime subscription will catch it
     }
   }
 

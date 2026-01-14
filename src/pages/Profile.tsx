@@ -57,7 +57,9 @@ export default function Profile() {
       if (!authUser) return
 
       const fileExt = 'jpg'
-      const fileName = `${authUser.id}/${Date.now()}.${fileExt}`
+      // Updated path to comply with user story requirements: /users/{user_id}/profile/
+      const fileName = `${authUser.id}/profile/${Date.now()}.${fileExt}`
+
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file, { upsert: true, contentType: 'image/jpeg' })
@@ -126,6 +128,9 @@ export default function Profile() {
         </div>
         <div className="text-center">
           <h2 className="text-2xl font-bold text-shadow">{formData.name}</h2>
+          <p className="text-sm font-semibold text-muted-foreground mt-1">
+            Seu corpo, seu combustível.
+          </p>
           <Badge
             variant="secondary"
             className="mt-2 bg-white/30 backdrop-blur-md"

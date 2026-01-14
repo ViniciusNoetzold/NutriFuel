@@ -110,9 +110,9 @@ export default function Evolution() {
     try {
       if (processedFile && authUser) {
         const fileExt = 'jpg'
-        const fileName = `${authUser.id}/${Date.now()}.${fileExt}`
+        const fileName = `${authUser.id}/evolution/${Date.now()}.${fileExt}`
         const { error: uploadError } = await supabase.storage
-          .from('evolution')
+          .from('avatars') // Using avatars bucket as standardized
           .upload(fileName, processedFile, {
             upsert: true,
             contentType: 'image/jpeg',
@@ -122,7 +122,7 @@ export default function Evolution() {
 
         const {
           data: { publicUrl },
-        } = supabase.storage.from('evolution').getPublicUrl(fileName)
+        } = supabase.storage.from('avatars').getPublicUrl(fileName)
         photoUrl = publicUrl
       }
 
@@ -167,16 +167,21 @@ export default function Evolution() {
       />
 
       <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="rounded-full"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-          <h2 className="text-2xl font-bold">Evolução</h2>
+        <div className="flex flex-col gap-0.5">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="rounded-full"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+            <h2 className="text-2xl font-bold">Evolução</h2>
+          </div>
+          <p className="text-xs text-muted-foreground font-medium ml-11">
+            Seu corpo, seu combustível.
+          </p>
         </div>
         <Dialog open={isNewEntryOpen} onOpenChange={setIsNewEntryOpen}>
           <DialogTrigger asChild>

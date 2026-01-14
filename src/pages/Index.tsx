@@ -79,7 +79,7 @@ export default function Index() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* 2. Hidratação */}
+        {/* 2. Gamified Hydration */}
         {isWidgetVisible('hydration') && (
           <HydrationBottle
             current={todayLog.waterIntake}

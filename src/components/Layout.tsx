@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { Outlet, useLocation, useNavigate, Link } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
@@ -116,19 +116,14 @@ export default function Layout() {
                   ) &&
                   'Detalhes'}
               </h1>
-              {location.pathname === '/' && (
-                <p className="text-[10px] text-muted-foreground font-medium md:hidden">
-                  Seu corpo, seu combustível
-                </p>
-              )}
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <span className="hidden md:inline-block text-xs font-bold text-muted-foreground mr-2">
-              Seu corpo, seu combustível
+              Seu corpo, seu combustível.
             </span>
-            {/* Widget & Theme Menu (Renamed to Configurações) */}
+            {/* Widget & Theme Menu */}
             <Popover>
               <PopoverTrigger asChild>
                 <Button

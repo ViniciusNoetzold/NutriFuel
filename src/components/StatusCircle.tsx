@@ -1,5 +1,4 @@
 import { Flame } from 'lucide-react'
-import { cn } from '@/lib/utils'
 
 interface StatusCircleProps {
   remainingCalories: number
