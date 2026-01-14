@@ -104,6 +104,7 @@ export default function Scanner() {
         setScanning(true)
       } catch (e) {
         // Error handled in store
+        console.error(e)
       }
     }
   }

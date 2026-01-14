@@ -52,12 +52,12 @@ export interface UserProfile {
   fatsGoal: number
   waterGoal: number
   visibleWidgets: string[]
-  hideArticles?: boolean
 }
 
 export type MealType = 'Café da Manhã' | 'Almoço' | 'Lanche' | 'Jantar'
 
 export interface MealSlot {
+  id?: string // Added ID for DB sync
   date: string // ISO date string YYYY-MM-DD
   type: MealType
   recipeId: string | null
@@ -107,16 +107,6 @@ export interface Notification {
 export interface ShoppingItem extends Ingredient {
   id: string
   checked: boolean
-}
-
-export interface Article {
-  id: string
-  title: string
-  excerpt: string
-  image: string
-  category: 'Nutrição' | 'Exercício' | 'Bem-estar'
-  readTime: string
-  content?: string // Full content for the overlay
 }
 
 export interface ScannedProduct {

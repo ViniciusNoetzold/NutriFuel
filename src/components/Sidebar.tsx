@@ -25,12 +25,17 @@ export function Sidebar() {
 
   return (
     <aside className="hidden h-[calc(100vh-2rem)] w-60 flex-col aero-glass md:flex fixed left-4 top-4 z-50">
-      <div className="flex h-16 items-center px-6 border-b border-white/20 dark:border-white/5">
-        <div className="bg-gradient-to-br from-primary to-cyan-300 p-1.5 rounded-xl shadow-inner mr-3 ring-1 ring-white/30">
-          <Zap className="h-5 w-5 text-white fill-white" />
+      <div className="flex flex-col px-6 py-4 border-b border-white/20 dark:border-white/5">
+        <div className="flex items-center">
+          <div className="bg-gradient-to-br from-primary to-cyan-300 p-1.5 rounded-xl shadow-inner mr-3 ring-1 ring-white/30">
+            <Zap className="h-5 w-5 text-white fill-white" />
+          </div>
+          <span className="text-lg font-extrabold text-foreground drop-shadow-sm tracking-tight">
+            NutriFuel
+          </span>
         </div>
-        <span className="text-lg font-extrabold text-foreground drop-shadow-sm tracking-tight">
-          NutriFuel
+        <span className="text-[10px] font-medium text-muted-foreground mt-1 ml-1">
+          Seu corpo, seu combustível
         </span>
       </div>
       <div className="flex-1 overflow-y-auto py-6">
@@ -67,7 +72,6 @@ export function Sidebar() {
           </div>
           <div className="text-sm">
             <p className="font-bold">Usuário</p>
-            <p className="text-xs text-muted-foreground">Free</p>
           </div>
         </div>
       </div>

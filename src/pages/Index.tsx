@@ -1,5 +1,6 @@
 import { useAppStore } from '@/stores/useAppStore'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import { Plus, Minus, Droplets, ChevronRight, Flame } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -7,8 +8,13 @@ import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
-import { ContentFeed } from '@/components/ContentFeed'
 import { SleepTracker } from '@/components/SleepTracker'
+import {
+  ChartContainer,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart'
+import { BarChart, Bar, XAxis, ResponsiveContainer } from 'recharts'
 
 export default function Index() {
   const {
@@ -52,6 +58,15 @@ export default function Index() {
   // Defensive programming: Ensure name exists before splitting
   const userName = user?.name || 'Usuário'
   const firstName = userName.split(' ')[0]
+
+  // Hydration Chart Data
+  const hydrationData = [...dailyLogs]
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .slice(-7)
+    .map((log) => ({
+      date: format(parseISO(log.date), 'EEE', { locale: ptBR }),
+      ml: log.waterIntake,
+    }))
 
   return (
     <div className="space-y-8 pb-24 px-1">
@@ -142,15 +157,25 @@ export default function Index() {
                   </div>
                 </div>
 
-                <div className="h-6 w-full bg-white/50 dark:bg-black/20 rounded-full overflow-hidden border border-white/40 shadow-inner mb-6 relative">
-                  <div
-                    className="h-full bg-gradient-to-r from-cyan-400 to-cyan-600 shadow-[0_0_20px_rgba(6,182,212,0.5)] transition-all duration-1000 ease-out animate-liquid-flow"
-                    style={{
-                      width: `${Math.min(100, (todayLog.waterIntake / (user.waterGoal || 2500)) * 100)}%`,
+                <div className="h-24 w-full mb-6">
+                  <ChartContainer
+                    config={{
+                      ml: { label: 'ml', color: 'hsl(var(--primary))' },
                     }}
+                    className="h-full w-full"
                   >
-                    <div className="absolute top-0 left-0 w-full h-1/2 bg-white/30" />
-                  </div>
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={hydrationData}>
+                        <XAxis dataKey="date" hide={false} fontSize={10} />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Bar
+                          dataKey="ml"
+                          fill="hsl(var(--primary))"
+                          radius={[4, 4, 0, 0]}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
                 </div>
 
                 <div className="flex gap-4">
@@ -199,7 +224,7 @@ export default function Index() {
                   if (!recipe) return null
                   return (
                     <div
-                      key={`${slot.date}-${slot.type}-${slot.recipeId}`}
+                      key={`${slot.date}-${slot.type}-${slot.recipeId}-${slot.id || 'temp'}`}
                       className={cn(
                         'aero-card p-3 flex items-center gap-4 group transition-all duration-500',
                         slot.completed && 'opacity-70 grayscale-[0.3]',
@@ -267,9 +292,6 @@ export default function Index() {
           </div>
         )}
       </div>
-
-      {/* 5. Content Feed - Interative Glass Cards */}
-      {isWidgetVisible('content') && <ContentFeed />}
     </div>
   )
 }

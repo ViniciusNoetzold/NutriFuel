@@ -100,24 +100,34 @@ export default function Layout() {
                 <ArrowLeft className="h-5 w-5" />
               </Button>
             )}
-            <h1 className="text-xl font-bold tracking-tight text-shadow">
-              {location.pathname === '/' && 'Início'}
-              {location.pathname === '/recipes' && 'Receitas'}
-              {location.pathname === '/plan' && 'Plano Alimentar'}
-              {location.pathname === '/shop' && 'Compras'}
-              {location.pathname === '/profile' && 'Perfil'}
-              {location.pathname === '/evolution' && 'Registro de evolução'}
-              {location.pathname === '/recipes/create' && 'Nova Receita'}
-              {location.pathname === '/recipes/scan' && 'Scanner'}
-              {location.pathname.startsWith('/recipes/') &&
-                !['/recipes', '/recipes/create', '/recipes/scan'].includes(
-                  location.pathname,
-                ) &&
-                'Detalhes'}
-            </h1>
+            <div>
+              <h1 className="text-xl font-bold tracking-tight text-shadow">
+                {location.pathname === '/' && 'Início'}
+                {location.pathname === '/recipes' && 'Receitas'}
+                {location.pathname === '/plan' && 'Plano Alimentar'}
+                {location.pathname === '/shop' && 'Compras'}
+                {location.pathname === '/profile' && 'Perfil'}
+                {location.pathname === '/evolution' && 'Registro de evolução'}
+                {location.pathname === '/recipes/create' && 'Nova Receita'}
+                {location.pathname === '/recipes/scan' && 'Scanner'}
+                {location.pathname.startsWith('/recipes/') &&
+                  !['/recipes', '/recipes/create', '/recipes/scan'].includes(
+                    location.pathname,
+                  ) &&
+                  'Detalhes'}
+              </h1>
+              {location.pathname === '/' && (
+                <p className="text-[10px] text-muted-foreground font-medium md:hidden">
+                  Seu corpo, seu combustível
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="flex items-center gap-2">
+            <span className="hidden md:inline-block text-xs font-bold text-muted-foreground mr-2">
+              Seu corpo, seu combustível
+            </span>
             {/* Widget & Theme Menu (Renamed to Configurações) */}
             <Popover>
               <PopoverTrigger asChild>

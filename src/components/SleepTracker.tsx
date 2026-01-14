@@ -2,8 +2,7 @@ import { useAppStore } from '@/stores/useAppStore'
 import { Card, CardContent } from '@/components/ui/card'
 import { Moon, Plus, Minus } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { format } from 'date-fns'
-import { cn } from '@/lib/utils'
+import { format, parseISO, isSameDay } from 'date-fns'
 import {
   ChartContainer,
   ChartTooltip,
@@ -12,7 +11,7 @@ import {
 import { LineChart, Line, XAxis, ResponsiveContainer } from 'recharts'
 
 export function SleepTracker() {
-  const { dailyLogs, logSleep, user } = useAppStore()
+  const { dailyLogs, logSleep } = useAppStore()
   const today = format(new Date(), 'yyyy-MM-dd')
   const todayLog = dailyLogs.find((l) => l.date === today)
   const hours = todayLog?.sleepHours || 0
@@ -21,13 +20,16 @@ export function SleepTracker() {
     logSleep(Math.max(0, hours + amount), today)
   }
 
-  const chartData = dailyLogs
-    .slice(-5)
-    .map((log) => ({
-      date: format(new Date(log.date), 'dd/MM'),
-      hours: log.sleepHours || 0,
-    }))
-    .reverse()
+  // Ensure data is sorted chronologically for the chart
+  const sortedLogs = [...dailyLogs].sort(
+    (a, b) => new Date(a.date).getTime() - new Date(b.date).getTime(),
+  )
+
+  const chartData = sortedLogs.slice(-7).map((log) => ({
+    date: format(parseISO(log.date), 'dd/MM'),
+    fullDate: log.date,
+    hours: log.sleepHours || 0,
+  }))
 
   return (
     <Card className="aero-card border-0 bg-indigo-50/50 dark:bg-indigo-900/20">

@@ -3,7 +3,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
-import { Switch } from '@/components/ui/switch'
 import {
   Select,
   SelectContent,
@@ -166,19 +165,6 @@ export default function Profile() {
                 {formData.goal}
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Settings */}
-        <div className="space-y-4 pb-4 border-b border-white/20">
-          <h3 className="font-semibold text-lg">Configurações</h3>
-          <div className="flex items-center justify-between">
-            <Label htmlFor="hide-articles">Ocultar Artigos/Dicas</Label>
-            <Switch
-              id="hide-articles"
-              checked={formData.hideArticles}
-              onCheckedChange={(val) => handleChange('hideArticles', val)}
-            />
           </div>
         </div>
 

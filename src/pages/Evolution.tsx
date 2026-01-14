@@ -20,7 +20,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { useAppStore } from '@/stores/useAppStore'
-import { format } from 'date-fns'
+import { format, parseISO } from 'date-fns'
 import {
   ChartContainer,
   ChartTooltip,
@@ -73,8 +73,21 @@ export default function Evolution() {
     toast.success('Foto atualizada!')
   }
 
-  const handleShare = () => {
-    toast.success('Card gerado! Compartilhando...')
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Minha Evolução NutriFuel',
+          text: `Estou evoluindo! Confira meu progresso.`,
+          url: window.location.href,
+        })
+        toast.success('Compartilhado com sucesso!')
+      } catch (error) {
+        console.error('Error sharing:', error)
+      }
+    } else {
+      toast.info('Compartilhamento não suportado neste navegador.')
+    }
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -135,11 +148,12 @@ export default function Evolution() {
     .filter((l) => l.photo)
     .map((l) => ({ date: l.date, src: l.photo!, weight: l.weight }))
 
-  // Chart Data from Daily Logs
+  // Chart Data from Daily Logs - Ensure Date Sorting
   const chartData = safeLogs
     .filter((l) => typeof l.weight === 'number')
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .map((l) => ({
-      date: format(new Date(l.date), 'dd/MM'),
+      date: format(parseISO(l.date), 'dd/MM'),
       weight: l.weight!,
     }))
 
@@ -397,9 +411,7 @@ export default function Evolution() {
                   <div className="w-full z-10">
                     <Button
                       className="w-full bg-white text-black hover:bg-white/90 rounded-full font-bold"
-                      onClick={() =>
-                        toast.success('Card pronto para compartilhar!')
-                      }
+                      onClick={() => handleShare()}
                     >
                       Compartilhar
                     </Button>

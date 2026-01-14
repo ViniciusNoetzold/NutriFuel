@@ -1,4 +1,4 @@
-import { Recipe, UserProfile, Article } from './types'
+import { Recipe, UserProfile } from './types'
 
 export const MOCK_USER: UserProfile = {
   name: 'Alex Silva',
@@ -15,70 +15,8 @@ export const MOCK_USER: UserProfile = {
   carbsGoal: 200,
   fatsGoal: 70,
   waterGoal: 2500,
-  visibleWidgets: ['macros', 'hydration', 'meals', 'sleep', 'content'],
+  visibleWidgets: ['macros', 'hydration', 'meals', 'sleep'],
 }
-
-export const MOCK_ARTICLES: Article[] = [
-  {
-    id: '1',
-    title: 'O Poder da Hidratação no Treino',
-    excerpt:
-      'Descubra como a água influencia sua performance e recuperação muscular.',
-    image: 'https://img.usecurling.com/p/300/200?q=water%20gym',
-    category: 'Bem-estar',
-    readTime: '3 min',
-    content: `
-      <p>A água desempenha um papel fundamental em todas as funções do corpo, e no treino não é diferente. A desidratação, mesmo que leve (cerca de 2% de perda de peso corporal), pode levar a uma queda significativa na performance, causando fadiga precoce, cãibras e dificuldade de regulação térmica.</p>
-      <br/>
-      <h4>Quanto beber?</h4>
-      <p>A recomendação geral é de 35ml a 50ml por kg de peso corporal ao longo do dia. Durante o treino, tente ingerir cerca de 200ml a cada 20 minutos.</p>
-      <br/>
-      <h4>Benefícios da Hidratação Adequada:</h4>
-      <ul>
-        <li>Melhora o transporte de nutrientes para os músculos.</li>
-        <li>Lubrifica as articulações, prevenindo lesões.</li>
-        <li>Auxilia na eliminação de toxinas metabólicas.</li>
-      </ul>
-    `,
-  },
-  {
-    id: '2',
-    title: 'Proteína: Antes ou Depois?',
-    excerpt: 'O guia definitivo sobre o timing de nutrientes para hipertrofia.',
-    image: 'https://img.usecurling.com/p/300/200?q=protein%20shake',
-    category: 'Nutrição',
-    readTime: '5 min',
-    content: `
-      <p>A "janela anabólica" é um conceito antigo que sugeria que você precisava consumir proteína imediatamente após o treino. Hoje, a ciência mostra que o consumo total de proteínas ao longo do dia é o fator mais importante para a hipertrofia.</p>
-      <br/>
-      <h4>Pré-treino</h4>
-      <p>Consumir proteína antes do treino pode ajudar a iniciar a síntese proteica durante o exercício e prevenir o catabolismo muscular. Uma refeição leve 2-3 horas antes é ideal.</p>
-      <br/>
-      <h4>Pós-treino</h4>
-      <p>Embora não precise ser imediato, consumir proteína nas horas seguintes ao treino ajuda na recuperação e reparo tecidual. O ideal é combinar com carboidratos para repor o glicogênio.</p>
-    `,
-  },
-  {
-    id: '3',
-    title: '5 Alongamentos para Manhãs',
-    excerpt: 'Comece o dia com mais energia e menos dores nas costas.',
-    image: 'https://img.usecurling.com/p/300/200?q=stretching%20morning',
-    category: 'Exercício',
-    readTime: '4 min',
-    content: `
-      <p>Começar o dia movimentando o corpo envia sinais ao cérebro de que é hora de acordar, aumenta o fluxo sanguíneo e reduz a rigidez matinal.</p>
-      <br/>
-      <h4>Rotina Rápida:</h4>
-      <ol>
-        <li><strong>Esticada Total:</strong> Em pé, entrelace os dedos e estique os braços acima da cabeça, ficando na ponta dos pés.</li>
-        <li><strong>Torção de Tronco:</strong> Gire suavemente o tronco para os lados.</li>
-        <li><strong>Toque nos Pés:</strong> Com os joelhos levemente flexionados, tente tocar os dedos dos pés para alongar a cadeia posterior.</li>
-        <li><strong>Pescoço:</strong> Mova a cabeça suavemente de um lado para o outro.</li>
-        <li><strong>Gato e Vaca:</strong> Se possível, faça a postura do gato e vaca no chão para soltar a coluna.</li>
-      </ol>
-    `,
-  },
-]
 
 export const MOCK_RECIPES: Recipe[] = [
   {
