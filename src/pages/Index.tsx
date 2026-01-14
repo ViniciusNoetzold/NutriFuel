@@ -1,20 +1,14 @@
 import { useAppStore } from '@/stores/useAppStore'
-import { format, parseISO } from 'date-fns'
-import { ptBR } from 'date-fns/locale'
-import { Plus, Minus, Droplets, ChevronRight, Flame } from 'lucide-react'
+import { format } from 'date-fns'
+import { ChevronRight } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { Link } from 'react-router-dom'
 import { toast } from 'sonner'
 import { Checkbox } from '@/components/ui/checkbox'
 import { cn } from '@/lib/utils'
 import { SleepTracker } from '@/components/SleepTracker'
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart'
-import { BarChart, Bar, XAxis, ResponsiveContainer } from 'recharts'
+import { StatusCircle } from '@/components/StatusCircle'
+import { HydrationBottle } from '@/components/HydrationBottle'
 
 export default function Index() {
   const {
@@ -34,8 +28,10 @@ export default function Index() {
     exerciseBurned: 0,
     sleepHours: 0,
   }
+
+  // Get FRESH nutrition totals from meals table logic (via store)
   const consumed = getConsumedNutrition(today)
-  const dailyGoal = user.calorieGoal || 2000 // Fallback to avoid division by zero or NaN
+  const dailyGoal = user.calorieGoal || 2000
   const remainingCalories = dailyGoal - consumed.calories
 
   const todayMeals = mealPlan
@@ -48,25 +44,15 @@ export default function Index() {
   const handleWater = (amount: number) => {
     logWater(amount, today)
     if (amount > 0) {
-      toast.success('Hidratação +250ml')
+      toast.success('Hidratação +250ml', { position: 'bottom-center' })
     }
   }
 
   const isWidgetVisible = (id: string) =>
     user.visibleWidgets?.includes(id) ?? true
 
-  // Defensive programming: Ensure name exists before splitting
   const userName = user?.name || 'Usuário'
   const firstName = userName.split(' ')[0]
-
-  // Hydration Chart Data
-  const hydrationData = [...dailyLogs]
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .slice(-7)
-    .map((log) => ({
-      date: format(parseISO(log.date), 'EEE', { locale: ptBR }),
-      ml: log.waterIntake,
-    }))
 
   return (
     <div className="space-y-8 pb-24 px-1">
@@ -82,122 +68,25 @@ export default function Index() {
         </div>
       </div>
 
-      {/* 1. Status - Hierarchy Circle */}
+      {/* 1. Status - Hierarchy Circle (Macros) */}
       {isWidgetVisible('macros') && (
-        <div className="flex justify-center py-6">
-          <div className="relative w-72 h-72 flex items-center justify-center rounded-full bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-xl border border-white/40 shadow-2xl">
-            <div className="absolute inset-0 rounded-full bg-primary/10 opacity-20" />
-            <div className="absolute inset-4 rounded-full border-2 border-white/30" />
-
-            {/* Content */}
-            <div className="relative z-10 flex flex-col items-center justify-center text-center space-y-2">
-              <div className="mb-1 p-2 bg-gradient-to-br from-orange-400 to-red-600 rounded-full shadow-[0_4px_12px_rgba(249,115,22,0.5),inset_0_2px_4px_rgba(255,255,255,0.4)] border border-white/40 backdrop-blur-sm animate-pulse-slow">
-                <Flame className="w-6 h-6 text-white fill-white" />
-              </div>
-              <div>
-                <p className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-primary to-cyan-700 dark:to-cyan-400 drop-shadow-sm leading-none">
-                  {Math.max(0, Math.floor(remainingCalories))}
-                </p>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
-                  Kcal Restantes
-                </p>
-              </div>
-
-              {/* Macro Hierarchy */}
-              <div className="flex items-center gap-3 mt-2">
-                <div className="flex flex-col items-center">
-                  <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                    {Math.round(consumed.protein)}g
-                  </span>
-                  <span className="text-[8px] uppercase font-bold text-muted-foreground">
-                    Prot
-                  </span>
-                </div>
-                <div className="h-6 w-px bg-white/30" />
-                <div className="flex flex-col items-center">
-                  <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                    {Math.round(consumed.carbs)}g
-                  </span>
-                  <span className="text-[8px] uppercase font-bold text-muted-foreground">
-                    Carb
-                  </span>
-                </div>
-                <div className="h-6 w-px bg-white/30" />
-                <div className="flex flex-col items-center">
-                  <span className="text-sm font-bold text-yellow-600 dark:text-yellow-400">
-                    {Math.round(consumed.fats)}g
-                  </span>
-                  <span className="text-[8px] uppercase font-bold text-muted-foreground">
-                    Gord
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <StatusCircle
+          remainingCalories={remainingCalories}
+          protein={consumed.protein}
+          carbs={consumed.carbs}
+          fats={consumed.fats}
+        />
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* 2. Hidratação */}
         {isWidgetVisible('hydration') && (
-          <div className="space-y-6">
-            <Card className="aero-card border-0 bg-cyan-50/50 dark:bg-cyan-900/20">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="bg-cyan-500 p-2 rounded-full shadow-lg shadow-cyan-500/30 text-white">
-                    <Droplets className="h-6 w-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-lg text-foreground">
-                      Hidratação
-                    </h3>
-                    <p className="text-xs text-muted-foreground font-medium">
-                      Meta Diária: {user.waterGoal || 2500}ml
-                    </p>
-                  </div>
-                </div>
-
-                <div className="h-24 w-full mb-6">
-                  <ChartContainer
-                    config={{
-                      ml: { label: 'ml', color: 'hsl(var(--primary))' },
-                    }}
-                    className="h-full w-full"
-                  >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={hydrationData}>
-                        <XAxis dataKey="date" hide={false} fontSize={10} />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar
-                          dataKey="ml"
-                          fill="hsl(var(--primary))"
-                          radius={[4, 4, 0, 0]}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </div>
-
-                <div className="flex gap-4">
-                  <Button
-                    className="flex-1 aero-button bg-cyan-100/70 hover:bg-cyan-200/70 text-cyan-700 border-cyan-200/50"
-                    variant="ghost"
-                    onClick={() => handleWater(-250)}
-                    disabled={todayLog.waterIntake <= 0}
-                  >
-                    <Minus className="mr-2 h-4 w-4" /> 250ml
-                  </Button>
-                  <Button
-                    className="flex-1 aero-button bg-blue-100/70 hover:bg-blue-200/70 text-blue-700 border-blue-200/50"
-                    variant="ghost"
-                    onClick={() => handleWater(250)}
-                  >
-                    <Plus className="mr-2 h-4 w-4" /> 250ml
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+          <HydrationBottle
+            current={todayLog.waterIntake}
+            goal={user.waterGoal || 2500}
+            onAdd={(val) => handleWater(val)}
+            onRemove={(val) => handleWater(-val)}
+          />
         )}
 
         {/* 3. Sleep Widget */}

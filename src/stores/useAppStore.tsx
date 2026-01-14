@@ -65,6 +65,7 @@ interface AppContextType {
   scannedHistory: ScannedProduct[]
   addScannedProduct: (product: ScannedProduct) => void
   addMeal: (meal: Omit<Meal, 'id' | 'user_id' | 'created_at'>) => Promise<void>
+  consumedMeals: Meal[]
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -86,6 +87,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [recipes, setRecipes] = useState<Recipe[]>(MOCK_RECIPES as Recipe[])
   const [mealPlan, setMealPlan] = useState<MealSlot[]>([])
   const [dailyLogs, setDailyLogs] = useState<DayLog[]>([])
+  const [consumedMeals, setConsumedMeals] = useState<Meal[]>([])
   const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([])
   const [notifications, setNotifications] =
     useState<AppNotification[]>(MOCK_NOTIFICATIONS)
@@ -99,12 +101,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (authUser) {
       setIsLoading(true)
-      const fetchProfile = supabase
+
+      // Fetch Profile
+      supabase
         .from('profiles')
         .select('*')
         .eq('id', authUser.id)
         .single()
-        .then(({ data, error }) => {
+        .then(({ data }) => {
           if (data) {
             setUser((prev) => ({
               ...prev,
@@ -131,32 +135,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }
         })
 
-      const fetchLogs = supabase
-        .from('daily_logs')
-        .select('*')
-        .eq('user_id', authUser.id)
-        .order('date', { ascending: true })
-        .then(({ data }) => {
-          if (data) {
-            const logs: DayLog[] = data.map((d: any) => ({
-              date: d.date,
-              waterIntake: d.water_intake,
-              weight: d.weight,
-              photo: d.photo_url,
-              exerciseBurned: d.exercise_burned,
-              sleepHours: d.sleep_hours,
-              totalCalories: d.total_calories,
-              totalProtein: d.total_protein,
-              totalCarbs: d.total_carbs,
-              totalFats: d.total_fats,
-            }))
-            setDailyLogs(logs)
-          } else {
-            setDailyLogs([])
-          }
-        })
+      // Fetch Logs
+      fetchLogs()
+      fetchMeals()
 
-      const fetchMealPlans = supabase
+      // Fetch Plans
+      supabase
         .from('meal_plans')
         .select('*')
         .eq('user_id', authUser.id)
@@ -172,16 +156,51 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             setMealPlan(plans)
           }
         })
+        .finally(() => setIsLoading(false))
 
-      Promise.all([fetchProfile, fetchLogs, fetchMealPlans]).finally(() =>
-        setIsLoading(false),
-      )
+      // Realtime Subscriptions
+      const logsChannel = supabase
+        .channel('daily_logs_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'daily_logs',
+            filter: `user_id=eq.${authUser.id}`,
+          },
+          () => {
+            fetchLogs()
+          },
+        )
+        .subscribe()
+
+      const mealsChannel = supabase
+        .channel('meals_changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'meals',
+            filter: `user_id=eq.${authUser.id}`,
+          },
+          () => {
+            fetchMeals()
+          },
+        )
+        .subscribe()
+
+      return () => {
+        supabase.removeChannel(logsChannel)
+        supabase.removeChannel(mealsChannel)
+      }
     } else {
       setIsLoading(false)
     }
   }, [authUser])
 
-  const refreshDailyLogs = async () => {
+  const fetchLogs = async () => {
     if (!authUser) return
     const { data } = await supabase
       .from('daily_logs')
@@ -203,6 +222,25 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         totalFats: d.total_fats,
       }))
       setDailyLogs(logs)
+    }
+  }
+
+  const fetchMeals = async () => {
+    if (!authUser) return
+    // Fetch meals for the last 30 days to avoid fetching too much but keep context
+    const today = new Date()
+    const thirtyDaysAgo = new Date(today)
+    thirtyDaysAgo.setDate(today.getDate() - 30)
+
+    const { data } = await supabase
+      .from('meals')
+      .select('*')
+      .eq('user_id', authUser.id)
+      .gte('date', format(thirtyDaysAgo, 'yyyy-MM-dd'))
+      .order('created_at', { ascending: false })
+
+    if (data) {
+      setConsumedMeals(data)
     }
   }
 
@@ -418,7 +456,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
     if (authUser && dbPayloads.length > 0) {
       await supabase.from('meal_plans').insert(dbPayloads)
-      // Ideally refresh to get IDs
     }
   }
 
@@ -426,6 +463,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const existing = dailyLogs.find((l) => l.date === date)
     const newAmount = Math.max(0, (existing?.waterIntake || 0) + amount)
 
+    // Optimistic Update
     setDailyLogs((prev) => {
       if (existing) {
         return prev.map((l) =>
@@ -623,16 +661,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const getConsumedNutrition = (date: string) => {
-    // For home page, we use daily_logs if available, otherwise fallback to local calculation
-    // However, scanner updates daily_logs directly via trigger
-    const log = dailyLogs.find((l) => l.date === date)
-    if (log && log.totalCalories) {
-      return {
-        calories: log.totalCalories,
-        protein: log.totalProtein || 0,
-        carbs: log.totalCarbs || 0,
-        fats: log.totalFats || 0,
-      }
+    // Calculate FRESH sum from meals table as per requirements
+    const mealsForDate = consumedMeals.filter((m) => m.date === date)
+
+    if (mealsForDate.length > 0) {
+      return mealsForDate.reduce(
+        (acc, meal) => ({
+          calories: acc.calories + (meal.calories || 0),
+          protein: acc.protein + (meal.protein || 0),
+          carbs: acc.carbs + (meal.carbs || 0),
+          fats: acc.fats + (meal.fats || 0),
+        }),
+        { calories: 0, protein: 0, carbs: 0, fats: 0 },
+      )
     }
     return { calories: 0, protein: 0, carbs: 0, fats: 0 }
   }
@@ -647,8 +688,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         user_id: authUser.id,
         ...meal,
       })
-      // Trigger updates daily_logs, so we refresh
-      await refreshDailyLogs()
+      // No need to manually refresh, realtime subscription will catch it
     }
   }
 
@@ -692,6 +732,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         scannedHistory,
         addScannedProduct,
         addMeal,
+        consumedMeals,
       }}
     >
       {children}
