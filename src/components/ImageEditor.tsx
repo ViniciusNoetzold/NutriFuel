@@ -9,12 +9,15 @@ import {
 import { Check, X, ZoomIn, ZoomOut } from 'lucide-react'
 import { toast } from 'sonner'
 import { Slider } from '@/components/ui/slider'
+import { cn } from '@/lib/utils'
 
 interface ImageEditorProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSave: (file: File) => void
   initialFile: File | null
+  mask?: 'circle' | 'rect'
+  title?: string
 }
 
 export function ImageEditor({
@@ -22,6 +25,8 @@ export function ImageEditor({
   onOpenChange,
   onSave,
   initialFile,
+  mask = 'rect',
+  title = 'Ajustar Imagem',
 }: ImageEditorProps) {
   const [imageSrc, setImageSrc] = useState<string | null>(null)
   const [scale, setScale] = useState(1)
@@ -69,89 +74,75 @@ export function ImageEditor({
       const ctx = canvas.getContext('2d')
       if (!ctx) throw new Error('No Context')
 
-      // Set output size to 1080x1080
+      // Set output size to 1080x1080 for high quality
       canvas.width = 1080
       canvas.height = 1080
 
       const img = imageRef.current
       const container = containerRef.current
-
       if (!container) throw new Error('No Container')
 
-      // Calculate the visible area of the image in the container
-      // The container is a square viewing port.
-      // We need to map the visible pixels of the image DOM element to the canvas.
-
-      // Image Natural Dimensions
       const naturalWidth = img.naturalWidth
       const naturalHeight = img.naturalHeight
-
-      // Rendered Dimensions (including scale)
-      // The image is rendered with object-cover equivalent logic but via transform
-      // Actually we are using `transform` on the image.
-
-      // We need to calculate what part of natural image corresponds to the 1080x1080 canvas
-      // The container represents the 1080x1080 crop area.
-
-      // 1. Determine render scale factor relative to natural size
-      // We display the image in a container of size S (e.g. 300px)
-      // The image is scaled by `scale` and translated by `position`.
-
-      const containerRect = container.getBoundingClientRect()
-      const containerSize = containerRect.width // It's a square
 
       // Draw white background
       ctx.fillStyle = '#FFFFFF'
       ctx.fillRect(0, 0, 1080, 1080)
 
-      // Calculate mapping
-      // Canvas / Container ratio
+      // Calculate logic to replicate screen transform to canvas
+      const containerRect = container.getBoundingClientRect()
+      const containerSize = containerRect.width // Assuming square viewing area
       const ratio = 1080 / containerSize
 
-      // The image is drawn at (position.x, position.y) with scale `scale` inside container
-      // So on canvas it should be drawn at (position.x * ratio, position.y * ratio)
-      // with size (renderedWidth * ratio, renderedHeight * ratio)
+      // Render dimensions on screen (before transform)
+      // The image is rendered with object-contain usually, but we need natural aspect ratio
+      const renderedAspect = naturalWidth / naturalHeight
+      let renderW, renderH
 
-      // Determine initial rendered size (before zoom) inside container
-      // "fit contain" logic usually, but here we just render the image tag.
-      // Let's assume the image is rendered naturally or via CSS.
-      // Better approach: Draw the image onto the canvas using the same transform logic.
+      if (renderedAspect > 1) {
+        renderW = containerSize // max width
+        renderH = containerSize / renderedAspect
+      } else {
+        renderH = containerSize // max height
+        renderW = containerSize * renderedAspect
+      }
 
-      // Current render width/height of the image element (untransformed)
-      const renderW = img.width
-      const renderH = img.height
+      // If image is actually scaled by object-contain, we need to know rendered size
+      // We will rely on imageRef.current.width/height if it is not transformed yet?
+      // No, `transform` is applied to parent div usually or the img itself.
+      // In JSX below: transform applied to div wrapping img. Img is `max-w-full max-h-full object-contain`.
+      // So img dimensions are bounded by containerSize.
 
-      // Transform origin is center usually, but here likely top-left based on implementation
-      // Let's use the exact drawImage parameters
+      const domImgW = img.width
+      const domImgH = img.height
 
       ctx.save()
-      // Move to center of canvas
+
+      // Apply Circular Clip if needed
+      if (mask === 'circle') {
+        ctx.beginPath()
+        ctx.arc(1080 / 2, 1080 / 2, 1080 / 2, 0, Math.PI * 2, true)
+        ctx.closePath()
+        ctx.clip()
+      }
+
+      // Translate to center of canvas
       ctx.translate(1080 / 2, 1080 / 2)
       ctx.scale(scale, scale)
       ctx.translate(-1080 / 2, -1080 / 2)
+
+      // Apply translation from drag
       ctx.translate(position.x * ratio, position.y * ratio)
 
-      // We need to know the base scale of image in container to match visual
-      // If image is WxH and container is CxC.
-      // If we style img with max-width: 100%, max-height: 100%, it scales.
-      // We should force a specific size for control.
-      // Let's say we render image "cover" style initially?
-      // Simpler: Just render the image at natural size scaled to fit canvas width or height * zoom.
-
-      // Let's rely on the ratio.
-      // On screen: image is `renderW` wide.
-      // On canvas: `renderW * ratio` wide.
+      // We need to draw the image centered relative to the canvas center (which corresponds to container center)
+      // The domImg is centered in the container by flexbox.
 
       ctx.drawImage(
         img,
-        0,
-        0,
-        naturalWidth,
-        naturalHeight,
-        0,
-        0,
-        renderW * ratio,
-        renderH * ratio,
+        (1080 - domImgW * ratio) / 2,
+        (1080 - domImgH * ratio) / 2,
+        domImgW * ratio,
+        domImgH * ratio,
       )
 
       ctx.restore()
@@ -171,6 +162,7 @@ export function ImageEditor({
         0.9,
       )
     } catch (e) {
+      console.error(e)
       toast.error('Erro ao processar imagem')
       setLoading(false)
     }
@@ -180,7 +172,7 @@ export function ImageEditor({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="aero-glass max-w-xl">
         <DialogHeader>
-          <DialogTitle>Ajustar Imagem</DialogTitle>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
         <div className="flex flex-col items-center space-y-4 py-4">
           <p className="text-sm text-muted-foreground text-center">
@@ -188,12 +180,33 @@ export function ImageEditor({
           </p>
 
           <div
-            className="relative w-64 h-64 md:w-80 md:h-80 overflow-hidden bg-black/10 rounded-xl cursor-move border-2 border-white/50 shadow-inner"
+            className={cn(
+              'relative w-64 h-64 md:w-80 md:h-80 overflow-hidden bg-black/10 cursor-move border-2 border-white/50 shadow-inner',
+              mask === 'circle' ? 'rounded-full' : 'rounded-xl',
+            )}
             ref={containerRef}
             onMouseDown={handleMouseDown}
             onMouseMove={handleMouseMove}
             onMouseUp={handleMouseUp}
             onMouseLeave={handleMouseUp}
+            onTouchStart={(e) => {
+              setIsDragging(true)
+              const touch = e.touches[0]
+              setDragStart({
+                x: touch.clientX - position.x,
+                y: touch.clientY - position.y,
+              })
+            }}
+            onTouchMove={(e) => {
+              if (isDragging) {
+                const touch = e.touches[0]
+                setPosition({
+                  x: touch.clientX - dragStart.x,
+                  y: touch.clientY - dragStart.y,
+                })
+              }
+            }}
+            onTouchEnd={() => setIsDragging(false)}
           >
             {imageSrc && (
               <div
@@ -205,28 +218,31 @@ export function ImageEditor({
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  pointerEvents: 'none',
                 }}
               >
                 <img
                   ref={imageRef}
                   src={imageSrc}
-                  draggable={false}
                   className="max-w-full max-h-full object-contain pointer-events-none select-none"
                 />
               </div>
             )}
-            {/* Grid Overlay */}
-            <div className="absolute inset-0 pointer-events-none grid grid-cols-3 grid-rows-3 opacity-30">
-              <div className="border-r border-b border-white"></div>
-              <div className="border-r border-b border-white"></div>
-              <div className="border-b border-white"></div>
-              <div className="border-r border-b border-white"></div>
-              <div className="border-r border-b border-white"></div>
-              <div className="border-b border-white"></div>
-              <div className="border-r border-white"></div>
-              <div className="border-r border-white"></div>
-              <div></div>
-            </div>
+
+            {/* Grid Overlay for Rect only */}
+            {mask === 'rect' && (
+              <div className="absolute inset-0 pointer-events-none grid grid-cols-3 grid-rows-3 opacity-30">
+                <div className="border-r border-b border-white"></div>
+                <div className="border-r border-b border-white"></div>
+                <div className="border-b border-white"></div>
+                <div className="border-r border-b border-white"></div>
+                <div className="border-r border-b border-white"></div>
+                <div className="border-b border-white"></div>
+                <div className="border-r border-white"></div>
+                <div className="border-r border-white"></div>
+                <div></div>
+              </div>
+            )}
           </div>
 
           <div className="w-full max-w-xs space-y-4">

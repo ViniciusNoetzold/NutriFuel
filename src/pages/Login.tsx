@@ -7,9 +7,11 @@ import { Label } from '@/components/ui/label'
 import { InteractiveDumbbell } from '@/components/InteractiveDumbbell'
 import { Lock, User, ArrowRight } from 'lucide-react'
 import { toast } from 'sonner'
+import { useAppStore } from '@/stores/useAppStore'
 
 export default function Login() {
   const { signIn, signUp } = useAuth()
+  const { isOnboardingCompleted } = useAppStore()
   const navigate = useNavigate()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -27,8 +29,10 @@ export default function Login() {
       } else {
         const { error } = await signIn(email, password)
         if (error) throw error
-        navigate('/')
         toast.success('Bem-vindo!')
+        // Navigation will be handled by ProtectedRoute in App.tsx mainly,
+        // but we can hint direction here.
+        navigate('/')
       }
     } catch (error: any) {
       toast.error(error.message || 'Erro de autenticação')

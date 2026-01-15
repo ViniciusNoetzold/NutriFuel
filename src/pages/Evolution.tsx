@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Share2,
@@ -11,6 +11,7 @@ import {
   Moon,
   ChevronLeft,
   ChevronRight,
+  Download,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -30,6 +31,8 @@ import {
   startOfMonth,
   endOfMonth,
   isWithinInterval,
+  eachDayOfInterval,
+  isSameDay,
 } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import {
@@ -58,9 +61,20 @@ export default function Evolution() {
   const navigate = useNavigate()
   const { dailyLogs, user, logWeight, isLoading } = useAppStore()
   const { user: authUser } = useAuth()
-  const [beforeImage, setBeforeImage] = useState<string | null>(null)
-  const [afterImage, setAfterImage] = useState<string | null>(null)
+
+  // Before & After State
+  const [beforeImage, setBeforeImage] = useState<{
+    src: string
+    date: string
+    weight: number
+  } | null>(null)
+  const [afterImage, setAfterImage] = useState<{
+    src: string
+    date: string
+    weight: number
+  } | null>(null)
   const [activeSlot, setActiveSlot] = useState<'before' | 'after' | null>(null)
+
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [currentMonth, setCurrentMonth] = useState(new Date())
 
@@ -70,6 +84,10 @@ export default function Evolution() {
   const [uploading, setUploading] = useState(false)
   const [cardPreviewOpen, setCardPreviewOpen] = useState(false)
   const [selectedLogForCard, setSelectedLogForCard] = useState<any>(null)
+  const [generatedBeforeAfter, setGeneratedBeforeAfter] = useState<
+    string | null
+  >(null)
+  const canvasRef = useRef<HTMLCanvasElement>(null)
 
   // Image Editor
   const [editorOpen, setEditorOpen] = useState(false)
@@ -80,28 +98,97 @@ export default function Evolution() {
     setIsDialogOpen(true)
   }
 
-  const handleSelectImage = (src: string) => {
-    if (activeSlot === 'before') setBeforeImage(src)
-    else setAfterImage(src)
+  const handleSelectImage = (log: any) => {
+    const imageData = { src: log.photo!, date: log.date, weight: log.weight! }
+    if (activeSlot === 'before') setBeforeImage(imageData)
+    else setAfterImage(imageData)
     setIsDialogOpen(false)
-    toast.success('Foto atualizada!')
+    toast.success('Foto selecionada!')
+  }
+
+  const generateBeforeAfter = () => {
+    if (!beforeImage || !afterImage) return
+
+    const canvas = document.createElement('canvas')
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    // High Res Output
+    const w = 1200
+    const h = 1350
+    canvas.width = w
+    canvas.height = h
+
+    // Background
+    ctx.fillStyle = '#1e293b' // Dark background
+    ctx.fillRect(0, 0, w, h)
+
+    // Load Images
+    const img1 = new Image()
+    img1.crossOrigin = 'anonymous'
+    img1.src = beforeImage.src
+
+    const img2 = new Image()
+    img2.crossOrigin = 'anonymous'
+    img2.src = afterImage.src
+
+    let loaded = 0
+    const draw = () => {
+      loaded++
+      if (loaded < 2) return
+
+      // Draw Images side by side
+      // Left Side
+      ctx.drawImage(img1, 50, 200, 525, 700)
+      // Right Side
+      ctx.drawImage(img2, 625, 200, 525, 700)
+
+      // Overlays
+      ctx.fillStyle = 'rgba(0,0,0,0.5)'
+      ctx.fillRect(50, 800, 525, 100)
+      ctx.fillRect(625, 800, 525, 100)
+
+      // Text Labels
+      ctx.fillStyle = 'white'
+      ctx.font = 'bold 40px Inter, sans-serif'
+      ctx.textAlign = 'center'
+
+      // Dates
+      ctx.fillText(format(new Date(beforeImage.date), 'dd/MM/yyyy'), 312, 850)
+      ctx.fillText(format(new Date(afterImage.date), 'dd/MM/yyyy'), 887, 850)
+
+      // Weights
+      ctx.font = '30px Inter, sans-serif'
+      ctx.fillText(`${beforeImage.weight}kg`, 312, 890)
+      ctx.fillText(`${afterImage.weight}kg`, 887, 890)
+
+      // Header Slogan
+      ctx.font = 'bold 50px Inter, sans-serif'
+      ctx.fillText('NUTRIFUEL', w / 2, 100)
+      ctx.font = 'italic 30px Inter, sans-serif'
+      ctx.fillStyle = '#38bdf8'
+      ctx.fillText('Seu corpo, seu combustível.', w / 2, 150)
+
+      // Generate URL
+      setGeneratedBeforeAfter(canvas.toDataURL('image/png'))
+    }
+
+    img1.onload = draw
+    img2.onload = draw
+  }
+
+  const downloadGenerated = () => {
+    if (!generatedBeforeAfter) return
+    const link = document.createElement('a')
+    link.href = generatedBeforeAfter
+    link.download = 'nutrifuel-evolucao.png'
+    link.click()
+    toast.success('Imagem salva!')
   }
 
   const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'Minha Evolução no NutriFuel',
-          text: `Olha só minha evolução! Já perdi ${Math.abs(user.weight - Number(newWeight)).toFixed(1)}kg!`,
-          url: window.location.href,
-        })
-      } catch (err) {
-        toast.error('Erro ao compartilhar')
-      }
-    } else {
-      toast.success('Link copiado para a área de transferência!')
-      navigator.clipboard.writeText(window.location.href)
-    }
+    if (!beforeImage || !afterImage) return
+    generateBeforeAfter()
   }
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -124,9 +211,9 @@ export default function Evolution() {
     try {
       if (processedFile && authUser) {
         const fileExt = 'jpg'
-        const fileName = `${authUser.id}/profile/${Date.now()}.${fileExt}`
+        const fileName = `${authUser.id}/evolution/${Date.now()}.${fileExt}`
         const { error: uploadError } = await supabase.storage
-          .from('avatars') // Using avatars bucket as per previous setup, or specific bucket if needed
+          .from('avatars')
           .upload(fileName, processedFile, {
             upsert: true,
             contentType: 'image/jpeg',
@@ -155,44 +242,42 @@ export default function Evolution() {
     }
   }
 
-  // Filter logs by month
+  // Filter logs by month and FILL GAPS
   const safeLogs = Array.isArray(dailyLogs) ? dailyLogs : []
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(currentMonth)
+  const allDays = eachDayOfInterval({ start: monthStart, end: monthEnd })
 
-  const monthLogs = safeLogs
-    .filter((log) => {
-      const date = new Date(log.date)
-      return isWithinInterval(date, { start: monthStart, end: monthEnd })
-    })
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+  const chartData = allDays.map((day) => {
+    const dateStr = format(day, 'yyyy-MM-dd')
+    const log = safeLogs.find((l) => l.date === dateStr)
+    return {
+      date: format(day, 'dd/MM'),
+      weight: log?.weight || null, // Use null to break line
+    }
+  })
+
+  const waterChartData = allDays.map((day) => {
+    const dateStr = format(day, 'yyyy-MM-dd')
+    const log = safeLogs.find((l) => l.date === dateStr)
+    return {
+      date: format(day, 'dd/MM'),
+      ml: log?.waterIntake || 0,
+    }
+  })
+
+  const sleepChartData = allDays.map((day) => {
+    const dateStr = format(day, 'yyyy-MM-dd')
+    const log = safeLogs.find((l) => l.date === dateStr)
+    return {
+      date: format(day, 'dd/MM'),
+      hours: log?.sleepHours || 0,
+    }
+  })
 
   const historyPhotos = safeLogs
     .filter((l) => l.photo)
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Newest first for selection
-    .map((l) => ({ date: l.date, src: l.photo!, weight: l.weight }))
-
-  // Chart Data from Monthly Logs
-  const chartData = monthLogs
-    .filter((l) => typeof l.weight === 'number')
-    .map((l) => ({
-      date: format(new Date(l.date), 'dd/MM'),
-      weight: l.weight!,
-    }))
-
-  const waterChartData = monthLogs
-    .filter((l) => l.waterIntake > 0)
-    .map((l) => ({
-      date: format(new Date(l.date), 'dd/MM'),
-      ml: l.waterIntake,
-    }))
-
-  const sleepChartData = monthLogs
-    .filter((l) => l.sleepHours && l.sleepHours > 0)
-    .map((l) => ({
-      date: format(new Date(l.date), 'dd/MM'),
-      hours: l.sleepHours,
-    }))
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
 
   const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1))
   const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1))
@@ -204,6 +289,7 @@ export default function Evolution() {
         onOpenChange={setEditorOpen}
         initialFile={selectedFile}
         onSave={(file) => handleSaveEntry(file)}
+        mask="rect"
       />
 
       <div className="mb-4">
@@ -308,72 +394,67 @@ export default function Evolution() {
               <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                 <History className="h-5 w-5 text-primary" /> Histórico de Peso
               </h3>
-              {chartData.length > 0 ? (
-                <div className="h-[250px] w-full">
-                  <ChartContainer
-                    config={{
-                      weight: { label: 'Peso', color: 'hsl(var(--primary))' },
-                    }}
-                    className="h-full w-full"
-                  >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={chartData}>
-                        <defs>
-                          <linearGradient
-                            id="colorWeight"
-                            x1="0"
-                            y1="0"
-                            x2="0"
-                            y2="1"
-                          >
-                            <stop
-                              offset="5%"
-                              stopColor="hsl(var(--primary))"
-                              stopOpacity={0.4}
-                            />
-                            <stop
-                              offset="95%"
-                              stopColor="hsl(var(--primary))"
-                              stopOpacity={0}
-                            />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid
-                          vertical={false}
-                          strokeDasharray="3 3"
-                          opacity={0.2}
-                          stroke="currentColor"
-                        />
-                        <XAxis
-                          dataKey="date"
-                          tickLine={false}
-                          axisLine={false}
-                          tickMargin={10}
-                          fontSize={10}
-                          stroke="currentColor"
-                          opacity={0.7}
-                        />
-                        <YAxis domain={['dataMin - 1', 'dataMax + 1']} hide />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Area
-                          type="monotone"
-                          dataKey="weight"
-                          stroke="hsl(var(--primary))"
-                          strokeWidth={3}
-                          fillOpacity={1}
-                          fill="url(#colorWeight)"
-                          animationDuration={1500}
-                          dot={{ fill: 'hsl(var(--primary))', r: 3 }}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </div>
-              ) : (
-                <div className="h-[250px] w-full flex items-center justify-center text-muted-foreground text-sm">
-                  Nenhum registro este mês.
-                </div>
-              )}
+              <div className="h-[250px] w-full">
+                <ChartContainer
+                  config={{
+                    weight: { label: 'Peso', color: 'hsl(var(--primary))' },
+                  }}
+                  className="h-full w-full"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={chartData}>
+                      <defs>
+                        <linearGradient
+                          id="colorWeight"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="5%"
+                            stopColor="hsl(var(--primary))"
+                            stopOpacity={0.4}
+                          />
+                          <stop
+                            offset="95%"
+                            stopColor="hsl(var(--primary))"
+                            stopOpacity={0}
+                          />
+                        </linearGradient>
+                      </defs>
+                      <CartesianGrid
+                        vertical={false}
+                        strokeDasharray="3 3"
+                        opacity={0.2}
+                        stroke="currentColor"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={10}
+                        fontSize={10}
+                        stroke="currentColor"
+                        opacity={0.7}
+                      />
+                      <YAxis domain={['auto', 'auto']} hide />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Area
+                        type="monotone"
+                        dataKey="weight"
+                        stroke="hsl(var(--primary))"
+                        strokeWidth={3}
+                        fillOpacity={1}
+                        fill="url(#colorWeight)"
+                        animationDuration={1500}
+                        connectNulls={false} // IMPORTANT: Show gaps
+                        dot={{ fill: 'hsl(var(--primary))', r: 3 }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </div>
             </CardContent>
           </Card>
 
@@ -383,140 +464,89 @@ export default function Evolution() {
               <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                 <Droplets className="h-5 w-5 text-cyan-500" /> Hidratação
               </h3>
-              {waterChartData.length > 0 ? (
-                <div className="h-[250px] w-full">
-                  <ChartContainer
-                    config={{
-                      ml: { label: 'ml', color: '#06b6d4' },
-                    }}
-                    className="h-full w-full"
-                  >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <BarChart data={waterChartData}>
-                        <defs>
-                          <linearGradient
-                            id="waterGradient"
-                            x1="0"
-                            y1="0"
-                            x2="0"
-                            y2="1"
-                          >
-                            <stop
-                              offset="0%"
-                              stopColor="#22d3ee"
-                              stopOpacity={1}
-                            />
-                            <stop
-                              offset="100%"
-                              stopColor="#0891b2"
-                              stopOpacity={0.8}
-                            />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid
-                          vertical={false}
-                          strokeDasharray="3 3"
-                          opacity={0.2}
-                          stroke="currentColor"
-                        />
-                        <XAxis
-                          dataKey="date"
-                          tickLine={false}
-                          axisLine={false}
-                          tickMargin={10}
-                          fontSize={10}
-                          stroke="currentColor"
-                          opacity={0.7}
-                        />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Bar
-                          dataKey="ml"
-                          fill="url(#waterGradient)"
-                          radius={[8, 8, 0, 0]}
-                          barSize={20}
-                        />
-                      </BarChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </div>
-              ) : (
-                <div className="h-[250px] w-full flex items-center justify-center text-muted-foreground text-sm">
-                  Nenhum dado este mês.
-                </div>
-              )}
+              <div className="h-[250px] w-full">
+                <ChartContainer
+                  config={{
+                    ml: { label: 'ml', color: '#06b6d4' },
+                  }}
+                  className="h-full w-full"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={waterChartData}>
+                      <CartesianGrid
+                        vertical={false}
+                        strokeDasharray="3 3"
+                        opacity={0.2}
+                        stroke="currentColor"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={10}
+                        fontSize={10}
+                        stroke="currentColor"
+                        opacity={0.7}
+                      />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Bar
+                        dataKey="ml"
+                        fill="#06b6d4"
+                        radius={[8, 8, 0, 0]}
+                        barSize={20}
+                      />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </div>
             </CardContent>
           </Card>
 
-          {/* Sleep Chart - Chronological Left-Right */}
+          {/* Sleep Chart */}
           <Card className="aero-card border-0 bg-indigo-50/50 dark:bg-indigo-900/20">
             <CardContent className="p-4 pt-6">
               <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                 <Moon className="h-5 w-5 text-indigo-500" /> Histórico de Sono
               </h3>
-              {sleepChartData.length > 0 ? (
-                <div className="h-[250px] w-full">
-                  <ChartContainer
-                    config={{
-                      hours: { label: 'Horas', color: '#6366f1' },
-                    }}
-                    className="h-full w-full"
-                  >
-                    <ResponsiveContainer width="100%" height="100%">
-                      <AreaChart data={sleepChartData}>
-                        <defs>
-                          <linearGradient
-                            id="colorSleep"
-                            x1="0"
-                            y1="0"
-                            x2="0"
-                            y2="1"
-                          >
-                            <stop
-                              offset="5%"
-                              stopColor="#6366f1"
-                              stopOpacity={0.4}
-                            />
-                            <stop
-                              offset="95%"
-                              stopColor="#6366f1"
-                              stopOpacity={0}
-                            />
-                          </linearGradient>
-                        </defs>
-                        <CartesianGrid
-                          vertical={false}
-                          strokeDasharray="3 3"
-                          opacity={0.2}
-                          stroke="currentColor"
-                        />
-                        <XAxis
-                          dataKey="date"
-                          tickLine={false}
-                          axisLine={false}
-                          tickMargin={10}
-                          fontSize={10}
-                          stroke="currentColor"
-                          opacity={0.7}
-                        />
-                        <ChartTooltip content={<ChartTooltipContent />} />
-                        <Area
-                          type="monotone"
-                          dataKey="hours"
-                          stroke="#6366f1"
-                          strokeWidth={3}
-                          fillOpacity={1}
-                          fill="url(#colorSleep)"
-                          dot={{ fill: '#6366f1', r: 3 }}
-                        />
-                      </AreaChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
-                </div>
-              ) : (
-                <div className="h-[250px] w-full flex items-center justify-center text-muted-foreground text-sm">
-                  Nenhum dado este mês.
-                </div>
-              )}
+              <div className="h-[250px] w-full">
+                <ChartContainer
+                  config={{
+                    hours: { label: 'Horas', color: '#6366f1' },
+                  }}
+                  className="h-full w-full"
+                >
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={sleepChartData}>
+                      <CartesianGrid
+                        vertical={false}
+                        strokeDasharray="3 3"
+                        opacity={0.2}
+                        stroke="currentColor"
+                      />
+                      <XAxis
+                        dataKey="date"
+                        tickLine={false}
+                        axisLine={false}
+                        tickMargin={10}
+                        fontSize={10}
+                        stroke="currentColor"
+                        opacity={0.7}
+                      />
+                      <ChartTooltip content={<ChartTooltipContent />} />
+                      <Area
+                        type="monotone"
+                        dataKey="hours"
+                        stroke="#6366f1"
+                        strokeWidth={3}
+                        fillOpacity={0.2}
+                        fill="#6366f1"
+                        connectNulls={false}
+                        dot={{ fill: '#6366f1', r: 3 }}
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                </ChartContainer>
+              </div>
             </CardContent>
           </Card>
 
@@ -533,26 +563,15 @@ export default function Evolution() {
                       <div
                         key={idx}
                         className="relative aspect-square rounded-lg overflow-hidden cursor-pointer border-2 border-transparent hover:border-primary group"
-                        onClick={() => handleSelectImage(p.src)}
+                        onClick={() => handleSelectImage(p)}
                       >
                         <img
-                          src={p.src}
+                          src={p.photo}
                           className="w-full h-full object-cover"
                         />
                         <div className="absolute bottom-0 w-full bg-black/50 text-[10px] text-white text-center py-0.5">
                           {format(new Date(p.date), 'dd/MM')}
                         </div>
-                        {/* Share Button Overlay */}
-                        <button
-                          className="absolute top-1 right-1 p-1 bg-white/20 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            setSelectedLogForCard(p)
-                            setCardPreviewOpen(true)
-                          }}
-                        >
-                          <Share2 className="h-3 w-3 text-white" />
-                        </button>
                       </div>
                     ))}
                   </div>
@@ -562,70 +581,6 @@ export default function Evolution() {
                   </p>
                 )}
               </div>
-            </DialogContent>
-          </Dialog>
-
-          {/* Card Generator Modal - Story Card */}
-          <Dialog open={cardPreviewOpen} onOpenChange={setCardPreviewOpen}>
-            <DialogContent className="aero-glass border-0 bg-transparent shadow-none p-0 flex items-center justify-center">
-              {selectedLogForCard && (
-                <div className="relative w-80 aspect-[9/16] bg-gradient-to-br from-gray-900 to-black rounded-[32px] overflow-hidden shadow-2xl flex flex-col items-center justify-between p-6 border border-white/20">
-                  <div className="absolute inset-0 bg-[url('https://img.usecurling.com/p/64/64?q=noise&color=gray')] opacity-10 pointer-events-none mix-blend-overlay" />
-
-                  {/* Header */}
-                  <div className="w-full flex justify-between items-center z-10">
-                    <span className="font-bold text-white tracking-widest text-xs">
-                      NUTRIFUEL
-                    </span>
-                    <span className="text-[10px] text-white/60">
-                      {format(
-                        new Date(selectedLogForCard.date),
-                        'dd MMMM yyyy',
-                      )}
-                    </span>
-                  </div>
-
-                  {/* Photo */}
-                  <div className="relative w-full aspect-[3/4] rounded-2xl overflow-hidden border border-white/10 shadow-lg my-4 group">
-                    <img
-                      src={selectedLogForCard.src}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute bottom-0 inset-x-0 h-1/3 bg-gradient-to-t from-black/80 to-transparent" />
-                    <div className="absolute bottom-4 left-4">
-                      <p className="text-3xl font-black text-white">
-                        {selectedLogForCard.weight}
-                        <span className="text-base font-normal text-white/60 ml-1">
-                          kg
-                        </span>
-                      </p>
-                      <p className="text-[10px] text-white/80 uppercase tracking-wider font-bold">
-                        Progresso
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Footer */}
-                  <div className="w-full z-10">
-                    <Button
-                      className="w-full bg-white text-black hover:bg-white/90 rounded-full font-bold"
-                      onClick={() =>
-                        toast.success('Card pronto para compartilhar!')
-                      }
-                    >
-                      Compartilhar
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      className="w-full text-white/50 text-xs mt-2"
-                      onClick={() => setCardPreviewOpen(false)}
-                    >
-                      Fechar
-                    </Button>
-                  </div>
-                </div>
-              )}
             </DialogContent>
           </Dialog>
 
@@ -640,60 +595,90 @@ export default function Evolution() {
                   NutriFuel
                 </h3>
                 <p className="text-white/80 text-xs font-bold uppercase tracking-widest">
-                  Transformation
+                  Seu corpo, seu combustível.
                 </p>
               </div>
 
-              <div className="flex gap-2 h-64 relative z-10">
-                <div
-                  className="flex-1 bg-black/20 rounded-l-xl overflow-hidden relative group cursor-pointer border-r border-white/20"
-                  onClick={() => handleSlotClick('before')}
-                >
-                  {beforeImage ? (
-                    <img
-                      src={beforeImage}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-white/50 hover:bg-white/10 transition-colors">
-                      <Upload className="h-8 w-8 mb-2" />
-                      <span className="text-xs font-bold">ANTES</span>
-                    </div>
-                  )}
-                  <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded text-[10px] font-bold text-white backdrop-blur-sm">
-                    ANTES
+              {generatedBeforeAfter ? (
+                <div className="relative z-10 space-y-4">
+                  <img
+                    src={generatedBeforeAfter}
+                    className="w-full rounded-xl shadow-lg border-2 border-white/20"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={downloadGenerated}
+                      className="flex-1 bg-white text-primary hover:bg-white/90 font-bold"
+                    >
+                      <Download className="mr-2 h-4 w-4" /> Baixar
+                    </Button>
+                    <Button
+                      onClick={() => setGeneratedBeforeAfter(null)}
+                      variant="ghost"
+                      className="text-white hover:bg-white/20"
+                    >
+                      Refazer
+                    </Button>
                   </div>
                 </div>
+              ) : (
+                <>
+                  <div className="flex gap-2 h-64 relative z-10">
+                    <div
+                      className="flex-1 bg-black/20 rounded-l-xl overflow-hidden relative group cursor-pointer border-r border-white/20"
+                      onClick={() => handleSlotClick('before')}
+                    >
+                      {beforeImage ? (
+                        <img
+                          src={beforeImage.src}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-white/50 hover:bg-white/10 transition-colors">
+                          <Upload className="h-8 w-8 mb-2" />
+                          <span className="text-xs font-bold">ANTES</span>
+                        </div>
+                      )}
+                      <div className="absolute bottom-2 left-2 bg-black/50 px-2 py-1 rounded text-[10px] font-bold text-white backdrop-blur-sm">
+                        {beforeImage
+                          ? format(new Date(beforeImage.date), 'dd/MM/yy')
+                          : 'ANTES'}
+                      </div>
+                    </div>
 
-                <div
-                  className="flex-1 bg-black/20 rounded-r-xl overflow-hidden relative group cursor-pointer"
-                  onClick={() => handleSlotClick('after')}
-                >
-                  {afterImage ? (
-                    <img
-                      src={afterImage}
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-white/50 hover:bg-white/10 transition-colors">
-                      <Upload className="h-8 w-8 mb-2" />
-                      <span className="text-xs font-bold">DEPOIS</span>
+                    <div
+                      className="flex-1 bg-black/20 rounded-r-xl overflow-hidden relative group cursor-pointer"
+                      onClick={() => handleSlotClick('after')}
+                    >
+                      {afterImage ? (
+                        <img
+                          src={afterImage.src}
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center text-white/50 hover:bg-white/10 transition-colors">
+                          <Upload className="h-8 w-8 mb-2" />
+                          <span className="text-xs font-bold">DEPOIS</span>
+                        </div>
+                      )}
+                      <div className="absolute bottom-2 right-2 bg-primary px-2 py-1 rounded text-[10px] font-bold text-white shadow-lg">
+                        {afterImage
+                          ? format(new Date(afterImage.date), 'dd/MM/yy')
+                          : 'DEPOIS'}
+                      </div>
                     </div>
-                  )}
-                  <div className="absolute bottom-2 right-2 bg-primary px-2 py-1 rounded text-[10px] font-bold text-white shadow-lg">
-                    DEPOIS
                   </div>
-                </div>
-              </div>
+
+                  <Button
+                    onClick={handleShare}
+                    className="w-full mt-6 h-12 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 text-white font-bold shadow-lg"
+                    disabled={!beforeImage || !afterImage}
+                  >
+                    <Share2 className="mr-2 h-5 w-5" /> Gerar Comparativo
+                  </Button>
+                </>
+              )}
             </div>
-
-            <Button
-              onClick={handleShare}
-              className="w-full mt-6 h-12 rounded-xl bg-gradient-to-r from-pink-500 to-purple-600 hover:brightness-110 text-white font-bold shadow-lg"
-              disabled={!beforeImage || !afterImage}
-            >
-              <Share2 className="mr-2 h-5 w-5" /> Compartilhar Comparativo
-            </Button>
           </div>
         </>
       )}

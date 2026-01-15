@@ -28,10 +28,9 @@ export default function Index() {
     sleepHours: 0,
   }
   const consumed = getConsumedNutrition(today)
-  const dailyGoal = user.calorieGoal || 2000 // Fallback to avoid division by zero or NaN
+  const dailyGoal = user.calorieGoal || 2000
   const remainingCalories = dailyGoal - consumed.calories
 
-  // Group meals by type because we now support multiple items per slot
   const mealsByType = mealPlan
     .filter((slot) => slot.date === today)
     .reduce(
@@ -55,7 +54,6 @@ export default function Index() {
   const isWidgetVisible = (id: string) =>
     user.visibleWidgets?.includes(id) ?? true
 
-  // Defensive programming: Ensure name exists before splitting
   const userName = user?.name || 'Usuário'
   const firstName = userName.split(' ')[0]
 
@@ -68,7 +66,6 @@ export default function Index() {
               <div className="absolute inset-0 rounded-full bg-primary/10 opacity-20" />
               <div className="absolute inset-4 rounded-full border-2 border-white/30" />
 
-              {/* Content */}
               <div className="relative z-10 flex flex-col items-center justify-center text-center space-y-2">
                 <div className="mb-1 p-2 bg-gradient-to-br from-orange-400 to-red-600 rounded-full shadow-[0_4px_12px_rgba(249,115,22,0.5),inset_0_2px_4px_rgba(255,255,255,0.4)] border border-white/40 backdrop-blur-sm animate-pulse-slow">
                   <Flame className="w-6 h-6 text-white fill-white" />
@@ -82,7 +79,6 @@ export default function Index() {
                   </p>
                 </div>
 
-                {/* Macro Hierarchy */}
                 <div className="flex items-center gap-3 mt-2">
                   <div className="flex flex-col items-center">
                     <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
@@ -279,7 +275,6 @@ export default function Index() {
     }
   }
 
-  // Use configured order with defensive check
   const orderedWidgets = (user.homeLayoutOrder || []).filter((id) =>
     isWidgetVisible(id),
   )
@@ -292,6 +287,9 @@ export default function Index() {
           <h2 className="text-3xl font-bold tracking-tight text-shadow-lg text-foreground">
             Olá, {firstName}!
           </h2>
+          <p className="text-sm font-medium text-primary uppercase tracking-widest opacity-90">
+            Seu corpo, seu combustível.
+          </p>
         </div>
       </div>
 

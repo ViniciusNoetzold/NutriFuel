@@ -86,7 +86,6 @@ export default function Layout() {
     user?.visibleWidgets?.includes(id) ?? true
 
   const moveWidget = (id: string, direction: 'up' | 'down') => {
-    // Defensive copy: ensure homeLayoutOrder is an array
     const currentOrder = [...(user.homeLayoutOrder || [])]
     const index = currentOrder.indexOf(id)
     if (index === -1) return
@@ -136,9 +135,14 @@ export default function Layout() {
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
               )}
-              <h1 className="text-xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary to-cyan-500 text-shadow-sm">
-                NutriFuel
-              </h1>
+              <div>
+                <h1 className="text-xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary to-cyan-500 text-shadow-sm">
+                  NutriFuel
+                </h1>
+                <p className="text-[10px] text-primary/80 font-bold uppercase tracking-widest hidden sm:block">
+                  Seu corpo, seu combustível.
+                </p>
+              </div>
             </div>
           </div>
 
@@ -160,7 +164,6 @@ export default function Layout() {
                     <Settings className="h-4 w-4 opacity-50" />
                   </div>
                   <div className="space-y-2">
-                    {/* Defensive check for user.homeLayoutOrder */}
                     {(user.homeLayoutOrder || []).map((id) => (
                       <div
                         key={id}

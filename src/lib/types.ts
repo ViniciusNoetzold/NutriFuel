@@ -59,7 +59,7 @@ export interface UserProfile {
 export type MealType = 'Café da Manhã' | 'Almoço' | 'Lanche' | 'Jantar'
 
 export interface MealSlot {
-  id?: string // Added ID for precise identification
+  id?: string
   date: string // ISO date string YYYY-MM-DD
   type: MealType
   recipeId: string | null

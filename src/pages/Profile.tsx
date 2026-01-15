@@ -85,10 +85,15 @@ export default function Profile() {
         onOpenChange={setEditorOpen}
         initialFile={selectedFile}
         onSave={handleAvatarUpload}
+        mask="circle" // Use circular mask for profile
+        title="Foto de Perfil"
       />
 
       <div className="text-center pt-4">
         <h2 className="text-2xl font-bold">Perfil</h2>
+        <p className="text-xs text-primary font-bold mt-1 uppercase tracking-widest">
+          Seu corpo, seu combustível.
+        </p>
       </div>
 
       <div className="flex flex-col items-center justify-center space-y-4">
@@ -203,6 +208,16 @@ export default function Profile() {
                 className="aero-input"
                 value={formData.height}
                 onChange={(e) => handleChange('height', Number(e.target.value))}
+              />
+            </div>
+            <div className="space-y-2 col-span-2">
+              <Label htmlFor="phone">Telefone</Label>
+              <Input
+                id="phone"
+                type="tel"
+                className="aero-input"
+                value={formData.phone || ''}
+                onChange={(e) => handleChange('phone', e.target.value)}
               />
             </div>
           </div>

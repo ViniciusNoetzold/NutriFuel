@@ -44,14 +44,14 @@ export default function MealPlan() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [activeFilters, setActiveFilters] = useState<string[]>([])
 
-  // Calculate week based on current date
+  // Calculate strict week (Sunday to Saturday)
   const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 })
   const weekDays = Array.from({ length: 7 }).map((_, i) =>
     addDays(weekStart, i),
   )
 
   const handleAutoGenerate = () => {
-    // Generate for the currently viewed week
+    // Generate Strict Weekly Plan (Sun-Sat)
     autoGeneratePlan(format(weekStart, 'yyyy-MM-dd'))
     toast.success('Semana planejada magicamente! ✨')
   }
@@ -255,7 +255,6 @@ export default function MealPlan() {
                           recipe={r}
                           onAdd={() => {
                             handleAddMeal(currentDate, type, r.id)
-                            // Don't close immediately to allow multiple additions
                             toast.success('Adicionado!')
                           }}
                         />

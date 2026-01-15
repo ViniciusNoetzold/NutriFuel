@@ -29,9 +29,14 @@ export function Sidebar() {
         <div className="bg-gradient-to-br from-primary to-cyan-300 p-1.5 rounded-xl shadow-inner mr-3 ring-1 ring-white/30">
           <Zap className="h-5 w-5 text-white fill-white" />
         </div>
-        <span className="text-lg font-extrabold text-foreground drop-shadow-sm tracking-tight">
-          NutriFuel
-        </span>
+        <div>
+          <span className="block text-lg font-extrabold text-foreground drop-shadow-sm tracking-tight leading-none">
+            NutriFuel
+          </span>
+          <span className="block text-[8px] font-bold text-primary uppercase tracking-wider">
+            Seu corpo, seu combustível.
+          </span>
+        </div>
       </div>
       <div className="flex-1 overflow-y-auto py-6">
         <nav className="space-y-2 px-3">

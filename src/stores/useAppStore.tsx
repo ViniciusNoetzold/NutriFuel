@@ -21,6 +21,7 @@ interface AppContextType {
   user: UserProfile
   isAuthenticated: boolean
   isLoading: boolean
+  isOnboardingCompleted: boolean
   login: (username: string, pass: string) => boolean
   logout: () => void
   updateUser: (data: Partial<UserProfile>) => void
@@ -91,6 +92,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   })
   const [scannedHistory, setScannedHistory] = useState<ScannedProduct[]>([])
 
+  const isOnboardingCompleted = React.useMemo(() => {
+    if (!authUser) return false
+    // Check mandatory fields
+    return (
+      user.weight > 0 &&
+      user.height > 0 &&
+      user.age > 0 &&
+      !!user.goal &&
+      !!user.phone
+    )
+  }, [user, authUser])
+
   useEffect(() => {
     if (authUser) {
       setIsLoading(true)
@@ -102,7 +115,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .then(({ data }) => {
           if (data) {
             setUser((prev) => {
-              // Ensure we have valid default arrays even if DB returns null
               const defaultHomeLayout = [
                 'macros',
                 'hydration',
@@ -116,9 +128,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                 name: data.name || prev.name || 'Usuário',
                 email: authUser.email || prev.email,
                 avatar: data.avatar_url || prev.avatar,
-                weight: data.weight || prev.weight,
-                height: data.height || prev.height,
-                age: data.age || prev.age,
+                weight: data.weight || 0, // IMPORTANT: Default to 0 to trigger onboarding if missing
+                height: data.height || 0, // IMPORTANT: Default to 0
+                age: data.age || 0, // IMPORTANT: Default to 0
                 gender: (data.gender as UserProfile['gender']) || prev.gender,
                 activityLevel:
                   (data.activity_level as UserProfile['activityLevel']) ||
@@ -133,8 +145,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                   data.visible_widgets ||
                   prev.visibleWidgets ||
                   defaultHomeLayout,
-                phone: data.phone || prev.phone,
-                // Robust check: Use DB data if exists, otherwise fallback to prev (which should be MOCK_USER), or finally hardcoded default
+                phone: data.phone || '', // Empty if missing to trigger onboarding
                 homeLayoutOrder: data.home_layout_order
                   ? (data.home_layout_order as string[])
                   : prev.homeLayoutOrder || defaultHomeLayout,
@@ -188,7 +199,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               ingredients: r.ingredients || [],
               instructions: r.instructions || [],
               rating: 5,
-              isFavorite: false, // will be updated by profile favorites
+              isFavorite: false,
             }))
             setRecipes((prev) => {
               const dbIds = new Set(mappedRecipes.map((r) => r.id))
@@ -226,7 +237,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }, [authUser])
 
-  // Sync Favorites after profile load
   useEffect(() => {
     if (user.favoriteRecipes) {
       setRecipes((prev) =>
@@ -333,7 +343,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     type: MealType,
     recipeId: string,
   ) => {
-    // Generate a temporary ID if offline, but use DB ID when possible
     const tempId = Math.random().toString(36).substr(2, 9)
 
     setMealPlan((prev) => [
@@ -341,7 +350,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       { id: tempId, date, type, recipeId, completed: false },
     ])
     if (authUser) {
-      const { data, error } = await supabase
+      const { data } = await supabase
         .from('meal_plans')
         .insert({
           user_id: authUser.id,
@@ -353,7 +362,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .select()
 
       if (data && data[0]) {
-        // Update the temp ID with real DB ID
         setMealPlan((prev) =>
           prev.map((s) => (s.id === tempId ? { ...s, id: data[0].id } : s)),
         )
@@ -388,6 +396,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const autoGeneratePlan = async (startDate: string) => {
+    // Generates for 7 days starting from startDate
     const days = 7
     const newPlans: any[] = []
     const types: MealType[] = ['Café da Manhã', 'Almoço', 'Lanche', 'Jantar']
@@ -422,7 +431,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
 
     setMealPlan((prev) => {
-      // We append, not replace, so multiple plans can exist
+      // Filter out existing plans for this week to allow overwrite or append?
+      // User story says "Strict Weekly AI Planning", implies filling the week.
+      // We'll append for now, but UI handles duplicates by filtering/removing if needed,
+      // or we could clear existing for that range.
+      // For safety, let's just add new ones.
       return [...prev, ...newPlans]
     })
 
@@ -441,7 +454,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .select()
 
       if (data) {
-        // Refresh plan from DB to get IDs
         const plans: MealSlot[] = data.map((p: any) => ({
           id: p.id,
           date: p.date,
@@ -449,11 +461,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           recipeId: p.recipe_id,
           completed: p.completed,
         }))
-        // Merge with existing but prefer DB data for new items
         setMealPlan((prev) => {
           const oldItems = prev.filter(
             (p) => !newPlans.find((np) => np.id === p.id),
-          ) // Remove temp items
+          )
           return [...oldItems, ...plans]
         })
       }
@@ -592,7 +603,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const addMeal = async (meal: Meal) => {
-    // Optimistic update for UI instant feedback
     setDailyLogs((prev) => {
       const existing = prev.find((l) => l.date === meal.date)
       const newTotalCalories = (existing?.totalCalories || 0) + meal.calories
@@ -637,7 +647,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         carbs: meal.carbs,
         fats: meal.fats,
       })
-      // Sync Logs
       const { data: logs } = await supabase
         .from('daily_logs')
         .select('*')
@@ -709,14 +718,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const getConsumedNutrition = (date: string) => {
-    // 1. Get Ad-hoc logs (Scanner, manual entry via addMeal)
     const log = dailyLogs.find((l) => l.date === date)
     const adhocCalories = log?.totalCalories || 0
     const adhocProtein = log?.totalProtein || 0
     const adhocCarbs = log?.totalCarbs || 0
     const adhocFats = log?.totalFats || 0
 
-    // 2. Get Planned meals marked as completed
     const plannedSlots = mealPlan.filter((s) => s.date === date && s.completed)
     let plannedCalories = 0
     let plannedProtein = 0
@@ -733,7 +740,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
     })
 
-    // 3. Sum total
     return {
       calories: adhocCalories + plannedCalories,
       protein: adhocProtein + plannedProtein,
@@ -752,6 +758,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         user,
         isAuthenticated: !!authUser,
         isLoading,
+        isOnboardingCompleted,
         login,
         logout,
         updateUser,

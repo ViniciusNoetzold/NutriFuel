@@ -14,7 +14,8 @@ import Login from './pages/Login'
 import CreateRecipe from './pages/CreateRecipe'
 import Scanner from './pages/Scanner'
 import Evolution from './pages/Evolution'
-import { AppProvider } from './stores/useAppStore'
+import Onboarding from './pages/Onboarding'
+import { AppProvider, useAppStore } from './stores/useAppStore'
 import { ThemeProvider } from 'next-themes'
 import { useState, useEffect } from 'react'
 import { SplashScreen } from './components/SplashScreen'
@@ -22,10 +23,18 @@ import { AuthProvider, useAuth } from './hooks/use-auth'
 
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { user, loading } = useAuth()
+  const { isOnboardingCompleted } = useAppStore()
+
   if (loading) return null
   if (!user) {
     return <Navigate to="/login" replace />
   }
+
+  // Force onboarding check
+  if (!isOnboardingCompleted && window.location.pathname !== '/onboarding') {
+    return <Navigate to="/onboarding" replace />
+  }
+
   return <>{children}</>
 }
 
@@ -33,6 +42,7 @@ const AppRoutes = () => {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/onboarding" element={<Onboarding />} />
       <Route
         element={
           <ProtectedRoute>
