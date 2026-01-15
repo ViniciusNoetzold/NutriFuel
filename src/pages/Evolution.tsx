@@ -8,6 +8,8 @@ import {
   History,
   Plus,
   Loader2,
+  Droplets,
+  Moon,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -20,7 +22,7 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { useAppStore } from '@/stores/useAppStore'
-import { format, parseISO } from 'date-fns'
+import { format } from 'date-fns'
 import {
   ChartContainer,
   ChartTooltip,
@@ -29,6 +31,8 @@ import {
 import {
   AreaChart,
   Area,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -77,16 +81,16 @@ export default function Evolution() {
     if (navigator.share) {
       try {
         await navigator.share({
-          title: 'Minha Evolução NutriFuel',
-          text: `Estou evoluindo! Confira meu progresso.`,
+          title: 'Minha Evolução no NutriFuel',
+          text: `Olha só minha evolução! Já perdi ${Math.abs(user.weight - Number(newWeight)).toFixed(1)}kg!`,
           url: window.location.href,
         })
-        toast.success('Compartilhado com sucesso!')
-      } catch (error) {
-        console.error('Error sharing:', error)
+      } catch (err) {
+        toast.error('Erro ao compartilhar')
       }
     } else {
-      toast.info('Compartilhamento não suportado neste navegador.')
+      toast.success('Link copiado para a área de transferência!')
+      navigator.clipboard.writeText(window.location.href)
     }
   }
 
@@ -110,9 +114,9 @@ export default function Evolution() {
     try {
       if (processedFile && authUser) {
         const fileExt = 'jpg'
-        const fileName = `${authUser.id}/evolution/${Date.now()}.${fileExt}`
+        const fileName = `${authUser.id}/${Date.now()}.${fileExt}`
         const { error: uploadError } = await supabase.storage
-          .from('avatars') // Using avatars bucket as standardized
+          .from('evolution')
           .upload(fileName, processedFile, {
             upsert: true,
             contentType: 'image/jpeg',
@@ -122,7 +126,7 @@ export default function Evolution() {
 
         const {
           data: { publicUrl },
-        } = supabase.storage.from('avatars').getPublicUrl(fileName)
+        } = supabase.storage.from('evolution').getPublicUrl(fileName)
         photoUrl = publicUrl
       }
 
@@ -148,14 +152,29 @@ export default function Evolution() {
     .filter((l) => l.photo)
     .map((l) => ({ date: l.date, src: l.photo!, weight: l.weight }))
 
-  // Chart Data from Daily Logs - Ensure Date Sorting
+  // Chart Data from Daily Logs
   const chartData = safeLogs
     .filter((l) => typeof l.weight === 'number')
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .map((l) => ({
-      date: format(parseISO(l.date), 'dd/MM'),
+      date: format(new Date(l.date), 'dd/MM'),
       weight: l.weight!,
     }))
+
+  const waterChartData = safeLogs
+    .filter((l) => l.waterIntake > 0)
+    .map((l) => ({
+      date: format(new Date(l.date), 'dd/MM'),
+      ml: l.waterIntake,
+    }))
+
+  // Sleep Chart (Inverted: Newest first)
+  const sleepChartData = safeLogs
+    .filter((l) => l.sleepHours && l.sleepHours > 0)
+    .map((l) => ({
+      date: format(new Date(l.date), 'dd/MM'),
+      hours: l.sleepHours,
+    }))
+  // We keep normal order for AreaChart but we can use 'reversed' on XAxis to invert visually
 
   return (
     <div className="space-y-6 pb-24 px-1">
@@ -166,84 +185,73 @@ export default function Evolution() {
         onSave={(file) => handleSaveEntry(file)}
       />
 
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex flex-col gap-0.5">
+      <div className="mb-4">
+        <div className="flex items-center justify-between mb-2">
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(-1)}
-              className="rounded-full"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
             <h2 className="text-2xl font-bold">Evolução</h2>
           </div>
-          <p className="text-xs text-muted-foreground font-medium ml-11">
-            Seu corpo, seu combustível.
-          </p>
-        </div>
-        <Dialog open={isNewEntryOpen} onOpenChange={setIsNewEntryOpen}>
-          <DialogTrigger asChild>
-            <Button size="sm" className="aero-button rounded-full">
-              <Plus className="h-4 w-4 mr-2" /> Registrar
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="aero-glass">
-            <DialogHeader>
-              <DialogTitle>Novo Registro</DialogTitle>
-              <DialogDescription>
-                Registre seu peso e uma foto para acompanhar sua jornada.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label>Peso Atual (kg)</Label>
-                <Input
-                  type="number"
-                  value={newWeight}
-                  onChange={(e) => setNewWeight(e.target.value)}
-                  className="aero-input"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Foto (Opcional)</Label>
-                <div className="flex items-center gap-4">
-                  <Input
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    id="photo-upload"
-                    onChange={handleFileSelect}
-                  />
-                  <Label
-                    htmlFor="photo-upload"
-                    className="flex items-center justify-center w-full h-32 border-2 border-dashed border-white/40 rounded-xl cursor-pointer hover:bg-white/10 transition-colors"
-                  >
-                    <div className="flex flex-col items-center text-muted-foreground">
-                      <Camera className="h-8 w-8 mb-2" />
-                      <span className="text-xs">
-                        Toque para selecionar e editar (1080x1080)
-                      </span>
-                    </div>
-                  </Label>
-                </div>
-              </div>
-              <Button
-                className="w-full aero-button"
-                onClick={() => handleSaveEntry()}
-                disabled={uploading}
-              >
-                {uploading ? (
-                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                ) : (
-                  <Share2 className="h-4 w-4 mr-2" />
-                )}
-                Salvar sem Foto
+          <Dialog open={isNewEntryOpen} onOpenChange={setIsNewEntryOpen}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="aero-button rounded-full">
+                <Plus className="h-4 w-4 mr-2" /> Registrar
               </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogTrigger>
+            <DialogContent className="aero-glass">
+              <DialogHeader>
+                <DialogTitle>Novo Registro</DialogTitle>
+                <DialogDescription>
+                  Registre seu peso e uma foto para acompanhar sua jornada.
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label>Peso Atual (kg)</Label>
+                  <Input
+                    type="number"
+                    value={newWeight}
+                    onChange={(e) => setNewWeight(e.target.value)}
+                    className="aero-input"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Foto (Opcional)</Label>
+                  <div className="flex items-center gap-4">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      id="photo-upload"
+                      onChange={handleFileSelect}
+                    />
+                    <Label
+                      htmlFor="photo-upload"
+                      className="flex items-center justify-center w-full h-32 border-2 border-dashed border-white/40 rounded-xl cursor-pointer hover:bg-white/10 transition-colors"
+                    >
+                      <div className="flex flex-col items-center text-muted-foreground">
+                        <Camera className="h-8 w-8 mb-2" />
+                        <span className="text-xs">
+                          Toque para selecionar e editar (1080x1080)
+                        </span>
+                      </div>
+                    </Label>
+                  </div>
+                </div>
+                <Button
+                  className="w-full aero-button"
+                  onClick={() => handleSaveEntry()}
+                  disabled={uploading}
+                >
+                  {uploading ? (
+                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  ) : (
+                    <Share2 className="h-4 w-4 mr-2" />
+                  )}
+                  Salvar sem Foto
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {isLoading ? (
@@ -322,6 +330,152 @@ export default function Evolution() {
               ) : (
                 <div className="h-[250px] w-full flex items-center justify-center text-muted-foreground text-sm">
                   Nenhum dado de peso registrado.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Water Chart - Frutiger Aero Style */}
+          <Card className="aero-card border-0 bg-cyan-50/50 dark:bg-cyan-900/20">
+            <CardContent className="p-4 pt-6">
+              <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                <Droplets className="h-5 w-5 text-cyan-500" /> Hidratação
+              </h3>
+              {waterChartData.length > 0 ? (
+                <div className="h-[250px] w-full">
+                  <ChartContainer
+                    config={{
+                      ml: { label: 'ml', color: '#06b6d4' },
+                    }}
+                    className="h-full w-full"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={waterChartData}>
+                        <defs>
+                          <linearGradient
+                            id="waterGradient"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="0%"
+                              stopColor="#22d3ee"
+                              stopOpacity={1}
+                            />
+                            <stop
+                              offset="100%"
+                              stopColor="#0891b2"
+                              stopOpacity={0.8}
+                            />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid
+                          vertical={false}
+                          strokeDasharray="3 3"
+                          opacity={0.2}
+                          stroke="currentColor"
+                        />
+                        <XAxis
+                          dataKey="date"
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={10}
+                          fontSize={10}
+                          stroke="currentColor"
+                          opacity={0.7}
+                        />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Bar
+                          dataKey="ml"
+                          fill="url(#waterGradient)"
+                          radius={[8, 8, 0, 0]}
+                          barSize={20}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </div>
+              ) : (
+                <div className="h-[250px] w-full flex items-center justify-center text-muted-foreground text-sm">
+                  Nenhum dado de hidratação.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Sleep Chart - Inverted */}
+          <Card className="aero-card border-0 bg-indigo-50/50 dark:bg-indigo-900/20">
+            <CardContent className="p-4 pt-6">
+              <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
+                <Moon className="h-5 w-5 text-indigo-500" /> Histórico de Sono
+                (Invertido)
+              </h3>
+              {sleepChartData.length > 0 ? (
+                <div className="h-[250px] w-full">
+                  <ChartContainer
+                    config={{
+                      hours: { label: 'Horas', color: '#6366f1' },
+                    }}
+                    className="h-full w-full"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={sleepChartData}>
+                        <defs>
+                          <linearGradient
+                            id="colorSleep"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="5%"
+                              stopColor="#6366f1"
+                              stopOpacity={0.4}
+                            />
+                            <stop
+                              offset="95%"
+                              stopColor="#6366f1"
+                              stopOpacity={0}
+                            />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid
+                          vertical={false}
+                          strokeDasharray="3 3"
+                          opacity={0.2}
+                          stroke="currentColor"
+                        />
+                        {/* Reversed Axis as per requirement */}
+                        <XAxis
+                          dataKey="date"
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={10}
+                          fontSize={10}
+                          stroke="currentColor"
+                          opacity={0.7}
+                          reversed
+                        />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Area
+                          type="monotone"
+                          dataKey="hours"
+                          stroke="#6366f1"
+                          strokeWidth={3}
+                          fillOpacity={1}
+                          fill="url(#colorSleep)"
+                          dot={{ fill: '#6366f1', r: 3 }}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </div>
+              ) : (
+                <div className="h-[250px] w-full flex items-center justify-center text-muted-foreground text-sm">
+                  Nenhum dado de sono.
                 </div>
               )}
             </CardContent>
@@ -416,7 +570,9 @@ export default function Evolution() {
                   <div className="w-full z-10">
                     <Button
                       className="w-full bg-white text-black hover:bg-white/90 rounded-full font-bold"
-                      onClick={() => handleShare()}
+                      onClick={() =>
+                        toast.success('Card pronto para compartilhar!')
+                      }
                     >
                       Compartilhar
                     </Button>

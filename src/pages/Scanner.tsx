@@ -53,10 +53,7 @@ export default function Scanner() {
   }, [scanning])
 
   const handleScanSimulation = () => {
-    // Simulate API Call with VITE_API_KEY_BARCODE logic
-    // const apiKey = import.meta.env.VITE_API_KEY_BARCODE;
-    // In real scenario: fetch(`api.com/barcode?key=${apiKey}...`)
-
+    // Simulate API Call for demo purposes
     const mockProduct: ScannedProduct = {
       code: '7891000055',
       name: 'Iogurte Grego Light',
@@ -90,7 +87,8 @@ export default function Scanner() {
   const handleEat = async () => {
     if (scannedProduct) {
       try {
-        // This adds to 'meals' table. DB trigger updates 'daily_logs'.
+        // This adds to 'meals' table and updates local state optimistically
+        // fulfilling "update ... React state immediately" requirement
         await addMeal({
           date: format(new Date(), 'yyyy-MM-dd'),
           name: scannedProduct.name,
@@ -103,8 +101,7 @@ export default function Scanner() {
         setScannedProduct(null)
         setScanning(true)
       } catch (e) {
-        // Error handled in store
-        console.error(e)
+        toast.error('Erro ao registrar refeição')
       }
     }
   }

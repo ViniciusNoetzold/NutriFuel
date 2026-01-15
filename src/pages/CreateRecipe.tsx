@@ -26,7 +26,7 @@ export default function CreateRecipe() {
   const [ingredients, setIngredients] = useState<Ingredient[]>([])
   const [newIngredient, setNewIngredient] = useState('')
   const [newAmount, setNewAmount] = useState('')
-  const [instructions, setInstructions] = useState('')
+  const [instructionsText, setInstructionsText] = useState('')
 
   const handleAddIngredient = () => {
     if (!newIngredient || !newAmount) return
@@ -52,11 +52,6 @@ export default function CreateRecipe() {
       return
     }
 
-    if (!instructions) {
-      toast.error('Adicione a forma de preparo')
-      return
-    }
-
     const totalMacros = ingredients.reduce(
       (acc, curr) => ({
         cals: acc.cals + (curr.calories || 0),
@@ -67,9 +62,11 @@ export default function CreateRecipe() {
       { cals: 0, prot: 0, carbs: 0, fats: 0 },
     )
 
-    const instructionList = instructions
+    // Process instructions text area into array
+    const instructions = instructionsText
       .split('\n')
-      .filter((line) => line.trim() !== '')
+      .map((line) => line.trim())
+      .filter((line) => line.length > 0)
 
     const newRecipe: Recipe = {
       id: Math.random().toString(36).substr(2, 9),
@@ -85,7 +82,8 @@ export default function CreateRecipe() {
       category,
       tags: ['Custom'],
       ingredients,
-      instructions: instructionList,
+      instructions:
+        instructions.length > 0 ? instructions : ['Misturar tudo e servir.'],
       rating: 5,
       isCustom: true,
     }
@@ -200,16 +198,16 @@ export default function CreateRecipe() {
         </div>
 
         <div className="pt-4 border-t border-white/20">
-          <h3 className="font-semibold mb-4">Forma de Preparo</h3>
-          <div className="space-y-2">
-            <Label>Instruções (uma por linha)</Label>
-            <Textarea
-              value={instructions}
-              onChange={(e) => setInstructions(e.target.value)}
-              placeholder="1. Misture os ingredientes...&#10;2. Aqueça a panela..."
-              className="aero-input min-h-[150px]"
-            />
-          </div>
+          <h3 className="font-semibold mb-2">Forma de Preparo</h3>
+          <p className="text-xs text-muted-foreground mb-2">
+            Escreva cada passo em uma nova linha.
+          </p>
+          <Textarea
+            value={instructionsText}
+            onChange={(e) => setInstructionsText(e.target.value)}
+            className="aero-input min-h-[150px]"
+            placeholder="1. Lave os ingredientes...&#10;2. Corte tudo..."
+          />
         </div>
 
         <Button

@@ -62,6 +62,13 @@ export default function Recipes() {
 
   return (
     <div className="space-y-6 pb-24 px-1">
+      <div className="mb-4">
+        <h2 className="text-2xl font-bold">Receitas</h2>
+        <p className="text-sm font-medium text-muted-foreground">
+          Seu corpo, seu combustível.
+        </p>
+      </div>
+
       {/* Search & Filter Bar */}
       <div className="flex gap-3 sticky top-20 z-30 py-2">
         <div className="relative flex-1 group">

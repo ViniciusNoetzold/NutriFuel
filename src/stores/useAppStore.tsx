@@ -38,6 +38,7 @@ interface AppContextType {
   logWeight: (weight: number, date: string, photo?: string) => void
   logExercise: (calories: number, date: string) => void
   logSleep: (hours: number, date: string) => void
+  addMeal: (meal: Meal) => Promise<void>
   shoppingList: ShoppingItem[]
   addShoppingItem: (item: Omit<ShoppingItem, 'id' | 'checked'>) => void
   addIngredientsToShoppingList: (ingredients: Ingredient[]) => void
@@ -48,12 +49,6 @@ interface AppContextType {
   markNotificationsAsRead: () => void
   hydrationSettings: { enabled: boolean; sound: boolean }
   toggleHydrationSettings: (setting: 'enabled' | 'sound') => void
-  getDailyNutrition: (date: string) => {
-    calories: number
-    protein: number
-    carbs: number
-    fats: number
-  }
   getConsumedNutrition: (date: string) => {
     calories: number
     protein: number
@@ -64,8 +59,6 @@ interface AppContextType {
   resetPR: () => void
   scannedHistory: ScannedProduct[]
   addScannedProduct: (product: ScannedProduct) => void
-  addMeal: (meal: Omit<Meal, 'id' | 'user_id' | 'created_at'>) => Promise<void>
-  consumedMeals: Meal[]
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined)
@@ -87,7 +80,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [recipes, setRecipes] = useState<Recipe[]>(MOCK_RECIPES as Recipe[])
   const [mealPlan, setMealPlan] = useState<MealSlot[]>([])
   const [dailyLogs, setDailyLogs] = useState<DayLog[]>([])
-  const [consumedMeals, setConsumedMeals] = useState<Meal[]>([])
   const [shoppingList, setShoppingList] = useState<ShoppingItem[]>([])
   const [notifications, setNotifications] =
     useState<AppNotification[]>(MOCK_NOTIFICATIONS)
@@ -101,9 +93,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (authUser) {
       setIsLoading(true)
-
-      // Fetch Profile
-      supabase
+      const fetchProfile = supabase
         .from('profiles')
         .select('*')
         .eq('id', authUser.id)
@@ -135,19 +125,67 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           }
         })
 
-      // Fetch Logs
-      fetchLogs()
-      fetchMeals()
+      const fetchLogs = supabase
+        .from('daily_logs')
+        .select('*')
+        .eq('user_id', authUser.id)
+        .order('date', { ascending: true })
+        .then(({ data }) => {
+          if (data) {
+            const logs: DayLog[] = data.map((d: any) => ({
+              date: d.date,
+              waterIntake: d.water_intake || 0,
+              weight: d.weight,
+              photo: d.photo_url,
+              exerciseBurned: d.exercise_burned || 0,
+              sleepHours: d.sleep_hours || 0,
+              totalCalories: d.total_calories || 0,
+              totalProtein: d.total_protein || 0,
+              totalCarbs: d.total_carbs || 0,
+              totalFats: d.total_fats || 0,
+            }))
+            setDailyLogs(logs)
+          }
+        })
 
-      // Fetch Plans
-      supabase
+      const fetchRecipes = supabase
+        .from('recipes')
+        .select('*')
+        .then(({ data }) => {
+          if (data && data.length > 0) {
+            const mappedRecipes: Recipe[] = data.map((r: any) => ({
+              id: r.id,
+              title: r.title,
+              image: r.image_url || '',
+              calories: r.macros?.calories || 0,
+              protein: r.macros?.protein || 0,
+              carbs: r.macros?.carbs || 0,
+              fats: r.macros?.fats || 0,
+              prepTime: r.prep_time || 0,
+              portions: 1,
+              difficulty: r.difficulty as any,
+              category: r.category as any,
+              tags: r.tags || [],
+              ingredients: r.ingredients || [],
+              instructions: r.instructions || [],
+              rating: 5,
+              isFavorite: r.is_favorite || false,
+            }))
+            setRecipes((prev) => {
+              const dbIds = new Set(mappedRecipes.map((r) => r.id))
+              const uniqueMocks = prev.filter((r) => !dbIds.has(r.id))
+              return [...uniqueMocks, ...mappedRecipes]
+            })
+          }
+        })
+
+      const fetchMealPlans = supabase
         .from('meal_plans')
         .select('*')
         .eq('user_id', authUser.id)
         .then(({ data }) => {
           if (data) {
             const plans: MealSlot[] = data.map((p: any) => ({
-              id: p.id,
               date: p.date,
               type: p.type as MealType,
               recipeId: p.recipe_id,
@@ -156,127 +194,17 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             setMealPlan(plans)
           }
         })
-        .finally(() => setIsLoading(false))
 
-      // Realtime Subscriptions
-      const logsChannel = supabase
-        .channel('daily_logs_changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'daily_logs',
-            filter: `user_id=eq.${authUser.id}`,
-          },
-          () => {
-            fetchLogs()
-          },
-        )
-        .subscribe()
-
-      const mealsChannel = supabase
-        .channel('meals_changes')
-        .on(
-          'postgres_changes',
-          {
-            event: '*',
-            schema: 'public',
-            table: 'meals',
-            filter: `user_id=eq.${authUser.id}`,
-          },
-          () => {
-            fetchMeals()
-          },
-        )
-        .subscribe()
-
-      return () => {
-        supabase.removeChannel(logsChannel)
-        supabase.removeChannel(mealsChannel)
-      }
+      Promise.all([
+        fetchProfile,
+        fetchLogs,
+        fetchRecipes,
+        fetchMealPlans,
+      ]).finally(() => setIsLoading(false))
     } else {
       setIsLoading(false)
     }
   }, [authUser])
-
-  const fetchLogs = async () => {
-    if (!authUser) return
-    const { data } = await supabase
-      .from('daily_logs')
-      .select('*')
-      .eq('user_id', authUser.id)
-      .order('date', { ascending: true })
-
-    if (data) {
-      const logs: DayLog[] = data.map((d: any) => ({
-        date: d.date,
-        waterIntake: d.water_intake,
-        weight: d.weight,
-        photo: d.photo_url,
-        exerciseBurned: d.exercise_burned,
-        sleepHours: d.sleep_hours,
-        totalCalories: d.total_calories,
-        totalProtein: d.total_protein,
-        totalCarbs: d.total_carbs,
-        totalFats: d.total_fats,
-      }))
-      setDailyLogs(logs)
-    }
-  }
-
-  const fetchMeals = async () => {
-    if (!authUser) return
-    // Fetch meals for the last 30 days to avoid fetching too much but keep context
-    const today = new Date()
-    const thirtyDaysAgo = new Date(today)
-    thirtyDaysAgo.setDate(today.getDate() - 30)
-
-    const { data } = await supabase
-      .from('meals')
-      .select('*')
-      .eq('user_id', authUser.id)
-      .gte('date', format(thirtyDaysAgo, 'yyyy-MM-dd'))
-      .order('created_at', { ascending: false })
-
-    if (data) {
-      setConsumedMeals(data)
-    }
-  }
-
-  // Notification Logic
-  useEffect(() => {
-    if (!('Notification' in window)) return
-
-    if (Notification.permission !== 'granted') {
-      Notification.requestPermission()
-    }
-
-    const checkNotifications = () => {
-      const now = new Date()
-      const hours = now.getHours()
-      const minutes = now.getMinutes()
-      const scheduledHours = [7, 10, 13, 16, 19, 22]
-
-      if (scheduledHours.includes(hours) && minutes === 0) {
-        const title =
-          hours % 2 === 0 ? 'Hora da Refeição!' : 'Hora de Beber Água!'
-        const body =
-          hours % 2 === 0
-            ? 'Mantenha o foco na sua dieta.'
-            : 'Mantenha-se hidratado.'
-
-        if (Notification.permission === 'granted') {
-          new Notification(title, { body, icon: '/favicon.ico' })
-        } else {
-          toast.info(title, { description: body })
-        }
-      }
-    }
-
-    const interval = setInterval(checkNotifications, 60000) // Check every minute
-    return () => clearInterval(interval)
-  }, [])
 
   const login = (u: string, p: string) => {
     signIn(u, p).then(({ error }) => {
@@ -326,8 +254,28 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     updateUser({ visibleWidgets: newWidgets })
   }
 
-  const addRecipe = (recipe: Recipe) => {
+  const addRecipe = async (recipe: Recipe) => {
     setRecipes((prev) => [...prev, recipe])
+    if (authUser) {
+      const payload = {
+        title: recipe.title,
+        image_url: recipe.image,
+        macros: {
+          calories: recipe.calories,
+          protein: recipe.protein,
+          carbs: recipe.carbs,
+          fats: recipe.fats,
+        },
+        prep_time: recipe.prepTime,
+        difficulty: recipe.difficulty,
+        category: recipe.category,
+        tags: recipe.tags,
+        ingredients: recipe.ingredients as any,
+        instructions: recipe.instructions,
+        user_id: authUser.id,
+      }
+      await supabase.from('recipes').insert(payload)
+    }
   }
 
   const toggleFavorite = (id: string) => {
@@ -341,74 +289,59 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     type: MealType,
     recipeId: string,
   ) => {
-    // Optimistic update
-    const tempId = Math.random().toString()
-    setMealPlan((prev) => [
-      ...prev,
-      { id: tempId, date, type, recipeId, completed: false },
-    ])
-
+    setMealPlan((prev) => [...prev, { date, type, recipeId, completed: false }])
     if (authUser) {
-      const { data, error } = await supabase
-        .from('meal_plans')
-        .insert({
-          user_id: authUser.id,
-          date,
-          type,
-          recipe_id: recipeId,
-          completed: false,
-        })
-        .select()
-        .single()
-
-      if (!error && data) {
-        setMealPlan((prev) =>
-          prev.map((p) => (p.id === tempId ? { ...p, id: data.id } : p)),
-        )
-      } else {
-        // Rollback
-        setMealPlan((prev) => prev.filter((p) => p.id !== tempId))
-        toast.error('Erro ao salvar planejamento.')
-      }
+      await supabase.from('meal_plans').insert({
+        user_id: authUser.id,
+        date,
+        type,
+        recipe_id: recipeId,
+        completed: false,
+      })
     }
   }
 
   const removeMealFromPlan = async (date: string, type: MealType) => {
-    const item = mealPlan.find((s) => s.date === date && s.type === type)
-    if (!item) return
-
-    setMealPlan((prev) => prev.filter((s) => s.id !== item.id))
-
-    if (authUser && item.id) {
-      await supabase.from('meal_plans').delete().eq('id', item.id)
+    setMealPlan((prev) => {
+      const index = prev.findIndex((s) => s.date === date && s.type === type)
+      if (index === -1) return prev
+      const newPlan = [...prev]
+      newPlan.splice(index, 1)
+      return newPlan
+    })
+    if (authUser) {
+      await supabase
+        .from('meal_plans')
+        .delete()
+        .match({ user_id: authUser.id, date, type })
     }
   }
 
   const toggleMealCompletion = async (date: string, type: MealType) => {
-    const item = mealPlan.find((s) => s.date === date && s.type === type)
-    if (!item) return
+    const slot = mealPlan.find((s) => s.date === date && s.type === type)
+    if (!slot) return
 
-    const newStatus = !item.completed
-
+    const newCompleted = !slot.completed
     setMealPlan((prev) =>
-      prev.map((slot) =>
-        slot.id === item.id ? { ...slot, completed: newStatus } : slot,
+      prev.map((s) =>
+        s.date === date && s.type === type
+          ? { ...s, completed: newCompleted }
+          : s,
       ),
     )
 
-    if (authUser && item.id) {
+    if (authUser) {
       await supabase
         .from('meal_plans')
-        .update({ completed: newStatus })
-        .eq('id', item.id)
+        .update({ completed: newCompleted })
+        .match({ user_id: authUser.id, date, type })
     }
   }
 
-  const autoGeneratePlan = async (startDate: string) => {
+  const autoGeneratePlan = (startDate: string) => {
     const days = 7
     const newPlan: MealSlot[] = []
     const types: MealType[] = ['Café da Manhã', 'Almoço', 'Lanche', 'Jantar']
-    const dbPayloads: any[] = []
 
     for (let i = 0; i < days; i++) {
       const date = new Date(startDate)
@@ -428,42 +361,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           candidates[Math.floor(Math.random() * candidates.length)]
 
         if (randomRecipe) {
-          const item = {
+          newPlan.push({
             date: dateStr,
             type,
             recipeId: randomRecipe.id,
             completed: false,
-          }
-          newPlan.push(item)
-          if (authUser) {
-            dbPayloads.push({
-              user_id: authUser.id,
-              date: dateStr,
-              type,
-              recipe_id: randomRecipe.id,
-              completed: false,
-            })
-          }
+          })
         }
       })
     }
-
     setMealPlan((prev) => {
       const existingDates = new Set(newPlan.map((p) => p.date))
       const filteredPrev = prev.filter((p) => !existingDates.has(p.date))
       return [...filteredPrev, ...newPlan]
     })
-
-    if (authUser && dbPayloads.length > 0) {
-      await supabase.from('meal_plans').insert(dbPayloads)
-    }
   }
 
   const logWater = async (amount: number, date: string) => {
     const existing = dailyLogs.find((l) => l.date === date)
     const newAmount = Math.max(0, (existing?.waterIntake || 0) + amount)
 
-    // Optimistic Update
     setDailyLogs((prev) => {
       if (existing) {
         return prev.map((l) =>
@@ -496,16 +413,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const logWeight = async (weight: number, date: string, photo?: string) => {
-    const previousWeights = dailyLogs
-      .filter((l) => l.weight)
-      .map((l) => l.weight!)
-    const minWeight =
-      previousWeights.length > 0 ? Math.min(...previousWeights) : user.weight
-
-    if (weight < minWeight && user.goal === 'Emagrecer') {
-      setHasNewPR(true)
-    }
-
     setDailyLogs((prev) => {
       const existing = prev.find((l) => l.date === date)
       if (existing) {
@@ -601,6 +508,79 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const addMeal = async (meal: Meal) => {
+    // Optimistic update for UI instant feedback
+    setDailyLogs((prev) => {
+      const existing = prev.find((l) => l.date === meal.date)
+      const newTotalCalories = (existing?.totalCalories || 0) + meal.calories
+      const newTotalProtein = (existing?.totalProtein || 0) + meal.protein
+      const newTotalCarbs = (existing?.totalCarbs || 0) + meal.carbs
+      const newTotalFats = (existing?.totalFats || 0) + meal.fats
+
+      if (existing) {
+        return prev.map((l) =>
+          l.date === meal.date
+            ? {
+                ...l,
+                totalCalories: newTotalCalories,
+                totalProtein: newTotalProtein,
+                totalCarbs: newTotalCarbs,
+                totalFats: newTotalFats,
+              }
+            : l,
+        )
+      } else {
+        return [
+          ...prev,
+          {
+            date: meal.date,
+            waterIntake: 0,
+            totalCalories: meal.calories,
+            totalProtein: meal.protein,
+            totalCarbs: meal.carbs,
+            totalFats: meal.fats,
+          },
+        ]
+      }
+    })
+
+    if (authUser) {
+      await supabase.from('meals').insert({
+        user_id: authUser.id,
+        date: meal.date,
+        name: meal.name,
+        calories: meal.calories,
+        protein: meal.protein,
+        carbs: meal.carbs,
+        fats: meal.fats,
+      })
+      // Also update daily_logs manually for persistence if trigger is delayed or absent for quick sync
+      const { data: logs } = await supabase
+        .from('daily_logs')
+        .select('*')
+        .eq('user_id', authUser.id)
+        .eq('date', meal.date)
+        .single()
+
+      const currentCals = logs?.total_calories || 0
+      const currentProt = logs?.total_protein || 0
+      const currentCarbs = logs?.total_carbs || 0
+      const currentFats = logs?.total_fats || 0
+
+      await supabase.from('daily_logs').upsert(
+        {
+          user_id: authUser.id,
+          date: meal.date,
+          total_calories: currentCals + meal.calories,
+          total_protein: currentProt + meal.protein,
+          total_carbs: currentCarbs + meal.carbs,
+          total_fats: currentFats + meal.fats,
+        },
+        { onConflict: 'user_id,date' },
+      )
+    }
+  }
+
   const resetPR = () => setHasNewPR(false)
 
   const addShoppingItem = (item: Omit<ShoppingItem, 'id' | 'checked'>) => {
@@ -645,53 +625,42 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setHydrationSettings((prev) => ({ ...prev, [setting]: !prev[setting] }))
   }
 
-  const getDailyNutrition = (date: string) => {
-    const slots = mealPlan.filter((s) => s.date === date)
-    const nutrition = { calories: 0, protein: 0, carbs: 0, fats: 0 }
-    slots.forEach((slot) => {
+  const getConsumedNutrition = (date: string) => {
+    // 1. Get Ad-hoc logs (Scanner, manual entry via addMeal)
+    const log = dailyLogs.find((l) => l.date === date)
+    const adhocCalories = log?.totalCalories || 0
+    const adhocProtein = log?.totalProtein || 0
+    const adhocCarbs = log?.totalCarbs || 0
+    const adhocFats = log?.totalFats || 0
+
+    // 2. Get Planned meals marked as completed
+    const plannedSlots = mealPlan.filter((s) => s.date === date && s.completed)
+    let plannedCalories = 0
+    let plannedProtein = 0
+    let plannedCarbs = 0
+    let plannedFats = 0
+
+    plannedSlots.forEach((slot) => {
       const recipe = recipes.find((r) => r.id === slot.recipeId)
       if (recipe) {
-        nutrition.calories += recipe.calories
-        nutrition.protein += recipe.protein
-        nutrition.carbs += recipe.carbs
-        nutrition.fats += recipe.fats
+        plannedCalories += recipe.calories
+        plannedProtein += recipe.protein
+        plannedCarbs += recipe.carbs
+        plannedFats += recipe.fats
       }
     })
-    return nutrition
-  }
 
-  const getConsumedNutrition = (date: string) => {
-    // Calculate FRESH sum from meals table as per requirements
-    // This uses consumedMeals state which is updated via Realtime Subscription
-    const mealsForDate = consumedMeals.filter((m) => m.date === date)
-
-    if (mealsForDate.length > 0) {
-      return mealsForDate.reduce(
-        (acc, meal) => ({
-          calories: acc.calories + (meal.calories || 0),
-          protein: acc.protein + (meal.protein || 0),
-          carbs: acc.carbs + (meal.carbs || 0),
-          fats: acc.fats + (meal.fats || 0),
-        }),
-        { calories: 0, protein: 0, carbs: 0, fats: 0 },
-      )
+    // 3. Sum total
+    return {
+      calories: adhocCalories + plannedCalories,
+      protein: adhocProtein + plannedProtein,
+      carbs: adhocCarbs + plannedCarbs,
+      fats: adhocFats + plannedFats,
     }
-    return { calories: 0, protein: 0, carbs: 0, fats: 0 }
   }
 
   const addScannedProduct = (product: ScannedProduct) => {
     setScannedHistory((prev) => [product, ...prev])
-  }
-
-  const addMeal = async (meal: Omit<Meal, 'id' | 'user_id' | 'created_at'>) => {
-    // Optimistic Update can be added here if needed, but Realtime is fast enough (<200ms)
-    // for this specific requirement, we rely on Supabase Realtime to update `consumedMeals`
-    if (authUser) {
-      await supabase.from('meals').insert({
-        user_id: authUser.id,
-        ...meal,
-      })
-    }
   }
 
   return (
@@ -717,6 +686,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         logWeight,
         logExercise,
         logSleep,
+        addMeal,
         shoppingList,
         addShoppingItem,
         addIngredientsToShoppingList,
@@ -727,14 +697,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         markNotificationsAsRead,
         hydrationSettings,
         toggleHydrationSettings,
-        getDailyNutrition,
         getConsumedNutrition,
         hasNewPR,
         resetPR,
         scannedHistory,
         addScannedProduct,
-        addMeal,
-        consumedMeals,
       }}
     >
       {children}

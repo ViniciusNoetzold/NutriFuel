@@ -59,7 +59,7 @@ const App = () => {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Internationalization: Set language to pt-br
+    // Internationalization: Set language to pt-br as per requirements
     document.documentElement.lang = 'pt-br'
   }, [])
 

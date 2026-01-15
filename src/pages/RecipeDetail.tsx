@@ -66,7 +66,6 @@ export default function RecipeDetail() {
       addMealToPlan(selectedDate, type, recipe.id)
     })
 
-    // Confetti logic could be here, implementing simple toast for now
     toast.success(`${recipe.title} adicionado ao plano!`, {
       description: 'Refeição registrada com sucesso.',
     })
@@ -100,6 +99,23 @@ export default function RecipeDetail() {
     setSelectedMealTypes((prev) =>
       prev.includes(type) ? prev.filter((t) => t !== type) : [...prev, type],
     )
+  }
+
+  const handleShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: recipe.title,
+          text: `Confira essa receita incrível de ${recipe.title} no NutriFuel!`,
+          url: window.location.href,
+        })
+      } catch (err) {
+        toast.error('Erro ao compartilhar')
+      }
+    } else {
+      toast.success('Link copiado!')
+      navigator.clipboard.writeText(window.location.href)
+    }
   }
 
   // Calculated macros
@@ -325,6 +341,7 @@ export default function RecipeDetail() {
               variant="outline"
               size="lg"
               className="flex-1 h-14 rounded-2xl border-white/40 bg-white/30 backdrop-blur-md hover:bg-white/50"
+              onClick={handleShare}
             >
               <Share2 className="h-5 w-5" />
             </Button>
@@ -397,6 +414,7 @@ export default function RecipeDetail() {
 
           <TabsContent value="method" className="space-y-6 animate-fade-in-up">
             <div className="aero-glass p-6">
+              <h3 className="font-bold text-lg mb-4">Forma de Preparo</h3>
               {recipe.instructions.map((step, i) => (
                 <div key={i} className="flex gap-6 mb-8 last:mb-0 relative">
                   <div className="flex-none h-10 w-10 rounded-full bg-gradient-to-br from-primary to-blue-600 text-white shadow-lg flex items-center justify-center font-bold text-lg z-10">

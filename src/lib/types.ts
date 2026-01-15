@@ -57,7 +57,6 @@ export interface UserProfile {
 export type MealType = 'Café da Manhã' | 'Almoço' | 'Lanche' | 'Jantar'
 
 export interface MealSlot {
-  id?: string // Added ID for DB sync
   date: string // ISO date string YYYY-MM-DD
   type: MealType
   recipeId: string | null
@@ -65,8 +64,8 @@ export interface MealSlot {
 }
 
 export interface Meal {
-  id: string
-  user_id: string
+  id?: string
+  user_id?: string
   date: string
   name: string
   calories: number

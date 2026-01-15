@@ -53,7 +53,7 @@ export default function Login() {
                 NutriFuel
               </h1>
               <p className="text-primary font-bold dark:text-cyan-400 text-sm max-w-[200px] mx-auto mt-1 drop-shadow-sm opacity-90">
-                Energy for Life.
+                Seu corpo, seu combustível.
               </p>
             </div>
           </div>

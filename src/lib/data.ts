@@ -18,6 +18,8 @@ export const MOCK_USER: UserProfile = {
   visibleWidgets: ['macros', 'hydration', 'meals', 'sleep'],
 }
 
+// Articles removed as per user story requirements
+
 export const MOCK_RECIPES: Recipe[] = [
   {
     id: '1',

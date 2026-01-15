@@ -1,4 +1,4 @@
-import { useRef, useState, useEffect } from 'react'
+import React, { useRef, useState, useEffect } from 'react'
 import { Outlet, useLocation, useNavigate, Link } from 'react-router-dom'
 import { Sidebar } from './Sidebar'
 import { BottomNav } from './BottomNav'
@@ -77,6 +77,25 @@ export default function Layout() {
   const isWidgetVisible = (id: string) =>
     user.visibleWidgets?.includes(id) ?? true
 
+  const pageTitle = () => {
+    if (location.pathname === '/') return 'Início'
+    if (location.pathname === '/recipes') return 'Receitas'
+    if (location.pathname === '/plan') return 'Plano Alimentar'
+    if (location.pathname === '/shop') return 'Compras'
+    if (location.pathname === '/profile') return 'Perfil'
+    if (location.pathname === '/evolution') return 'Registro de evolução'
+    if (location.pathname === '/recipes/create') return 'Nova Receita'
+    if (location.pathname === '/recipes/scan') return 'Scanner'
+    if (
+      location.pathname.startsWith('/recipes/') &&
+      !['/recipes', '/recipes/create', '/recipes/scan'].includes(
+        location.pathname,
+      )
+    )
+      return 'Detalhes'
+    return ''
+  }
+
   return (
     <div className="flex min-h-screen transition-colors duration-500 theme-light-bg dark:theme-dark-bg text-foreground overflow-hidden relative">
       <div className="absolute inset-0 z-0 opacity-[0.04] pointer-events-none bg-texture-overlay mix-blend-overlay" />
@@ -89,41 +108,28 @@ export default function Layout() {
         className="flex-1 md:pl-64 pb-24 md:pb-0 z-10 relative h-screen overflow-y-auto scroll-smooth"
       >
         <header className="sticky top-0 z-40 flex h-16 items-center justify-between px-4 aero-glass mx-4 mt-4 mb-4 transition-transform duration-300">
-          <div className="flex items-center gap-2">
-            {isDetailPage && (
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => navigate(-1)}
-                className="hover:bg-white/20 rounded-full"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </Button>
-            )}
-            <div>
+          <div className="flex flex-col justify-center">
+            <div className="flex items-center gap-2">
+              {isDetailPage && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigate(-1)}
+                  className="hover:bg-white/20 rounded-full h-8 w-8"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                </Button>
+              )}
               <h1 className="text-xl font-bold tracking-tight text-shadow">
-                {location.pathname === '/' && 'Início'}
-                {location.pathname === '/recipes' && 'Receitas'}
-                {location.pathname === '/plan' && 'Plano Alimentar'}
-                {location.pathname === '/shop' && 'Compras'}
-                {location.pathname === '/profile' && 'Perfil'}
-                {location.pathname === '/evolution' && 'Registro de evolução'}
-                {location.pathname === '/recipes/create' && 'Nova Receita'}
-                {location.pathname === '/recipes/scan' && 'Scanner'}
-                {location.pathname.startsWith('/recipes/') &&
-                  !['/recipes', '/recipes/create', '/recipes/scan'].includes(
-                    location.pathname,
-                  ) &&
-                  'Detalhes'}
+                {pageTitle()}
               </h1>
             </div>
+            <p className="text-[10px] text-primary font-bold uppercase tracking-widest pl-1 animate-fade-in delay-200">
+              Seu corpo, seu combustível.
+            </p>
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="hidden md:inline-block text-xs font-bold text-muted-foreground mr-2">
-              Seu corpo, seu combustível.
-            </span>
-            {/* Widget & Theme Menu */}
             <Popover>
               <PopoverTrigger asChild>
                 <Button
