@@ -52,6 +52,7 @@ export default function MealPlan() {
 
   const handleAutoGenerate = () => {
     // Generate Strict Weekly Plan (Sun-Sat)
+    // Pass the calculated weekStart to ensure strict alignment
     autoGeneratePlan(format(weekStart, 'yyyy-MM-dd'))
     toast.success('Semana planejada magicamente! ✨')
   }

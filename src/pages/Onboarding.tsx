@@ -19,6 +19,7 @@ export default function Onboarding() {
   const navigate = useNavigate()
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState({
+    name: '',
     weight: '',
     height: '',
     age: '',
@@ -31,7 +32,10 @@ export default function Onboarding() {
   }
 
   const handleNext = () => {
-    if (step === 1 && (!formData.weight || !formData.height || !formData.age)) {
+    if (
+      step === 1 &&
+      (!formData.name || !formData.weight || !formData.height || !formData.age)
+    ) {
       toast.error('Preencha todos os campos')
       return
     }
@@ -45,6 +49,7 @@ export default function Onboarding() {
   const handleFinish = async () => {
     try {
       await updateUser({
+        name: formData.name,
         weight: Number(formData.weight),
         height: Number(formData.height),
         age: Number(formData.age),
@@ -68,10 +73,22 @@ export default function Onboarding() {
           <p className="text-muted-foreground text-sm">
             Vamos configurar seu perfil para começar.
           </p>
+          <p className="text-[10px] text-primary font-bold uppercase tracking-widest mt-2">
+            Seu corpo, seu combustível.
+          </p>
         </div>
 
         {step === 1 && (
           <div className="space-y-4 animate-fade-in-up">
+            <div className="space-y-2">
+              <Label>Nome de Exibição</Label>
+              <Input
+                className="aero-input"
+                value={formData.name}
+                onChange={(e) => handleChange('name', e.target.value)}
+                placeholder="Ex: João Silva"
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Peso (kg)</Label>

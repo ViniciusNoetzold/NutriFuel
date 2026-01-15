@@ -9,10 +9,13 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { useAppStore } from '@/stores/useAppStore'
+import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar'
 
 export function Sidebar() {
   const location = useLocation()
   const path = location.pathname
+  const { user } = useAppStore()
 
   const items = [
     { icon: Home, label: 'Início', href: '/' },
@@ -67,11 +70,14 @@ export function Sidebar() {
       </div>
       <div className="p-4 border-t border-white/20 dark:border-white/5 bg-white/5 dark:bg-black/20">
         <div className="flex items-center space-x-3">
-          <div className="h-10 w-10 rounded-full bg-gradient-to-tr from-primary to-cyan-300 flex items-center justify-center text-white font-bold shadow-md border-2 border-white/50">
-            U
-          </div>
-          <div className="text-sm">
-            <p className="font-bold">Usuário</p>
+          <Avatar className="h-10 w-10 border-2 border-white/50 shadow-md">
+            <AvatarImage src={user.avatar} />
+            <AvatarFallback>
+              <User className="h-5 w-5" />
+            </AvatarFallback>
+          </Avatar>
+          <div className="text-sm overflow-hidden">
+            <p className="font-bold truncate">{user.name}</p>
           </div>
         </div>
       </div>

@@ -12,7 +12,7 @@ import {
   Meal,
 } from '@/lib/types'
 import { MOCK_USER, MOCK_RECIPES } from '@/lib/data'
-import { format } from 'date-fns'
+import { format, startOfWeek, addDays, endOfWeek } from 'date-fns'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
@@ -94,8 +94,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const isOnboardingCompleted = React.useMemo(() => {
     if (!authUser) return false
-    // Check mandatory fields
+    // Check mandatory fields from User Story
     return (
+      user.name &&
       user.weight > 0 &&
       user.height > 0 &&
       user.age > 0 &&
@@ -128,9 +129,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                 name: data.name || prev.name || 'Usuário',
                 email: authUser.email || prev.email,
                 avatar: data.avatar_url || prev.avatar,
-                weight: data.weight || 0, // IMPORTANT: Default to 0 to trigger onboarding if missing
-                height: data.height || 0, // IMPORTANT: Default to 0
-                age: data.age || 0, // IMPORTANT: Default to 0
+                weight: data.weight || 0,
+                height: data.height || 0,
+                age: data.age || 0,
                 gender: (data.gender as UserProfile['gender']) || prev.gender,
                 activityLevel:
                   (data.activity_level as UserProfile['activityLevel']) ||
@@ -145,7 +146,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
                   data.visible_widgets ||
                   prev.visibleWidgets ||
                   defaultHomeLayout,
-                phone: data.phone || '', // Empty if missing to trigger onboarding
+                phone: data.phone || '',
                 homeLayoutOrder: data.home_layout_order
                   ? (data.home_layout_order as string[])
                   : prev.homeLayoutOrder || defaultHomeLayout,
@@ -396,14 +397,32 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const autoGeneratePlan = async (startDate: string) => {
-    // Generates for 7 days starting from startDate
+    // Generates for Sun-Sat based on start date
+    const start = startOfWeek(new Date(startDate), { weekStartsOn: 0 })
     const days = 7
     const newPlans: any[] = []
     const types: MealType[] = ['Café da Manhã', 'Almoço', 'Lanche', 'Jantar']
 
+    // Prepare range for deletion if needed
+    const startDateStr = format(start, 'yyyy-MM-dd')
+    const endDateStr = format(addDays(start, 6), 'yyyy-MM-dd')
+
+    // Clean up existing plans for this week to avoid duplication/clutter
+    // "Instant cloud persistence" - we overwrite the week.
+    setMealPlan((prev) =>
+      prev.filter((p) => p.date < startDateStr || p.date > endDateStr),
+    )
+    if (authUser) {
+      await supabase
+        .from('meal_plans')
+        .delete()
+        .eq('user_id', authUser.id)
+        .gte('date', startDateStr)
+        .lte('date', endDateStr)
+    }
+
     for (let i = 0; i < days; i++) {
-      const date = new Date(startDate)
-      date.setDate(date.getDate() + i)
+      const date = addDays(start, i)
       const dateStr = format(date, 'yyyy-MM-dd')
 
       types.forEach((type) => {
@@ -424,20 +443,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
             type,
             recipeId: randomRecipe.id,
             completed: false,
-            id: Math.random().toString(36).substr(2, 9), // Temp ID
+            id: Math.random().toString(36).substr(2, 9),
           })
         }
       })
     }
 
-    setMealPlan((prev) => {
-      // Filter out existing plans for this week to allow overwrite or append?
-      // User story says "Strict Weekly AI Planning", implies filling the week.
-      // We'll append for now, but UI handles duplicates by filtering/removing if needed,
-      // or we could clear existing for that range.
-      // For safety, let's just add new ones.
-      return [...prev, ...newPlans]
-    })
+    setMealPlan((prev) => [...prev, ...newPlans])
 
     if (authUser) {
       const dbPayload = newPlans.map((p) => ({
@@ -448,24 +460,29 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         completed: false,
       }))
 
+      // Batch insert
       const { data } = await supabase
         .from('meal_plans')
         .insert(dbPayload)
         .select()
 
       if (data) {
-        const plans: MealSlot[] = data.map((p: any) => ({
+        // Update local state with real IDs from DB
+        const realPlans: MealSlot[] = data.map((p: any) => ({
           id: p.id,
           date: p.date,
           type: p.type as MealType,
           recipeId: p.recipe_id,
           completed: p.completed,
         }))
+
+        // Replace temp items with confirmed items
         setMealPlan((prev) => {
-          const oldItems = prev.filter(
-            (p) => !newPlans.find((np) => np.id === p.id),
+          // We already cleared old items. Now we remove the temp items we just added and add the real ones
+          const withoutTemps = prev.filter(
+            (p) => !newPlans.some((np) => np.id === p.id),
           )
-          return [...oldItems, ...plans]
+          return [...withoutTemps, ...realPlans]
         })
       }
     }

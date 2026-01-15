@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import {
   Share2,
@@ -30,7 +30,6 @@ import {
   addMonths,
   startOfMonth,
   endOfMonth,
-  isWithinInterval,
   eachDayOfInterval,
   isSameDay,
 } from 'date-fns'
@@ -82,12 +81,9 @@ export default function Evolution() {
   const [isNewEntryOpen, setIsNewEntryOpen] = useState(false)
   const [newWeight, setNewWeight] = useState(user.weight.toString())
   const [uploading, setUploading] = useState(false)
-  const [cardPreviewOpen, setCardPreviewOpen] = useState(false)
-  const [selectedLogForCard, setSelectedLogForCard] = useState<any>(null)
   const [generatedBeforeAfter, setGeneratedBeforeAfter] = useState<
     string | null
   >(null)
-  const canvasRef = useRef<HTMLCanvasElement>(null)
 
   // Image Editor
   const [editorOpen, setEditorOpen] = useState(false)
@@ -248,14 +244,29 @@ export default function Evolution() {
   const monthEnd = endOfMonth(currentMonth)
   const allDays = eachDayOfInterval({ start: monthStart, end: monthEnd })
 
-  const chartData = allDays.map((day) => {
-    const dateStr = format(day, 'yyyy-MM-dd')
-    const log = safeLogs.find((l) => l.date === dateStr)
-    return {
-      date: format(day, 'dd/MM'),
-      weight: log?.weight || null, // Use null to break line
-    }
-  })
+  const chartData = useMemo(() => {
+    let lastKnownWeight =
+      safeLogs
+        .filter((l) => l.date < format(monthStart, 'yyyy-MM-dd') && l.weight)
+        .sort((a, b) => b.date.localeCompare(a.date))[0]?.weight ||
+      user.weight ||
+      0 // Fallback to current profile weight
+
+    return allDays.map((day) => {
+      const dateStr = format(day, 'yyyy-MM-dd')
+      const log = safeLogs.find((l) => l.date === dateStr)
+
+      // Logic: If Wt is null, Wt = Wt-1 (carry forward)
+      if (log?.weight) {
+        lastKnownWeight = log.weight
+      }
+
+      return {
+        date: format(day, 'dd/MM'),
+        weight: lastKnownWeight > 0 ? lastKnownWeight : null,
+      }
+    })
+  }, [allDays, safeLogs, user.weight, monthStart])
 
   const waterChartData = allDays.map((day) => {
     const dateStr = format(day, 'yyyy-MM-dd')
@@ -388,164 +399,177 @@ export default function Evolution() {
         </div>
       ) : (
         <>
-          {/* Weight Chart */}
-          <Card className="aero-card border-0 bg-white/40 dark:bg-black/40">
+          {/* Weight Chart - Scrollable HD */}
+          <Card className="aero-card border-0 bg-white/40 dark:bg-black/40 overflow-hidden">
             <CardContent className="p-4 pt-6">
               <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                 <History className="h-5 w-5 text-primary" /> Histórico de Peso
               </h3>
-              <div className="h-[250px] w-full">
-                <ChartContainer
-                  config={{
-                    weight: { label: 'Peso', color: 'hsl(var(--primary))' },
-                  }}
-                  className="h-full w-full"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={chartData}>
-                      <defs>
-                        <linearGradient
-                          id="colorWeight"
-                          x1="0"
-                          y1="0"
-                          x2="0"
-                          y2="1"
-                        >
-                          <stop
-                            offset="5%"
-                            stopColor="hsl(var(--primary))"
-                            stopOpacity={0.4}
-                          />
-                          <stop
-                            offset="95%"
-                            stopColor="hsl(var(--primary))"
-                            stopOpacity={0}
-                          />
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid
-                        vertical={false}
-                        strokeDasharray="3 3"
-                        opacity={0.2}
-                        stroke="currentColor"
-                      />
-                      <XAxis
-                        dataKey="date"
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={10}
-                        fontSize={10}
-                        stroke="currentColor"
-                        opacity={0.7}
-                      />
-                      <YAxis domain={['auto', 'auto']} hide />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Area
-                        type="monotone"
-                        dataKey="weight"
-                        stroke="hsl(var(--primary))"
-                        strokeWidth={3}
-                        fillOpacity={1}
-                        fill="url(#colorWeight)"
-                        animationDuration={1500}
-                        connectNulls={false} // IMPORTANT: Show gaps
-                        dot={{ fill: 'hsl(var(--primary))', r: 3 }}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
+              <div className="overflow-x-auto pb-4">
+                <div className="h-[300px] min-w-[800px]">
+                  <ChartContainer
+                    config={{
+                      weight: { label: 'Peso', color: 'hsl(var(--primary))' },
+                    }}
+                    className="h-full w-full"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={chartData}>
+                        <defs>
+                          <linearGradient
+                            id="colorWeight"
+                            x1="0"
+                            y1="0"
+                            x2="0"
+                            y2="1"
+                          >
+                            <stop
+                              offset="5%"
+                              stopColor="hsl(var(--primary))"
+                              stopOpacity={0.4}
+                            />
+                            <stop
+                              offset="95%"
+                              stopColor="hsl(var(--primary))"
+                              stopOpacity={0}
+                            />
+                          </linearGradient>
+                        </defs>
+                        <CartesianGrid
+                          vertical={false}
+                          strokeDasharray="3 3"
+                          opacity={0.2}
+                          stroke="currentColor"
+                        />
+                        <XAxis
+                          dataKey="date"
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={10}
+                          fontSize={10}
+                          stroke="currentColor"
+                          opacity={0.7}
+                        />
+                        <YAxis
+                          domain={['auto', 'auto']}
+                          hide={false}
+                          axisLine={false}
+                          tickLine={false}
+                          tickMargin={10}
+                          fontSize={10}
+                          stroke="currentColor"
+                          opacity={0.5}
+                        />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Area
+                          type="monotone"
+                          dataKey="weight"
+                          stroke="hsl(var(--primary))"
+                          strokeWidth={3}
+                          fillOpacity={1}
+                          fill="url(#colorWeight)"
+                          animationDuration={1500}
+                          dot={{ fill: 'hsl(var(--primary))', r: 3 }}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Water Chart */}
-          <Card className="aero-card border-0 bg-cyan-50/50 dark:bg-cyan-900/20">
+          {/* Water Chart - Scrollable HD */}
+          <Card className="aero-card border-0 bg-cyan-50/50 dark:bg-cyan-900/20 overflow-hidden">
             <CardContent className="p-4 pt-6">
               <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                 <Droplets className="h-5 w-5 text-cyan-500" /> Hidratação
               </h3>
-              <div className="h-[250px] w-full">
-                <ChartContainer
-                  config={{
-                    ml: { label: 'ml', color: '#06b6d4' },
-                  }}
-                  className="h-full w-full"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={waterChartData}>
-                      <CartesianGrid
-                        vertical={false}
-                        strokeDasharray="3 3"
-                        opacity={0.2}
-                        stroke="currentColor"
-                      />
-                      <XAxis
-                        dataKey="date"
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={10}
-                        fontSize={10}
-                        stroke="currentColor"
-                        opacity={0.7}
-                      />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Bar
-                        dataKey="ml"
-                        fill="#06b6d4"
-                        radius={[8, 8, 0, 0]}
-                        barSize={20}
-                      />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
+              <div className="overflow-x-auto pb-4">
+                <div className="h-[300px] min-w-[800px]">
+                  <ChartContainer
+                    config={{
+                      ml: { label: 'ml', color: '#06b6d4' },
+                    }}
+                    className="h-full w-full"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={waterChartData}>
+                        <CartesianGrid
+                          vertical={false}
+                          strokeDasharray="3 3"
+                          opacity={0.2}
+                          stroke="currentColor"
+                        />
+                        <XAxis
+                          dataKey="date"
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={10}
+                          fontSize={10}
+                          stroke="currentColor"
+                          opacity={0.7}
+                        />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Bar
+                          dataKey="ml"
+                          fill="#06b6d4"
+                          radius={[8, 8, 0, 0]}
+                          barSize={30}
+                        />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </div>
               </div>
             </CardContent>
           </Card>
 
-          {/* Sleep Chart */}
-          <Card className="aero-card border-0 bg-indigo-50/50 dark:bg-indigo-900/20">
+          {/* Sleep Chart - Scrollable HD */}
+          <Card className="aero-card border-0 bg-indigo-50/50 dark:bg-indigo-900/20 overflow-hidden">
             <CardContent className="p-4 pt-6">
               <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                 <Moon className="h-5 w-5 text-indigo-500" /> Histórico de Sono
               </h3>
-              <div className="h-[250px] w-full">
-                <ChartContainer
-                  config={{
-                    hours: { label: 'Horas', color: '#6366f1' },
-                  }}
-                  className="h-full w-full"
-                >
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={sleepChartData}>
-                      <CartesianGrid
-                        vertical={false}
-                        strokeDasharray="3 3"
-                        opacity={0.2}
-                        stroke="currentColor"
-                      />
-                      <XAxis
-                        dataKey="date"
-                        tickLine={false}
-                        axisLine={false}
-                        tickMargin={10}
-                        fontSize={10}
-                        stroke="currentColor"
-                        opacity={0.7}
-                      />
-                      <ChartTooltip content={<ChartTooltipContent />} />
-                      <Area
-                        type="monotone"
-                        dataKey="hours"
-                        stroke="#6366f1"
-                        strokeWidth={3}
-                        fillOpacity={0.2}
-                        fill="#6366f1"
-                        connectNulls={false}
-                        dot={{ fill: '#6366f1', r: 3 }}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </ChartContainer>
+              <div className="overflow-x-auto pb-4">
+                <div className="h-[300px] min-w-[800px]">
+                  <ChartContainer
+                    config={{
+                      hours: { label: 'Horas', color: '#6366f1' },
+                    }}
+                    className="h-full w-full"
+                  >
+                    <ResponsiveContainer width="100%" height="100%">
+                      <AreaChart data={sleepChartData}>
+                        <CartesianGrid
+                          vertical={false}
+                          strokeDasharray="3 3"
+                          opacity={0.2}
+                          stroke="currentColor"
+                        />
+                        <XAxis
+                          dataKey="date"
+                          tickLine={false}
+                          axisLine={false}
+                          tickMargin={10}
+                          fontSize={10}
+                          stroke="currentColor"
+                          opacity={0.7}
+                        />
+                        <ChartTooltip content={<ChartTooltipContent />} />
+                        <Area
+                          type="monotone"
+                          dataKey="hours"
+                          stroke="#6366f1"
+                          strokeWidth={3}
+                          fillOpacity={0.2}
+                          fill="#6366f1"
+                          dot={{ fill: '#6366f1', r: 3 }}
+                        />
+                      </AreaChart>
+                    </ResponsiveContainer>
+                  </ChartContainer>
+                </div>
               </div>
             </CardContent>
           </Card>
