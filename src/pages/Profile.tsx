@@ -57,7 +57,7 @@ export default function Profile() {
       if (!authUser) return
 
       const fileExt = 'jpg'
-      const fileName = `${authUser.id}/${Date.now()}.${fileExt}`
+      const fileName = `${authUser.id}/profile/${Date.now()}.${fileExt}`
       const { error: uploadError } = await supabase.storage
         .from('avatars')
         .upload(fileName, file, { upsert: true, contentType: 'image/jpeg' })
@@ -153,21 +153,6 @@ export default function Profile() {
                 readOnly
                 className="aero-input bg-gray-100/50 dark:bg-black/20 text-muted-foreground cursor-not-allowed opacity-70"
               />
-            </div>
-            <div className="space-y-2">
-              <Label>Telefone</Label>
-              <Input
-                value={formData.phone || ''}
-                readOnly
-                className="aero-input bg-gray-100/50 dark:bg-black/20 text-muted-foreground cursor-not-allowed opacity-70"
-                placeholder="Não cadastrado"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Objetivo Pessoal</Label>
-              <div className="aero-input bg-gray-100/50 dark:bg-black/20 text-muted-foreground flex items-center px-3 py-2 rounded-xl cursor-not-allowed opacity-70">
-                {formData.goal}
-              </div>
             </div>
           </div>
         </div>

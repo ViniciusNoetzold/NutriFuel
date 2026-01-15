@@ -31,12 +31,19 @@ export default function Index() {
   const dailyGoal = user.calorieGoal || 2000 // Fallback to avoid division by zero or NaN
   const remainingCalories = dailyGoal - consumed.calories
 
-  const todayMeals = mealPlan
+  // Group meals by type because we now support multiple items per slot
+  const mealsByType = mealPlan
     .filter((slot) => slot.date === today)
-    .sort((a, b) => {
-      const order = { 'Café da Manhã': 1, Almoço: 2, Lanche: 3, Jantar: 4 }
-      return order[a.type] - order[b.type]
-    })
+    .reduce(
+      (acc, slot) => {
+        if (!acc[slot.type]) acc[slot.type] = []
+        acc[slot.type].push(slot)
+        return acc
+      },
+      {} as Record<string, typeof mealPlan>,
+    )
+
+  const mealOrder = ['Café da Manhã', 'Almoço', 'Lanche', 'Jantar']
 
   const handleWater = (amount: number) => {
     logWater(amount, today)
@@ -52,76 +59,65 @@ export default function Index() {
   const userName = user?.name || 'Usuário'
   const firstName = userName.split(' ')[0]
 
-  return (
-    <div className="space-y-8 pb-24 px-1">
-      {/* Hero Section */}
-      <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-        <div className="flex-1 space-y-2">
-          <h2 className="text-3xl font-bold tracking-tight text-shadow-lg text-foreground">
-            Olá, {firstName}!
-          </h2>
-        </div>
-      </div>
+  const renderWidget = (id: string) => {
+    switch (id) {
+      case 'macros':
+        return (
+          <div key="macros" className="flex justify-center py-6">
+            <div className="relative w-72 h-72 flex items-center justify-center rounded-full bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-xl border border-white/40 shadow-2xl">
+              <div className="absolute inset-0 rounded-full bg-primary/10 opacity-20" />
+              <div className="absolute inset-4 rounded-full border-2 border-white/30" />
 
-      {/* 1. Status - Hierarchy Circle */}
-      {isWidgetVisible('macros') && (
-        <div className="flex justify-center py-6">
-          <div className="relative w-72 h-72 flex items-center justify-center rounded-full bg-gradient-to-br from-white/20 to-white/5 backdrop-blur-xl border border-white/40 shadow-2xl">
-            <div className="absolute inset-0 rounded-full bg-primary/10 opacity-20" />
-            <div className="absolute inset-4 rounded-full border-2 border-white/30" />
-
-            {/* Content */}
-            <div className="relative z-10 flex flex-col items-center justify-center text-center space-y-2">
-              <div className="mb-1 p-2 bg-gradient-to-br from-orange-400 to-red-600 rounded-full shadow-[0_4px_12px_rgba(249,115,22,0.5),inset_0_2px_4px_rgba(255,255,255,0.4)] border border-white/40 backdrop-blur-sm animate-pulse-slow">
-                <Flame className="w-6 h-6 text-white fill-white" />
-              </div>
-              <div>
-                <p className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-primary to-cyan-700 dark:to-cyan-400 drop-shadow-sm leading-none">
-                  {Math.max(0, Math.floor(remainingCalories))}
-                </p>
-                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
-                  Kcal Restantes
-                </p>
-              </div>
-
-              {/* Macro Hierarchy */}
-              <div className="flex items-center gap-3 mt-2">
-                <div className="flex flex-col items-center">
-                  <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
-                    {Math.round(consumed.protein)}g
-                  </span>
-                  <span className="text-[8px] uppercase font-bold text-muted-foreground">
-                    Prot
-                  </span>
+              {/* Content */}
+              <div className="relative z-10 flex flex-col items-center justify-center text-center space-y-2">
+                <div className="mb-1 p-2 bg-gradient-to-br from-orange-400 to-red-600 rounded-full shadow-[0_4px_12px_rgba(249,115,22,0.5),inset_0_2px_4px_rgba(255,255,255,0.4)] border border-white/40 backdrop-blur-sm animate-pulse-slow">
+                  <Flame className="w-6 h-6 text-white fill-white" />
                 </div>
-                <div className="h-6 w-px bg-white/30" />
-                <div className="flex flex-col items-center">
-                  <span className="text-sm font-bold text-green-600 dark:text-green-400">
-                    {Math.round(consumed.carbs)}g
-                  </span>
-                  <span className="text-[8px] uppercase font-bold text-muted-foreground">
-                    Carb
-                  </span>
+                <div>
+                  <p className="text-5xl font-black text-transparent bg-clip-text bg-gradient-to-b from-primary to-cyan-700 dark:to-cyan-400 drop-shadow-sm leading-none">
+                    {Math.max(0, Math.floor(remainingCalories))}
+                  </p>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">
+                    Kcal Restantes
+                  </p>
                 </div>
-                <div className="h-6 w-px bg-white/30" />
-                <div className="flex flex-col items-center">
-                  <span className="text-sm font-bold text-yellow-600 dark:text-yellow-400">
-                    {Math.round(consumed.fats)}g
-                  </span>
-                  <span className="text-[8px] uppercase font-bold text-muted-foreground">
-                    Gord
-                  </span>
+
+                {/* Macro Hierarchy */}
+                <div className="flex items-center gap-3 mt-2">
+                  <div className="flex flex-col items-center">
+                    <span className="text-sm font-bold text-blue-600 dark:text-blue-400">
+                      {Math.round(consumed.protein)}g
+                    </span>
+                    <span className="text-[8px] uppercase font-bold text-muted-foreground">
+                      Prot
+                    </span>
+                  </div>
+                  <div className="h-6 w-px bg-white/30" />
+                  <div className="flex flex-col items-center">
+                    <span className="text-sm font-bold text-green-600 dark:text-green-400">
+                      {Math.round(consumed.carbs)}g
+                    </span>
+                    <span className="text-[8px] uppercase font-bold text-muted-foreground">
+                      Carb
+                    </span>
+                  </div>
+                  <div className="h-6 w-px bg-white/30" />
+                  <div className="flex flex-col items-center">
+                    <span className="text-sm font-bold text-yellow-600 dark:text-yellow-400">
+                      {Math.round(consumed.fats)}g
+                    </span>
+                    <span className="text-[8px] uppercase font-bold text-muted-foreground">
+                      Gord
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* 2. Hidratação */}
-        {isWidgetVisible('hydration') && (
-          <div className="space-y-6">
+        )
+      case 'hydration':
+        return (
+          <div key="hydration" className="space-y-6">
             <Card className="aero-card border-0 bg-cyan-50/50 dark:bg-cyan-900/20">
               <CardContent className="p-6">
                 <div className="flex items-center gap-3 mb-4">
@@ -169,14 +165,16 @@ export default function Index() {
               </CardContent>
             </Card>
           </div>
-        )}
-
-        {/* 3. Sleep Widget */}
-        {isWidgetVisible('sleep') && <SleepTracker />}
-
-        {/* 4. Refeições do Dia */}
-        {isWidgetVisible('meals') && (
-          <div>
+        )
+      case 'sleep':
+        return (
+          <div key="sleep">
+            <SleepTracker />
+          </div>
+        )
+      case 'meals':
+        return (
+          <div key="meals">
             <div className="flex items-center justify-between mb-4 px-2">
               <h3 className="font-bold text-xl text-shadow text-foreground">
                 Refeições de Hoje
@@ -188,62 +186,76 @@ export default function Index() {
                 Ver tudo <ChevronRight className="h-4 w-4" />
               </Link>
             </div>
-            {todayMeals.length > 0 ? (
+            {Object.keys(mealsByType).length > 0 ? (
               <div className="grid grid-cols-1 gap-4">
-                {todayMeals.map((slot) => {
-                  const recipe = recipes.find((r) => r.id === slot.recipeId)
-                  if (!recipe) return null
+                {mealOrder.map((type) => {
+                  const slots = mealsByType[type]
+                  if (!slots) return null
+
                   return (
-                    <div
-                      key={`${slot.date}-${slot.type}-${slot.recipeId}`}
-                      className={cn(
-                        'aero-card p-3 flex items-center gap-4 group transition-all duration-500',
-                        slot.completed && 'opacity-70 grayscale-[0.3]',
-                      )}
-                    >
-                      <div className="pl-2">
-                        <Checkbox
-                          checked={slot.completed}
-                          onCheckedChange={() =>
-                            toggleMealCompletion(slot.date, slot.type)
-                          }
-                          className={cn(
-                            'h-6 w-6 rounded-full border-2 border-primary/50 data-[state=checked]:bg-primary data-[state=checked]:text-white transition-all duration-300',
-                            slot.completed && 'animate-glow',
-                          )}
-                        />
-                      </div>
-                      <Link
-                        to={`/recipes/${recipe.id}`}
-                        className="flex-1 flex items-center gap-4 min-w-0"
-                      >
-                        <img
-                          src={recipe.image}
-                          className="h-20 w-20 rounded-[16px] object-cover shadow-md group-hover:scale-105 transition-transform duration-500"
-                          alt={recipe.title}
-                        />
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs text-primary font-bold mb-1 uppercase tracking-wider">
-                            {slot.type}
-                          </p>
-                          <p
+                    <div key={type} className="space-y-2">
+                      <h4 className="text-xs font-bold text-primary uppercase tracking-wider ml-1">
+                        {type}
+                      </h4>
+                      {slots.map((slot) => {
+                        const recipe = recipes.find(
+                          (r) => r.id === slot.recipeId,
+                        )
+                        if (!recipe) return null
+                        return (
+                          <div
+                            key={
+                              slot.id ||
+                              `${slot.date}-${slot.type}-${slot.recipeId}`
+                            }
                             className={cn(
-                              'font-bold truncate text-lg transition-all text-foreground',
-                              slot.completed
-                                ? 'line-through text-muted-foreground'
-                                : 'group-hover:text-primary',
+                              'aero-card p-3 flex items-center gap-4 group transition-all duration-500',
+                              slot.completed && 'opacity-70 grayscale-[0.3]',
                             )}
                           >
-                            {recipe.title}
-                          </p>
-                          <p className="text-xs text-muted-foreground font-medium">
-                            {recipe.calories} kcal • {recipe.prepTime} min
-                          </p>
-                        </div>
-                        <div className="bg-white/50 p-2 rounded-full shadow-sm">
-                          <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                      </Link>
+                            <div className="pl-2">
+                              <Checkbox
+                                checked={slot.completed}
+                                onCheckedChange={() =>
+                                  toggleMealCompletion(slot.id || '')
+                                }
+                                className={cn(
+                                  'h-6 w-6 rounded-full border-2 border-primary/50 data-[state=checked]:bg-primary data-[state=checked]:text-white transition-all duration-300',
+                                  slot.completed && 'animate-glow',
+                                )}
+                              />
+                            </div>
+                            <Link
+                              to={`/recipes/${recipe.id}`}
+                              className="flex-1 flex items-center gap-4 min-w-0"
+                            >
+                              <img
+                                src={recipe.image}
+                                className="h-16 w-16 rounded-[12px] object-cover shadow-md group-hover:scale-105 transition-transform duration-500"
+                                alt={recipe.title}
+                              />
+                              <div className="flex-1 min-w-0">
+                                <p
+                                  className={cn(
+                                    'font-bold truncate text-base transition-all text-foreground',
+                                    slot.completed
+                                      ? 'line-through text-muted-foreground'
+                                      : 'group-hover:text-primary',
+                                  )}
+                                >
+                                  {recipe.title}
+                                </p>
+                                <p className="text-xs text-muted-foreground font-medium">
+                                  {recipe.calories} kcal • {recipe.prepTime} min
+                                </p>
+                              </div>
+                              <div className="bg-white/50 p-2 rounded-full shadow-sm">
+                                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                            </Link>
+                          </div>
+                        )
+                      })}
                     </div>
                   )
                 })}
@@ -261,7 +273,30 @@ export default function Index() {
               </div>
             )}
           </div>
-        )}
+        )
+      default:
+        return null
+    }
+  }
+
+  // Use configured order
+  const orderedWidgets = user.homeLayoutOrder.filter((id) =>
+    isWidgetVisible(id),
+  )
+
+  return (
+    <div className="space-y-8 pb-24 px-1">
+      {/* Hero Section */}
+      <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+        <div className="flex-1 space-y-2">
+          <h2 className="text-3xl font-bold tracking-tight text-shadow-lg text-foreground">
+            Olá, {firstName}!
+          </h2>
+        </div>
+      </div>
+
+      <div className="space-y-8">
+        {orderedWidgets.map((id) => renderWidget(id))}
       </div>
     </div>
   )

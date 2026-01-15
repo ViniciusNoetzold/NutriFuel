@@ -25,13 +25,14 @@ interface AppContextType {
   logout: () => void
   updateUser: (data: Partial<UserProfile>) => void
   toggleWidget: (widget: string) => void
+  reorderWidgets: (newOrder: string[]) => void
   recipes: Recipe[]
   addRecipe: (recipe: Recipe) => void
   toggleFavorite: (id: string) => void
   mealPlan: MealSlot[]
   addMealToPlan: (date: string, type: MealType, recipeId: string) => void
-  removeMealFromPlan: (date: string, type: MealType) => void
-  toggleMealCompletion: (date: string, type: MealType) => void
+  removeMealFromPlan: (id: string) => void
+  toggleMealCompletion: (slotId: string) => void
   autoGeneratePlan: (startDate: string) => void
   dailyLogs: DayLog[]
   logWater: (amount: number, date: string) => void
@@ -121,6 +122,15 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               waterGoal: data.water_goal || prev.waterGoal,
               visibleWidgets: data.visible_widgets || prev.visibleWidgets,
               phone: data.phone || prev.phone,
+              homeLayoutOrder: data.home_layout_order
+                ? (data.home_layout_order as string[])
+                : prev.homeLayoutOrder || [
+                    'macros',
+                    'hydration',
+                    'sleep',
+                    'meals',
+                  ],
+              favoriteRecipes: data.favorite_recipes || [],
             }))
           }
         })
@@ -169,7 +179,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
               ingredients: r.ingredients || [],
               instructions: r.instructions || [],
               rating: 5,
-              isFavorite: r.is_favorite || false,
+              isFavorite: false, // will be updated by profile favorites
             }))
             setRecipes((prev) => {
               const dbIds = new Set(mappedRecipes.map((r) => r.id))
@@ -186,6 +196,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .then(({ data }) => {
           if (data) {
             const plans: MealSlot[] = data.map((p: any) => ({
+              id: p.id,
               date: p.date,
               type: p.type as MealType,
               recipeId: p.recipe_id,
@@ -205,6 +216,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false)
     }
   }, [authUser])
+
+  // Sync Favorites after profile load
+  useEffect(() => {
+    if (user.favoriteRecipes) {
+      setRecipes((prev) =>
+        prev.map((r) => ({
+          ...r,
+          isFavorite: user.favoriteRecipes.includes(r.id),
+        })),
+      )
+    }
+  }, [user.favoriteRecipes])
 
   const login = (u: string, p: string) => {
     signIn(u, p).then(({ error }) => {
@@ -232,6 +255,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         payload.activity_level = data.activityLevel
       if (data.visibleWidgets !== undefined)
         payload.visible_widgets = data.visibleWidgets
+      if (data.homeLayoutOrder !== undefined)
+        payload.home_layout_order = data.homeLayoutOrder
       if (data.phone !== undefined) payload.phone = data.phone
       if (data.calorieGoal !== undefined)
         payload.calorie_goal = data.calorieGoal
@@ -241,6 +266,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       if (data.fatsGoal !== undefined) payload.fats_goal = data.fatsGoal
       if (data.waterGoal !== undefined) payload.water_goal = data.waterGoal
       if (data.goal !== undefined) payload.goal = data.goal
+      if (data.favoriteRecipes !== undefined)
+        payload.favorite_recipes = data.favoriteRecipes
 
       await supabase.from('profiles').update(payload).eq('id', authUser.id)
     }
@@ -252,6 +279,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       ? currentWidgets.filter((w) => w !== widget)
       : [...currentWidgets, widget]
     updateUser({ visibleWidgets: newWidgets })
+  }
+
+  const reorderWidgets = (newOrder: string[]) => {
+    updateUser({ homeLayoutOrder: newOrder })
   }
 
   const addRecipe = async (recipe: Recipe) => {
@@ -279,9 +310,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const toggleFavorite = (id: string) => {
-    setRecipes((prev) =>
-      prev.map((r) => (r.id === id ? { ...r, isFavorite: !r.isFavorite } : r)),
-    )
+    const isFav = user.favoriteRecipes.includes(id)
+    const newFavorites = isFav
+      ? user.favoriteRecipes.filter((fav) => fav !== id)
+      : [...user.favoriteRecipes, id]
+
+    updateUser({ favoriteRecipes: newFavorites })
   }
 
   const addMealToPlan = async (
@@ -289,44 +323,49 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     type: MealType,
     recipeId: string,
   ) => {
-    setMealPlan((prev) => [...prev, { date, type, recipeId, completed: false }])
-    if (authUser) {
-      await supabase.from('meal_plans').insert({
-        user_id: authUser.id,
-        date,
-        type,
-        recipe_id: recipeId,
-        completed: false,
-      })
-    }
-  }
+    // Generate a temporary ID if offline, but use DB ID when possible
+    const tempId = Math.random().toString(36).substr(2, 9)
 
-  const removeMealFromPlan = async (date: string, type: MealType) => {
-    setMealPlan((prev) => {
-      const index = prev.findIndex((s) => s.date === date && s.type === type)
-      if (index === -1) return prev
-      const newPlan = [...prev]
-      newPlan.splice(index, 1)
-      return newPlan
-    })
+    setMealPlan((prev) => [
+      ...prev,
+      { id: tempId, date, type, recipeId, completed: false },
+    ])
     if (authUser) {
-      await supabase
+      const { data, error } = await supabase
         .from('meal_plans')
-        .delete()
-        .match({ user_id: authUser.id, date, type })
+        .insert({
+          user_id: authUser.id,
+          date,
+          type,
+          recipe_id: recipeId,
+          completed: false,
+        })
+        .select()
+
+      if (data && data[0]) {
+        // Update the temp ID with real DB ID
+        setMealPlan((prev) =>
+          prev.map((s) => (s.id === tempId ? { ...s, id: data[0].id } : s)),
+        )
+      }
     }
   }
 
-  const toggleMealCompletion = async (date: string, type: MealType) => {
-    const slot = mealPlan.find((s) => s.date === date && s.type === type)
+  const removeMealFromPlan = async (id: string) => {
+    setMealPlan((prev) => prev.filter((s) => s.id !== id))
+    if (authUser) {
+      await supabase.from('meal_plans').delete().eq('id', id)
+    }
+  }
+
+  const toggleMealCompletion = async (slotId: string) => {
+    const slot = mealPlan.find((s) => s.id === slotId)
     if (!slot) return
 
     const newCompleted = !slot.completed
     setMealPlan((prev) =>
       prev.map((s) =>
-        s.date === date && s.type === type
-          ? { ...s, completed: newCompleted }
-          : s,
+        s.id === slotId ? { ...s, completed: newCompleted } : s,
       ),
     )
 
@@ -334,13 +373,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       await supabase
         .from('meal_plans')
         .update({ completed: newCompleted })
-        .match({ user_id: authUser.id, date, type })
+        .eq('id', slotId)
     }
   }
 
-  const autoGeneratePlan = (startDate: string) => {
+  const autoGeneratePlan = async (startDate: string) => {
     const days = 7
-    const newPlan: MealSlot[] = []
+    const newPlans: any[] = []
     const types: MealType[] = ['Café da Manhã', 'Almoço', 'Lanche', 'Jantar']
 
     for (let i = 0; i < days; i++) {
@@ -361,20 +400,54 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           candidates[Math.floor(Math.random() * candidates.length)]
 
         if (randomRecipe) {
-          newPlan.push({
+          newPlans.push({
             date: dateStr,
             type,
             recipeId: randomRecipe.id,
             completed: false,
+            id: Math.random().toString(36).substr(2, 9), // Temp ID
           })
         }
       })
     }
+
     setMealPlan((prev) => {
-      const existingDates = new Set(newPlan.map((p) => p.date))
-      const filteredPrev = prev.filter((p) => !existingDates.has(p.date))
-      return [...filteredPrev, ...newPlan]
+      // We append, not replace, so multiple plans can exist
+      return [...prev, ...newPlans]
     })
+
+    if (authUser) {
+      const dbPayload = newPlans.map((p) => ({
+        user_id: authUser.id,
+        date: p.date,
+        type: p.type,
+        recipe_id: p.recipeId,
+        completed: false,
+      }))
+
+      const { data } = await supabase
+        .from('meal_plans')
+        .insert(dbPayload)
+        .select()
+
+      if (data) {
+        // Refresh plan from DB to get IDs
+        const plans: MealSlot[] = data.map((p: any) => ({
+          id: p.id,
+          date: p.date,
+          type: p.type as MealType,
+          recipeId: p.recipe_id,
+          completed: p.completed,
+        }))
+        // Merge with existing but prefer DB data for new items
+        setMealPlan((prev) => {
+          const oldItems = prev.filter(
+            (p) => !newPlans.find((np) => np.id === p.id),
+          ) // Remove temp items
+          return [...oldItems, ...plans]
+        })
+      }
+    }
   }
 
   const logWater = async (amount: number, date: string) => {
@@ -554,7 +627,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         carbs: meal.carbs,
         fats: meal.fats,
       })
-      // Also update daily_logs manually for persistence if trigger is delayed or absent for quick sync
+      // Sync Logs
       const { data: logs } = await supabase
         .from('daily_logs')
         .select('*')
@@ -673,6 +746,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         logout,
         updateUser,
         toggleWidget,
+        reorderWidgets,
         recipes,
         addRecipe,
         toggleFavorite,

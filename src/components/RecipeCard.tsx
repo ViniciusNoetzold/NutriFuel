@@ -26,7 +26,8 @@ export function RecipeCard({ recipe, onAdd }: RecipeCardProps) {
       <Card className="aero-card h-full flex flex-col overflow-hidden border-0 relative">
         <div className="absolute inset-0 bg-gradient-to-tr from-white/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10" />
 
-        <div className="relative aspect-square md:aspect-video overflow-hidden rounded-t-[20px] m-1 shadow-sm">
+        {/* 2:1 Aspect Ratio */}
+        <div className="relative aspect-[2/1] overflow-hidden rounded-t-[20px] m-1 shadow-sm">
           <img
             src={recipe.image}
             alt={recipe.title}

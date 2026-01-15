@@ -11,6 +11,8 @@ import {
   Moon,
   Settings,
   History,
+  ArrowUp,
+  ArrowDown,
 } from 'lucide-react'
 import { Button } from './ui/button'
 import { Avatar, AvatarImage, AvatarFallback } from './ui/avatar'
@@ -30,8 +32,13 @@ import { NotificationHistory } from '@/components/NotificationHistory'
 export default function Layout() {
   const location = useLocation()
   const navigate = useNavigate()
-  const { user, notifications, markNotificationsAsRead, toggleWidget } =
-    useAppStore()
+  const {
+    user,
+    notifications,
+    markNotificationsAsRead,
+    toggleWidget,
+    reorderWidgets,
+  } = useAppStore()
   const { setTheme, theme } = useTheme()
   const mainRef = useRef<HTMLDivElement>(null)
   const [showNavbar, setShowNavbar] = useState(true)
@@ -77,6 +84,25 @@ export default function Layout() {
   const isWidgetVisible = (id: string) =>
     user.visibleWidgets?.includes(id) ?? true
 
+  const moveWidget = (id: string, direction: 'up' | 'down') => {
+    const currentOrder = [...(user.homeLayoutOrder || [])]
+    const index = currentOrder.indexOf(id)
+    if (index === -1) return
+
+    if (direction === 'up' && index > 0) {
+      ;[currentOrder[index], currentOrder[index - 1]] = [
+        currentOrder[index - 1],
+        currentOrder[index],
+      ]
+    } else if (direction === 'down' && index < currentOrder.length - 1) {
+      ;[currentOrder[index], currentOrder[index + 1]] = [
+        currentOrder[index + 1],
+        currentOrder[index],
+      ]
+    }
+    reorderWidgets(currentOrder)
+  }
+
   const pageTitle = () => {
     if (location.pathname === '/') return 'Início'
     if (location.pathname === '/recipes') return 'Receitas'
@@ -96,6 +122,13 @@ export default function Layout() {
     return ''
   }
 
+  const WIDGET_LABELS: Record<string, string> = {
+    macros: 'Macros & Status',
+    hydration: 'Hidratação',
+    meals: 'Refeições',
+    sleep: 'Sono',
+  }
+
   return (
     <div className="flex min-h-screen transition-colors duration-500 theme-light-bg dark:theme-dark-bg text-foreground overflow-hidden relative">
       <div className="absolute inset-0 z-0 opacity-[0.04] pointer-events-none bg-texture-overlay mix-blend-overlay" />
@@ -107,7 +140,7 @@ export default function Layout() {
         ref={mainRef}
         className="flex-1 md:pl-64 pb-24 md:pb-0 z-10 relative h-screen overflow-y-auto scroll-smooth"
       >
-        <header className="sticky top-0 z-40 flex h-16 items-center justify-between px-4 aero-glass mx-4 mt-4 mb-4 transition-transform duration-300">
+        <header className="sticky top-0 z-40 flex h-16 items-center justify-between px-4 aero-glass mx-4 mt-4 mb-4 transition-transform duration-300 backdrop-blur-3xl bg-white/30 dark:bg-black/30 border-white/20">
           <div className="flex flex-col justify-center">
             <div className="flex items-center gap-2">
               {isDetailPage && (
@@ -120,13 +153,10 @@ export default function Layout() {
                   <ArrowLeft className="h-4 w-4" />
                 </Button>
               )}
-              <h1 className="text-xl font-bold tracking-tight text-shadow">
-                {pageTitle()}
+              <h1 className="text-xl font-extrabold tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary to-cyan-500 text-shadow-sm">
+                NutriFuel
               </h1>
             </div>
-            <p className="text-[10px] text-primary font-bold uppercase tracking-widest pl-1 animate-fade-in delay-200">
-              Seu corpo, seu combustível.
-            </p>
           </div>
 
           <div className="flex items-center gap-2">
@@ -140,32 +170,47 @@ export default function Layout() {
                   <Settings className="h-5 w-5" />
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-64 aero-glass" align="end">
+              <PopoverContent className="w-72 aero-glass" align="end">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between border-b border-white/20 pb-2">
-                    <span className="font-semibold text-sm">Configurações</span>
+                    <span className="font-semibold text-sm">Dashboard</span>
                     <Settings className="h-4 w-4 opacity-50" />
                   </div>
                   <div className="space-y-2">
-                    {[
-                      { id: 'macros', label: 'Macros & Status' },
-                      { id: 'hydration', label: 'Hidratação' },
-                      { id: 'meals', label: 'Refeições' },
-                      { id: 'sleep', label: 'Sono' },
-                    ].map((w) => (
+                    {user.homeLayoutOrder.map((id) => (
                       <div
-                        key={w.id}
-                        className="flex items-center justify-between"
+                        key={id}
+                        className="flex items-center justify-between bg-white/20 p-2 rounded-lg"
                       >
-                        <Label htmlFor={w.id} className="text-xs">
-                          {w.label}
-                        </Label>
-                        <Switch
-                          id={w.id}
-                          checked={isWidgetVisible(w.id)}
-                          onCheckedChange={() => toggleWidget(w.id)}
-                          className="scale-75 origin-right"
-                        />
+                        <div className="flex items-center gap-2">
+                          <Switch
+                            id={id}
+                            checked={isWidgetVisible(id)}
+                            onCheckedChange={() => toggleWidget(id)}
+                            className="scale-75"
+                          />
+                          <Label htmlFor={id} className="text-xs font-medium">
+                            {WIDGET_LABELS[id] || id}
+                          </Label>
+                        </div>
+                        <div className="flex gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 rounded-full"
+                            onClick={() => moveWidget(id, 'up')}
+                          >
+                            <ArrowUp className="h-3 w-3" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 rounded-full"
+                            onClick={() => moveWidget(id, 'down')}
+                          >
+                            <ArrowDown className="h-3 w-3" />
+                          </Button>
+                        </div>
                       </div>
                     ))}
                   </div>

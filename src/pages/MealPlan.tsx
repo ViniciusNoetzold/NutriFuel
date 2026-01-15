@@ -51,13 +51,14 @@ export default function MealPlan() {
   )
 
   const handleAutoGenerate = () => {
+    // Generate for the currently viewed week
     autoGeneratePlan(format(weekStart, 'yyyy-MM-dd'))
     toast.success('Semana planejada magicamente! ✨')
   }
 
-  const getSlot = (date: Date, type: string) => {
+  const getSlots = (date: Date, type: string) => {
     const dateStr = format(date, 'yyyy-MM-dd')
-    return mealPlan.find((s) => s.date === dateStr && s.type === type)
+    return mealPlan.filter((s) => s.date === dateStr && s.type === type)
   }
 
   const handleAddMeal = (date: Date, type: string, recipeId: string) => {
@@ -177,89 +178,96 @@ export default function MealPlan() {
         </div>
 
         {MEAL_TYPES.map((type) => {
-          const slot = getSlot(currentDate, type)
-          const recipe = slot
-            ? recipes.find((r) => r.id === slot.recipeId)
-            : null
+          const slots = getSlots(currentDate, type)
 
           return (
             <div key={type} className="space-y-3">
               <h4 className="text-xs font-bold text-muted-foreground ml-2 uppercase tracking-wide opacity-70">
                 {type}
               </h4>
-              {recipe ? (
-                <div className="relative group">
-                  <div className="absolute -right-2 -top-2 z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 scale-90 group-hover:scale-100">
-                    <Button
-                      size="icon"
-                      variant="destructive"
-                      className="h-8 w-8 rounded-full shadow-lg border-2 border-white"
-                      onClick={() => removeMealFromPlan(slot!.date, slot!.type)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                  <RecipeCard recipe={recipe} />
-                </div>
-              ) : (
-                <Sheet>
-                  <SheetTrigger asChild>
-                    <button className="w-full h-24 rounded-[20px] border-2 border-dashed border-white/40 bg-white/5 hover:bg-white/10 transition-all flex flex-col items-center justify-center text-muted-foreground gap-2 group">
-                      <div className="h-8 w-8 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
-                        <Plus className="h-4 w-4 opacity-70" />
-                      </div>
-                      <span className="text-xs font-medium">
-                        Adicionar {type}
-                      </span>
-                    </button>
-                  </SheetTrigger>
-                  <SheetContent
-                    side="bottom"
-                    className="h-[85vh] rounded-t-3xl aero-glass flex flex-col"
+
+              {/* List all items for this slot */}
+              {slots.map((slot) => {
+                const recipe = recipes.find((r) => r.id === slot.recipeId)
+                if (!recipe) return null
+                return (
+                  <div
+                    key={
+                      slot.id || `${slot.date}-${slot.type}-${slot.recipeId}`
+                    }
+                    className="relative group mb-2"
                   >
-                    <SheetHeader className="pb-4">
-                      <SheetTitle>Escolher para {type}</SheetTitle>
-                      <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
-                        {DIETARY_FILTERS.map((filter) => (
-                          <Badge
-                            key={filter}
-                            variant={
-                              activeFilters.includes(filter)
-                                ? 'default'
-                                : 'outline'
-                            }
-                            className="cursor-pointer whitespace-nowrap"
-                            onClick={() => toggleFilter(filter)}
-                          >
-                            {filter}
-                          </Badge>
-                        ))}
-                      </div>
-                    </SheetHeader>
-                    <div className="flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-4 pb-8">
-                      {filteredRecipes.length > 0 ? (
-                        filteredRecipes.map((r) => (
-                          <RecipeCard
-                            key={r.id}
-                            recipe={r}
-                            onAdd={() => {
-                              handleAddMeal(currentDate, type, r.id)
-                              document.dispatchEvent(
-                                new KeyboardEvent('keydown', { key: 'Escape' }),
-                              )
-                              toast.success('Adicionado!')
-                            }}
-                          />
-                        ))
-                      ) : (
-                        <div className="col-span-full text-center py-8 text-muted-foreground">
-                          Nenhuma receita encontrada.
-                        </div>
-                      )}
+                    <div className="absolute -right-2 -top-2 z-20 opacity-0 group-hover:opacity-100 transition-all duration-300 scale-90 group-hover:scale-100">
+                      <Button
+                        size="icon"
+                        variant="destructive"
+                        className="h-8 w-8 rounded-full shadow-lg border-2 border-white"
+                        onClick={() => removeMealFromPlan(slot.id || '')}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
                     </div>
-                  </SheetContent>
-                </Sheet>
-              )}
+                    <RecipeCard recipe={recipe} />
+                  </div>
+                )
+              })}
+
+              {/* Add Button */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <button className="w-full h-16 rounded-[20px] border-2 border-dashed border-white/40 bg-white/5 hover:bg-white/10 transition-all flex flex-col items-center justify-center text-muted-foreground gap-1 group">
+                    <div className="h-6 w-6 rounded-full bg-white/20 flex items-center justify-center group-hover:scale-110 transition-transform">
+                      <Plus className="h-3 w-3 opacity-70" />
+                    </div>
+                    <span className="text-[10px] font-medium">
+                      Adicionar {type}
+                    </span>
+                  </button>
+                </SheetTrigger>
+                <SheetContent
+                  side="bottom"
+                  className="h-[85vh] rounded-t-3xl aero-glass flex flex-col"
+                >
+                  <SheetHeader className="pb-4">
+                    <SheetTitle>Escolher para {type}</SheetTitle>
+                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide">
+                      {DIETARY_FILTERS.map((filter) => (
+                        <Badge
+                          key={filter}
+                          variant={
+                            activeFilters.includes(filter)
+                              ? 'default'
+                              : 'outline'
+                          }
+                          className="cursor-pointer whitespace-nowrap"
+                          onClick={() => toggleFilter(filter)}
+                        >
+                          {filter}
+                        </Badge>
+                      ))}
+                    </div>
+                  </SheetHeader>
+                  <div className="flex-1 overflow-y-auto grid grid-cols-1 sm:grid-cols-2 gap-4 pb-8">
+                    {filteredRecipes.length > 0 ? (
+                      filteredRecipes.map((r) => (
+                        <RecipeCard
+                          key={r.id}
+                          recipe={r}
+                          onAdd={() => {
+                            handleAddMeal(currentDate, type, r.id)
+                            // Don't close immediately to allow multiple additions
+                            toast.success('Adicionado!')
+                          }}
+                        />
+                      ))
+                    ) : (
+                      <div className="col-span-full text-center py-8 text-muted-foreground">
+                        Nenhuma receita encontrada.
+                      </div>
+                    )}
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           )
         })}

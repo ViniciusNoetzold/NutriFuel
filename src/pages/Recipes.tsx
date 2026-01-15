@@ -167,21 +167,22 @@ export default function Recipes() {
         </div>
       </div>
 
-      {/* Categories */}
+      {/* Frutiger Aero Categories */}
       <div className="flex gap-3 overflow-x-auto pb-4 pt-2 -mx-4 px-4 scrollbar-hide snap-x">
         {CATEGORIES.map((cat) => (
           <button
             key={cat}
             onClick={() => setSelectedCategory(cat)}
             className={cn(
-              'crystal-bubble snap-center flex-shrink-0 px-6 py-2.5 text-sm font-bold transition-all duration-300 hover:scale-105 active:scale-95',
+              'relative snap-center flex-shrink-0 px-6 py-2.5 text-sm font-bold transition-all duration-300 rounded-full border',
               selectedCategory === cat
-                ? 'bg-gradient-to-b from-primary to-cyan-600 dark:from-primary dark:to-cyan-600 text-white shadow-[0_0_15px_rgba(var(--primary),0.5)] border-transparent'
-                : 'bg-gradient-to-b from-white/80 to-white/40 dark:from-white/20 dark:to-white/5 text-foreground hover:bg-white/60',
+                ? 'bg-gradient-to-b from-primary/80 to-cyan-600/80 text-white shadow-[0_4px_12px_rgba(var(--primary),0.4),inset_0_1px_1px_rgba(255,255,255,0.4)] border-transparent scale-105'
+                : 'bg-white/40 dark:bg-white/5 border-white/30 text-foreground hover:bg-white/60',
             )}
           >
+            {/* Gloss Effect */}
+            <div className="absolute inset-x-0 top-0 h-1/2 bg-gradient-to-b from-white/40 to-transparent rounded-t-full pointer-events-none" />
             <span className="relative z-10 text-shadow-sm">{cat}</span>
-            <span className="absolute top-1 left-2 right-2 h-[2px] bg-white/60 rounded-full blur-[1px]" />
           </button>
         ))}
       </div>
@@ -190,7 +191,7 @@ export default function Recipes() {
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 md:gap-6">
         {filteredRecipes.map((recipe) => (
           <div key={recipe.id} className="w-full h-full">
-            <div className="text-[10px] md:text-sm p-1">
+            <div className="text-[10px] md:text-sm p-1 h-full">
               <RecipeCard recipe={recipe} />
             </div>
           </div>

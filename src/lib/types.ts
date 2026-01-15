@@ -52,11 +52,14 @@ export interface UserProfile {
   fatsGoal: number
   waterGoal: number
   visibleWidgets: string[]
+  homeLayoutOrder: string[]
+  favoriteRecipes: string[]
 }
 
 export type MealType = 'Café da Manhã' | 'Almoço' | 'Lanche' | 'Jantar'
 
 export interface MealSlot {
+  id?: string // Added ID for precise identification
   date: string // ISO date string YYYY-MM-DD
   type: MealType
   recipeId: string | null

@@ -3,13 +3,14 @@ import { Button } from '@/components/ui/button'
 import {
   Share2,
   Upload,
-  ArrowLeft,
   Camera,
   History,
   Plus,
   Loader2,
   Droplets,
   Moon,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
@@ -22,7 +23,15 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog'
 import { useAppStore } from '@/stores/useAppStore'
-import { format } from 'date-fns'
+import {
+  format,
+  subMonths,
+  addMonths,
+  startOfMonth,
+  endOfMonth,
+  isWithinInterval,
+} from 'date-fns'
+import { ptBR } from 'date-fns/locale'
 import {
   ChartContainer,
   ChartTooltip,
@@ -53,6 +62,7 @@ export default function Evolution() {
   const [afterImage, setAfterImage] = useState<string | null>(null)
   const [activeSlot, setActiveSlot] = useState<'before' | 'after' | null>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [currentMonth, setCurrentMonth] = useState(new Date())
 
   // New Entry State
   const [isNewEntryOpen, setIsNewEntryOpen] = useState(false)
@@ -114,9 +124,9 @@ export default function Evolution() {
     try {
       if (processedFile && authUser) {
         const fileExt = 'jpg'
-        const fileName = `${authUser.id}/${Date.now()}.${fileExt}`
+        const fileName = `${authUser.id}/profile/${Date.now()}.${fileExt}`
         const { error: uploadError } = await supabase.storage
-          .from('evolution')
+          .from('avatars') // Using avatars bucket as per previous setup, or specific bucket if needed
           .upload(fileName, processedFile, {
             upsert: true,
             contentType: 'image/jpeg',
@@ -126,7 +136,7 @@ export default function Evolution() {
 
         const {
           data: { publicUrl },
-        } = supabase.storage.from('evolution').getPublicUrl(fileName)
+        } = supabase.storage.from('avatars').getPublicUrl(fileName)
         photoUrl = publicUrl
       }
 
@@ -145,36 +155,47 @@ export default function Evolution() {
     }
   }
 
-  // Defensive programming: Ensure dailyLogs is an array
+  // Filter logs by month
   const safeLogs = Array.isArray(dailyLogs) ? dailyLogs : []
+  const monthStart = startOfMonth(currentMonth)
+  const monthEnd = endOfMonth(currentMonth)
+
+  const monthLogs = safeLogs
+    .filter((log) => {
+      const date = new Date(log.date)
+      return isWithinInterval(date, { start: monthStart, end: monthEnd })
+    })
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
   const historyPhotos = safeLogs
     .filter((l) => l.photo)
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()) // Newest first for selection
     .map((l) => ({ date: l.date, src: l.photo!, weight: l.weight }))
 
-  // Chart Data from Daily Logs
-  const chartData = safeLogs
+  // Chart Data from Monthly Logs
+  const chartData = monthLogs
     .filter((l) => typeof l.weight === 'number')
     .map((l) => ({
       date: format(new Date(l.date), 'dd/MM'),
       weight: l.weight!,
     }))
 
-  const waterChartData = safeLogs
+  const waterChartData = monthLogs
     .filter((l) => l.waterIntake > 0)
     .map((l) => ({
       date: format(new Date(l.date), 'dd/MM'),
       ml: l.waterIntake,
     }))
 
-  // Sleep Chart (Inverted: Newest first)
-  const sleepChartData = safeLogs
+  const sleepChartData = monthLogs
     .filter((l) => l.sleepHours && l.sleepHours > 0)
     .map((l) => ({
       date: format(new Date(l.date), 'dd/MM'),
       hours: l.sleepHours,
     }))
-  // We keep normal order for AreaChart but we can use 'reversed' on XAxis to invert visually
+
+  const prevMonth = () => setCurrentMonth(subMonths(currentMonth, 1))
+  const nextMonth = () => setCurrentMonth(addMonths(currentMonth, 1))
 
   return (
     <div className="space-y-6 pb-24 px-1">
@@ -186,7 +207,7 @@ export default function Evolution() {
       />
 
       <div className="mb-4">
-        <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <h2 className="text-2xl font-bold">Evolução</h2>
           </div>
@@ -229,9 +250,7 @@ export default function Evolution() {
                     >
                       <div className="flex flex-col items-center text-muted-foreground">
                         <Camera className="h-8 w-8 mb-2" />
-                        <span className="text-xs">
-                          Toque para selecionar e editar (1080x1080)
-                        </span>
+                        <span className="text-xs">Toque para selecionar</span>
                       </div>
                     </Label>
                   </div>
@@ -251,6 +270,29 @@ export default function Evolution() {
               </div>
             </DialogContent>
           </Dialog>
+        </div>
+
+        {/* Month Selector */}
+        <div className="flex items-center justify-between aero-glass p-2 rounded-xl mb-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={prevMonth}
+            className="rounded-full"
+          >
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <span className="font-bold capitalize">
+            {format(currentMonth, 'MMMM yyyy', { locale: ptBR })}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={nextMonth}
+            className="rounded-full"
+          >
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
@@ -329,13 +371,13 @@ export default function Evolution() {
                 </div>
               ) : (
                 <div className="h-[250px] w-full flex items-center justify-center text-muted-foreground text-sm">
-                  Nenhum dado de peso registrado.
+                  Nenhum registro este mês.
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Water Chart - Frutiger Aero Style */}
+          {/* Water Chart */}
           <Card className="aero-card border-0 bg-cyan-50/50 dark:bg-cyan-900/20">
             <CardContent className="p-4 pt-6">
               <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
@@ -399,18 +441,17 @@ export default function Evolution() {
                 </div>
               ) : (
                 <div className="h-[250px] w-full flex items-center justify-center text-muted-foreground text-sm">
-                  Nenhum dado de hidratação.
+                  Nenhum dado este mês.
                 </div>
               )}
             </CardContent>
           </Card>
 
-          {/* Sleep Chart - Inverted */}
+          {/* Sleep Chart - Chronological Left-Right */}
           <Card className="aero-card border-0 bg-indigo-50/50 dark:bg-indigo-900/20">
             <CardContent className="p-4 pt-6">
               <h3 className="font-semibold text-lg mb-4 flex items-center gap-2">
                 <Moon className="h-5 w-5 text-indigo-500" /> Histórico de Sono
-                (Invertido)
               </h3>
               {sleepChartData.length > 0 ? (
                 <div className="h-[250px] w-full">
@@ -448,7 +489,6 @@ export default function Evolution() {
                           opacity={0.2}
                           stroke="currentColor"
                         />
-                        {/* Reversed Axis as per requirement */}
                         <XAxis
                           dataKey="date"
                           tickLine={false}
@@ -457,7 +497,6 @@ export default function Evolution() {
                           fontSize={10}
                           stroke="currentColor"
                           opacity={0.7}
-                          reversed
                         />
                         <ChartTooltip content={<ChartTooltipContent />} />
                         <Area
@@ -475,7 +514,7 @@ export default function Evolution() {
                 </div>
               ) : (
                 <div className="h-[250px] w-full flex items-center justify-center text-muted-foreground text-sm">
-                  Nenhum dado de sono.
+                  Nenhum dado este mês.
                 </div>
               )}
             </CardContent>
