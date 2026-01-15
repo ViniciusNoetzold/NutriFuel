@@ -12,7 +12,7 @@ import {
   Meal,
 } from '@/lib/types'
 import { MOCK_USER, MOCK_RECIPES } from '@/lib/data'
-import { format, startOfWeek, addDays, endOfWeek } from 'date-fns'
+import { format, startOfWeek, addDays } from 'date-fns'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
@@ -94,9 +94,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const isOnboardingCompleted = React.useMemo(() => {
     if (!authUser) return false
-    // Check mandatory fields from User Story
+    // Mandatory fields from User Story: Name, Weight, Age, Goal, Phone, Height
     return (
-      user.name &&
+      !!user.name &&
       user.weight > 0 &&
       user.height > 0 &&
       user.age > 0 &&
@@ -108,6 +108,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (authUser) {
       setIsLoading(true)
+      // Single fetch to retrieve user profile and optimizations
       const fetchProfile = supabase
         .from('profiles')
         .select('*')
@@ -397,18 +398,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const autoGeneratePlan = async (startDate: string) => {
-    // Generates for Sun-Sat based on start date
     const start = startOfWeek(new Date(startDate), { weekStartsOn: 0 })
     const days = 7
     const newPlans: any[] = []
     const types: MealType[] = ['Café da Manhã', 'Almoço', 'Lanche', 'Jantar']
 
-    // Prepare range for deletion if needed
     const startDateStr = format(start, 'yyyy-MM-dd')
     const endDateStr = format(addDays(start, 6), 'yyyy-MM-dd')
 
-    // Clean up existing plans for this week to avoid duplication/clutter
-    // "Instant cloud persistence" - we overwrite the week.
     setMealPlan((prev) =>
       prev.filter((p) => p.date < startDateStr || p.date > endDateStr),
     )
@@ -460,14 +457,12 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         completed: false,
       }))
 
-      // Batch insert
       const { data } = await supabase
         .from('meal_plans')
         .insert(dbPayload)
         .select()
 
       if (data) {
-        // Update local state with real IDs from DB
         const realPlans: MealSlot[] = data.map((p: any) => ({
           id: p.id,
           date: p.date,
@@ -476,9 +471,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
           completed: p.completed,
         }))
 
-        // Replace temp items with confirmed items
         setMealPlan((prev) => {
-          // We already cleared old items. Now we remove the temp items we just added and add the real ones
           const withoutTemps = prev.filter(
             (p) => !newPlans.some((np) => np.id === p.id),
           )

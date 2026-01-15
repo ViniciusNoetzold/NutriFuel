@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { ChevronRight, Check } from 'lucide-react'
+import { calculateGoals } from '@/lib/utils'
 
 export default function Onboarding() {
   const { updateUser } = useAppStore()
@@ -20,11 +21,13 @@ export default function Onboarding() {
   const [step, setStep] = useState(1)
   const [formData, setFormData] = useState({
     name: '',
+    phone: '',
+    age: '',
+    gender: 'male',
     weight: '',
     height: '',
-    age: '',
-    phone: '',
     goal: 'Manter Peso',
+    activityLevel: 'Moderado',
   })
 
   const handleChange = (field: string, value: string) => {
@@ -32,48 +35,78 @@ export default function Onboarding() {
   }
 
   const handleNext = () => {
-    if (
-      step === 1 &&
-      (!formData.name || !formData.weight || !formData.height || !formData.age)
-    ) {
-      toast.error('Preencha todos os campos')
-      return
+    if (step === 1) {
+      if (!formData.name || !formData.phone || !formData.age) {
+        toast.error('Preencha todos os campos obrigatórios')
+        return
+      }
+      if (Number(formData.age) <= 0) {
+        toast.error('Idade inválida')
+        return
+      }
+      setStep((prev) => prev + 1)
     }
-    if (step === 2 && !formData.phone) {
-      toast.error('Telefone é obrigatório')
-      return
-    }
-    setStep((prev) => prev + 1)
   }
 
   const handleFinish = async () => {
+    if (step === 2) {
+      if (!formData.weight || !formData.height) {
+        toast.error('Preencha peso e altura')
+        return
+      }
+      if (Number(formData.weight) <= 0 || Number(formData.height) <= 0) {
+        toast.error('Peso e altura devem ser maiores que zero')
+        return
+      }
+    }
+
     try {
+      // Calculate Macros and Goals
+      const calculated = calculateGoals(
+        Number(formData.weight),
+        Number(formData.height),
+        Number(formData.age),
+        formData.gender as 'male' | 'female',
+        formData.activityLevel,
+        formData.goal,
+      )
+
       await updateUser({
         name: formData.name,
+        phone: formData.phone,
+        age: Number(formData.age),
+        gender: formData.gender as 'male' | 'female',
         weight: Number(formData.weight),
         height: Number(formData.height),
-        age: Number(formData.age),
-        phone: formData.phone,
         goal: formData.goal as any,
+        activityLevel: formData.activityLevel as any,
+        ...calculated,
       })
+
       toast.success('Perfil criado com sucesso!')
+      // Redirect handled by router protection (or explicit)
       navigate('/')
     } catch (e) {
+      console.error(e)
       toast.error('Erro ao salvar perfil')
     }
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-sky-200 to-blue-200 dark:from-[#0f172a] dark:to-[#1e293b]">
-      <div className="w-full max-w-md aero-glass p-8 rounded-[32px] space-y-6">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-sky-200 to-blue-200 dark:from-[#0f172a] dark:to-[#1e293b] relative overflow-hidden">
+      {/* Texture & Background Overlay */}
+      <div className="absolute inset-0 opacity-[0.04] pointer-events-none bg-texture-overlay mix-blend-overlay z-0" />
+      <div className="absolute inset-0 bg-gradient-to-t from-transparent via-white/10 to-white/30 dark:via-cyan-900/10 pointer-events-none" />
+
+      <div className="w-full max-w-md aero-glass p-8 rounded-[32px] space-y-6 relative z-10 border border-white/60 dark:border-white/10">
         <div className="text-center">
           <h1 className="text-3xl font-extrabold text-metallic mb-2">
             Bem-vindo!
           </h1>
           <p className="text-muted-foreground text-sm">
-            Vamos configurar seu perfil para começar.
+            Configure seu perfil para começar.
           </p>
-          <p className="text-[10px] text-primary font-bold uppercase tracking-widest mt-2">
+          <p className="text-[10px] text-primary font-bold uppercase tracking-widest mt-2 drop-shadow-sm">
             Seu corpo, seu combustível.
           </p>
         </div>
@@ -81,7 +114,7 @@ export default function Onboarding() {
         {step === 1 && (
           <div className="space-y-4 animate-fade-in-up">
             <div className="space-y-2">
-              <Label>Nome de Exibição</Label>
+              <Label>Nome de Exibição *</Label>
               <Input
                 className="aero-input"
                 value={formData.name}
@@ -89,9 +122,55 @@ export default function Onboarding() {
                 placeholder="Ex: João Silva"
               />
             </div>
+            <div className="space-y-2">
+              <Label>Telefone *</Label>
+              <Input
+                type="tel"
+                className="aero-input"
+                value={formData.phone}
+                onChange={(e) => handleChange('phone', e.target.value)}
+                placeholder="(11) 99999-9999"
+              />
+            </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Peso (kg)</Label>
+                <Label>Idade *</Label>
+                <Input
+                  type="number"
+                  className="aero-input"
+                  value={formData.age}
+                  onChange={(e) => handleChange('age', e.target.value)}
+                  placeholder="25"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Gênero</Label>
+                <Select
+                  value={formData.gender}
+                  onValueChange={(val) => handleChange('gender', val)}
+                >
+                  <SelectTrigger className="aero-input">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="male">Masculino</SelectItem>
+                    <SelectItem value="female">Feminino</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <Button className="w-full aero-button mt-4" onClick={handleNext}>
+              Próximo <ChevronRight className="ml-2 h-4 w-4" />
+            </Button>
+          </div>
+        )}
+
+        {step === 2 && (
+          <div className="space-y-4 animate-fade-in-up">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Peso (kg) *</Label>
                 <Input
                   type="number"
                   className="aero-input"
@@ -101,7 +180,7 @@ export default function Onboarding() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Altura (cm)</Label>
+                <Label>Altura (cm) *</Label>
                 <Input
                   type="number"
                   className="aero-input"
@@ -112,35 +191,7 @@ export default function Onboarding() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Idade</Label>
-              <Input
-                type="number"
-                className="aero-input"
-                value={formData.age}
-                onChange={(e) => handleChange('age', e.target.value)}
-                placeholder="25"
-              />
-            </div>
-            <Button className="w-full aero-button" onClick={handleNext}>
-              Próximo <ChevronRight className="ml-2 h-4 w-4" />
-            </Button>
-          </div>
-        )}
-
-        {step === 2 && (
-          <div className="space-y-4 animate-fade-in-up">
-            <div className="space-y-2">
-              <Label>Telefone</Label>
-              <Input
-                type="tel"
-                className="aero-input"
-                value={formData.phone}
-                onChange={(e) => handleChange('phone', e.target.value)}
-                placeholder="(11) 99999-9999"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Objetivo</Label>
+              <Label>Objetivo Pessoal *</Label>
               <Select
                 value={formData.goal}
                 onValueChange={(val) => handleChange('goal', val)}
@@ -155,8 +206,34 @@ export default function Onboarding() {
                 </SelectContent>
               </Select>
             </div>
-            <Button className="w-full aero-button" onClick={handleFinish}>
-              Concluir <Check className="ml-2 h-4 w-4" />
+            <div className="space-y-2">
+              <Label>Nível de Atividade</Label>
+              <Select
+                value={formData.activityLevel}
+                onValueChange={(val) => handleChange('activityLevel', val)}
+              >
+                <SelectTrigger className="aero-input">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Sedentário">Sedentário</SelectItem>
+                  <SelectItem value="Leve">Leve</SelectItem>
+                  <SelectItem value="Moderado">Moderado</SelectItem>
+                  <SelectItem value="Intenso">Intenso</SelectItem>
+                  <SelectItem value="Atleta">Atleta</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <Button className="w-full aero-button mt-4" onClick={handleFinish}>
+              Concluir Cadastro <Check className="ml-2 h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              className="w-full"
+              onClick={() => setStep(1)}
+            >
+              Voltar
             </Button>
           </div>
         )}

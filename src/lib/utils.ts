@@ -1,4 +1,4 @@
-/* General utility functions (exposes cn) */
+/* General utility functions (exposes cn, processImage, calculateGoals) */
 import { clsx, type ClassValue } from 'clsx'
 import { twMerge } from 'tailwind-merge'
 
@@ -47,4 +47,66 @@ export async function processImage(file: File): Promise<Blob> {
     }
     img.onerror = reject
   })
+}
+
+export function calculateGoals(
+  weight: number,
+  height: number,
+  age: number,
+  gender: 'male' | 'female',
+  activityLevel: string,
+  goal: string,
+) {
+  // Mifflin-St Jeor Equation
+  let bmr = 10 * weight + 6.25 * height - 5 * age
+  if (gender === 'male') bmr += 5
+  else bmr -= 161
+
+  const activityMultipliers: Record<string, number> = {
+    Sedentário: 1.2,
+    Leve: 1.375,
+    Moderado: 1.55,
+    Intenso: 1.725,
+    Atleta: 1.9,
+  }
+  const multiplier = activityMultipliers[activityLevel] || 1.55
+  let tdee = bmr * multiplier
+
+  if (goal === 'Emagrecer') tdee -= 500
+  else if (goal === 'Ganhar Massa') tdee += 500
+
+  // Ensure minimum safe calories
+  if (tdee < 1200) tdee = 1200
+
+  // Macro Split
+  let pRatio = 0.3 // Default Balanced
+  let cRatio = 0.4
+  let fRatio = 0.3
+
+  if (goal === 'Emagrecer') {
+    pRatio = 0.4
+    cRatio = 0.3
+    fRatio = 0.3
+  }
+  if (goal === 'Ganhar Massa') {
+    pRatio = 0.3
+    cRatio = 0.5
+    fRatio = 0.2
+  }
+
+  const calories = Math.round(tdee)
+  const protein = Math.round((calories * pRatio) / 4)
+  const carbs = Math.round((calories * cRatio) / 4)
+  const fats = Math.round((calories * fRatio) / 9)
+
+  // Water: ~35ml per kg
+  const water = Math.round(weight * 35)
+
+  return {
+    calorieGoal: calories,
+    proteinGoal: protein,
+    carbsGoal: carbs,
+    fatsGoal: fats,
+    waterGoal: water,
+  }
 }

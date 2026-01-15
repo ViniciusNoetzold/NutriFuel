@@ -30,9 +30,37 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
     return <Navigate to="/login" replace />
   }
 
-  // Force onboarding check
-  if (!isOnboardingCompleted && window.location.pathname !== '/onboarding') {
+  // Force onboarding check - Smart Navigation Logic
+  if (!isOnboardingCompleted) {
     return <Navigate to="/onboarding" replace />
+  }
+
+  return <>{children}</>
+}
+
+const OnboardingRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth()
+  const { isOnboardingCompleted } = useAppStore()
+
+  if (loading) return null
+  if (!user) {
+    return <Navigate to="/login" replace />
+  }
+
+  // Prevent returning users from seeing onboarding
+  if (isOnboardingCompleted) {
+    return <Navigate to="/" replace />
+  }
+
+  return <>{children}</>
+}
+
+const PublicRoute = ({ children }: { children: React.ReactNode }) => {
+  const { user, loading } = useAuth()
+
+  if (loading) return null
+  if (user) {
+    return <Navigate to="/" replace />
   }
 
   return <>{children}</>
@@ -41,8 +69,22 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
 const AppRoutes = () => {
   return (
     <Routes>
-      <Route path="/login" element={<Login />} />
-      <Route path="/onboarding" element={<Onboarding />} />
+      <Route
+        path="/login"
+        element={
+          <PublicRoute>
+            <Login />
+          </PublicRoute>
+        }
+      />
+      <Route
+        path="/onboarding"
+        element={
+          <OnboardingRoute>
+            <Onboarding />
+          </OnboardingRoute>
+        }
+      />
       <Route
         element={
           <ProtectedRoute>
