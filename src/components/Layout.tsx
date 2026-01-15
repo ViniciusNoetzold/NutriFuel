@@ -53,7 +53,8 @@ export default function Layout() {
     location.pathname === '/recipes/create' ||
     location.pathname === '/recipes/scan'
 
-  const unreadCount = notifications.filter((n) => !n.read).length
+  const safeNotifications = notifications || []
+  const unreadCount = safeNotifications.filter((n) => !n.read).length
 
   // Scroll listener for Smart Navbar
   useEffect(() => {
@@ -82,9 +83,10 @@ export default function Layout() {
   }, [lastScrollY])
 
   const isWidgetVisible = (id: string) =>
-    user.visibleWidgets?.includes(id) ?? true
+    user?.visibleWidgets?.includes(id) ?? true
 
   const moveWidget = (id: string, direction: 'up' | 'down') => {
+    // Defensive copy: ensure homeLayoutOrder is an array
     const currentOrder = [...(user.homeLayoutOrder || [])]
     const index = currentOrder.indexOf(id)
     if (index === -1) return
@@ -101,25 +103,6 @@ export default function Layout() {
       ]
     }
     reorderWidgets(currentOrder)
-  }
-
-  const pageTitle = () => {
-    if (location.pathname === '/') return 'Início'
-    if (location.pathname === '/recipes') return 'Receitas'
-    if (location.pathname === '/plan') return 'Plano Alimentar'
-    if (location.pathname === '/shop') return 'Compras'
-    if (location.pathname === '/profile') return 'Perfil'
-    if (location.pathname === '/evolution') return 'Registro de evolução'
-    if (location.pathname === '/recipes/create') return 'Nova Receita'
-    if (location.pathname === '/recipes/scan') return 'Scanner'
-    if (
-      location.pathname.startsWith('/recipes/') &&
-      !['/recipes', '/recipes/create', '/recipes/scan'].includes(
-        location.pathname,
-      )
-    )
-      return 'Detalhes'
-    return ''
   }
 
   const WIDGET_LABELS: Record<string, string> = {
@@ -177,7 +160,8 @@ export default function Layout() {
                     <Settings className="h-4 w-4 opacity-50" />
                   </div>
                   <div className="space-y-2">
-                    {user.homeLayoutOrder.map((id) => (
+                    {/* Defensive check for user.homeLayoutOrder */}
+                    {(user.homeLayoutOrder || []).map((id) => (
                       <div
                         key={id}
                         className="flex items-center justify-between bg-white/20 p-2 rounded-lg"
@@ -275,9 +259,9 @@ export default function Layout() {
                   </div>
                 </div>
                 <ScrollArea className="h-[300px]">
-                  {notifications.length > 0 ? (
+                  {safeNotifications.length > 0 ? (
                     <div className="divide-y divide-white/10">
-                      {notifications.map((notification) => (
+                      {safeNotifications.map((notification) => (
                         <div
                           key={notification.id}
                           className={cn(

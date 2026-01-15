@@ -101,37 +101,46 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         .single()
         .then(({ data }) => {
           if (data) {
-            setUser((prev) => ({
-              ...prev,
-              id: data.id,
-              name: data.name || prev.name || 'Usuário',
-              email: authUser.email || prev.email,
-              avatar: data.avatar_url || prev.avatar,
-              weight: data.weight || prev.weight,
-              height: data.height || prev.height,
-              age: data.age || prev.age,
-              gender: (data.gender as UserProfile['gender']) || prev.gender,
-              activityLevel:
-                (data.activity_level as UserProfile['activityLevel']) ||
-                prev.activityLevel,
-              goal: (data.goal as UserProfile['goal']) || prev.goal,
-              calorieGoal: data.calorie_goal || prev.calorieGoal,
-              proteinGoal: data.protein_goal || prev.proteinGoal,
-              carbsGoal: data.carbs_goal || prev.carbsGoal,
-              fatsGoal: data.fats_goal || prev.fatsGoal,
-              waterGoal: data.water_goal || prev.waterGoal,
-              visibleWidgets: data.visible_widgets || prev.visibleWidgets,
-              phone: data.phone || prev.phone,
-              homeLayoutOrder: data.home_layout_order
-                ? (data.home_layout_order as string[])
-                : prev.homeLayoutOrder || [
-                    'macros',
-                    'hydration',
-                    'sleep',
-                    'meals',
-                  ],
-              favoriteRecipes: data.favorite_recipes || [],
-            }))
+            setUser((prev) => {
+              // Ensure we have valid default arrays even if DB returns null
+              const defaultHomeLayout = [
+                'macros',
+                'hydration',
+                'sleep',
+                'meals',
+              ]
+
+              return {
+                ...prev,
+                id: data.id,
+                name: data.name || prev.name || 'Usuário',
+                email: authUser.email || prev.email,
+                avatar: data.avatar_url || prev.avatar,
+                weight: data.weight || prev.weight,
+                height: data.height || prev.height,
+                age: data.age || prev.age,
+                gender: (data.gender as UserProfile['gender']) || prev.gender,
+                activityLevel:
+                  (data.activity_level as UserProfile['activityLevel']) ||
+                  prev.activityLevel,
+                goal: (data.goal as UserProfile['goal']) || prev.goal,
+                calorieGoal: data.calorie_goal || prev.calorieGoal,
+                proteinGoal: data.protein_goal || prev.proteinGoal,
+                carbsGoal: data.carbs_goal || prev.carbsGoal,
+                fatsGoal: data.fats_goal || prev.fatsGoal,
+                waterGoal: data.water_goal || prev.waterGoal,
+                visibleWidgets:
+                  data.visible_widgets ||
+                  prev.visibleWidgets ||
+                  defaultHomeLayout,
+                phone: data.phone || prev.phone,
+                // Robust check: Use DB data if exists, otherwise fallback to prev (which should be MOCK_USER), or finally hardcoded default
+                homeLayoutOrder: data.home_layout_order
+                  ? (data.home_layout_order as string[])
+                  : prev.homeLayoutOrder || defaultHomeLayout,
+                favoriteRecipes: data.favorite_recipes || [],
+              }
+            })
           }
         })
 
@@ -310,10 +319,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }
 
   const toggleFavorite = (id: string) => {
-    const isFav = user.favoriteRecipes.includes(id)
+    const favorites = user.favoriteRecipes || []
+    const isFav = favorites.includes(id)
     const newFavorites = isFav
-      ? user.favoriteRecipes.filter((fav) => fav !== id)
-      : [...user.favoriteRecipes, id]
+      ? favorites.filter((fav) => fav !== id)
+      : [...favorites, id]
 
     updateUser({ favoriteRecipes: newFavorites })
   }

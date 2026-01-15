@@ -279,8 +279,8 @@ export default function Index() {
     }
   }
 
-  // Use configured order
-  const orderedWidgets = user.homeLayoutOrder.filter((id) =>
+  // Use configured order with defensive check
+  const orderedWidgets = (user.homeLayoutOrder || []).filter((id) =>
     isWidgetVisible(id),
   )
 

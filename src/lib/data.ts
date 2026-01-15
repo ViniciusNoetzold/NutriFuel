@@ -16,9 +16,9 @@ export const MOCK_USER: UserProfile = {
   fatsGoal: 70,
   waterGoal: 2500,
   visibleWidgets: ['macros', 'hydration', 'meals', 'sleep'],
+  homeLayoutOrder: ['macros', 'hydration', 'sleep', 'meals'],
+  favoriteRecipes: [],
 }
-
-// Articles removed as per user story requirements
 
 export const MOCK_RECIPES: Recipe[] = [
   {
